@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="#0f172a"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TUSTOCK"
+        android:textColor="#3b82f6"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Scanner de productos"
+        android:textColor="#94a3b8"
+        android:textSize="16sp"
+        android:layout_marginBottom="48dp" />
+
+    <View
+        android:id="@+id/statusIndicator"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:background="@android:color/holo_orange_light"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Verificando conexión..."
+        android:textColor="#e2e8f0"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:layout_marginBottom="24dp" />
+
+    <EditText
+        android:id="@+id/serverUrlInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="http://192.168.1.100:8090"
+        android:textColor="#e2e8f0"
+        android:textColorHint="#475569"
+        android:background="@drawable/edit_text_bg"
+        android:padding="14dp"
+        android:inputType="textUri"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/connectButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Conectar"
+        android:backgroundTint="#334155"
+        android:textColor="#e2e8f0"
+        android:layout_marginBottom="32dp" />
+
+    <Button
+        android:id="@+id/scanButton"
+        android:layout_width="240dp"
+        android:layout_height="80dp"
+        android:text="ESCANEAR"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:backgroundTint="#3b82f6"
+        android:textColor="#ffffff"
+        android:enabled="false"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/settingsButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Configuración"
+        android:backgroundTint="@android:color/transparent"
+        android:textColor="#64748b" />
+
+</LinearLayout>

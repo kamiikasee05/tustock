@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TUSTOCK Scanner</string>
+    <string name="scan_product">Escanear producto</string>
+    <string name="register_product">Registrar nuevo</string>
+    <string name="connect_server">Conectar al servidor</string>
+    <string name="server_url">URL del servidor</string>
+    <string name="product_found">Producto encontrado</string>
+    <string name="product_not_found">Producto no encontrado</string>
+</resources>
