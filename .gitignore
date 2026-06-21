@@ -24,6 +24,11 @@ build/
 *.aab
 .gradle/
 local.properties
+android/app/build/
+android/build/
+android/.gradle/
+*.jks
+*.keystore
 .idea/
 
 # OS
