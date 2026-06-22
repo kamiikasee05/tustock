@@ -1,9 +1,10 @@
 package com.tustock.scanner
 
-import android.content.SharedPreferences
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.*
@@ -20,15 +21,9 @@ class SettingsActivity : AppCompatActivity() {
         val saveButton = findViewById<Button>(R.id.saveButton)
         val testButton = findViewById<Button>(R.id.testButton)
 
-        // Check if we came from scanner with a code to register
-        val registerCode = intent.getStringExtra("register_code")
-        if (registerCode != null) {
-            findViewById<EditText>(R.id.registerCodeInput)?.setText(registerCode)
-            findViewById<android.view.View>(R.id.registerSection)?.visibility = android.view.View.VISIBLE
-        }
-
         val savedUrl = prefs.getString("server_url", "http://192.168.1.100:8090")
         urlInput.setText(savedUrl)
+        if (savedUrl != null) ApiClient.baseUrl = savedUrl
 
         saveButton.setOnClickListener {
             val url = urlInput.text.toString().trim()
@@ -49,32 +44,47 @@ class SettingsActivity : AppCompatActivity() {
                     val ok = ApiClient.healthCheck()
                     Toast.makeText(
                         this@SettingsActivity,
-                        if (ok) "Conexión exitosa" else "No se pudo conectar",
+                        if (ok) "Conexion exitosa" else "No se pudo conectar",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
             }
         }
 
-        // Register product handler
-        findViewById<Button>(R.id.registerSubmitButton)?.setOnClickListener {
-            val code = findViewById<EditText>(R.id.registerCodeInput)?.text?.toString()?.trim() ?: ""
-            val name = findViewById<EditText>(R.id.registerNameInput)?.text?.toString()?.trim() ?: ""
-            val price = findViewById<EditText>(R.id.registerPriceInput)?.text?.toString()?.toDoubleOrNull() ?: 0.0
+        val registerCode = intent.getStringExtra("register_code")
+        val registerSection = findViewById<View>(R.id.registerSection)
+        val codeInput = findViewById<EditText>(R.id.registerCodeInput)
+        val nameInput = findViewById<EditText>(R.id.registerNameInput)
+        val priceInput = findViewById<EditText>(R.id.registerPriceInput)
+        val submitBtn = findViewById<Button>(R.id.registerSubmitButton)
+
+        if (registerCode != null) {
+            registerSection.visibility = View.VISIBLE
+            codeInput.setText(registerCode)
+            nameInput.requestFocus()
+        }
+
+        submitBtn.setOnClickListener {
+            val code = codeInput.text.toString().trim()
+            val name = nameInput.text.toString().trim()
+            val price = priceInput.text.toString().toDoubleOrNull() ?: 0.0
 
             if (code.isEmpty() || name.isEmpty()) {
-                Toast.makeText(this, "Código y nombre son requeridos", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Codigo y nombre son requeridos", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
+            submitBtn.isEnabled = false
+            submitBtn.text = "Registrando..."
+            Toast.makeText(this, "Enviando a $savedUrl...", Toast.LENGTH_SHORT).show()
+
             scope.launch {
                 val result = ApiClient.createProduct(
-                    CreateProductRequest(
-                        code = code,
-                        name = name,
-                        selling_price = price
-                    )
+                    CreateProductRequest(code = code, name = name, selling_price = price)
                 )
+                submitBtn.isEnabled = true
+                submitBtn.text = "Registrar producto"
+
                 result.onSuccess {
                     Toast.makeText(this@SettingsActivity, "Producto registrado: ${it.name}", Toast.LENGTH_SHORT).show()
                     finish()
