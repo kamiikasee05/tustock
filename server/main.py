@@ -27,20 +27,45 @@ def health():
 @app.get("/api/server-info")
 def server_info():
     import socket
+
+    VIRTUAL_RANGES = [
+        ("192.168.56.", "VirtualBox"),
+        ("172.17.", "Docker"),
+        ("172.18.", "Docker"),
+        ("172.19.", "Docker"),
+        ("172.20.", "Docker"),
+        ("172.21.", "Docker"),
+    ]
+
     hostname = socket.gethostname()
-    ips = []
+    all_ips = []
     try:
         for info in socket.getaddrinfo(hostname, None):
             ip = info[4][0]
-            if ip not in ips and not ip.startswith("127.") and ":" not in ip:
-                ips.append(ip)
+            if ip not in all_ips and not ip.startswith("127.") and ":" not in ip:
+                all_ips.append(ip)
     except:
         pass
+
+    real_ips = []
+    virtual_ips = []
+    for ip in all_ips:
+        is_virtual = any(ip.startswith(prefix) for prefix, _ in VIRTUAL_RANGES)
+        if is_virtual:
+            virtual_ips.append(ip)
+        else:
+            real_ips.append(ip)
+
+    primary_ip = real_ips[0] if real_ips else (all_ips[0] if all_ips else "localhost")
+    displayed_ips = real_ips + virtual_ips
+
     return {
         "hostname": hostname,
-        "ips": ips,
+        "primary_ip": primary_ip,
+        "ips": displayed_ips,
         "port": API_PORT,
-        "urls": [f"http://{ip}:{API_PORT}" for ip in ips],
+        "urls": [f"http://{ip}:{API_PORT}" for ip in displayed_ips],
+        "primary_url": f"http://{primary_ip}:{API_PORT}",
     }
 
 from routes.products import router as products_router

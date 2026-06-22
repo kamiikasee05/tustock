@@ -3,6 +3,8 @@ import { api, Product } from '../api/client'
 
 interface ServerInfo {
   hostname: string
+  primary_ip: string
+  primary_url: string
   ips: string[]
   port: number
   urls: string[]
@@ -22,7 +24,7 @@ export default function ScannerConnect() {
       .then(r => r.json())
       .then((info: ServerInfo) => {
         setServerInfo(info)
-        setServerIP(info.urls[0] || `http://localhost:${info.port}`)
+        setServerIP(info.primary_url || info.urls[0] || `http://localhost:${info.port}`)
       })
       .catch(() => {})
       .finally(() => setInfoLoading(false))
