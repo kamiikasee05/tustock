@@ -66,3 +66,21 @@ class AuditItemUpdate(BaseModel):
 
 class ScanRequest(BaseModel):
     product_code: str = Field(..., max_length=50)
+
+class VendorCreate(BaseModel):
+    dni: str = Field(..., max_length=20)
+    name: str = Field(..., max_length=100)
+
+class VendorLogin(BaseModel):
+    dni: str = Field(..., max_length=20)
+
+class PendingOrderItem(BaseModel):
+    product_id: int
+    code: str
+    name: str
+    quantity: float = Field(..., gt=0)
+    unit_price: float = Field(..., ge=0)
+
+class PendingOrderCreate(BaseModel):
+    vendor_id: int
+    items: list[PendingOrderItem]

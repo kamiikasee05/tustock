@@ -1,0 +1,128 @@
+import json
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from datetime import datetime, timezone, date
+from database import get_db
+from models.pending_order import PendingOrder
+from models.vendor import Vendor
+from models.sale import Sale, SaleItem
+from models.stock import CurrentStock, StockMovement
+from schemas import PendingOrderCreate
+
+router = APIRouter(prefix="/api/pending-orders", tags=["pending-orders"])
+
+@router.get("")
+def list_pending(db: Session = Depends(get_db)):
+    orders = (
+        db.query(PendingOrder, Vendor)
+        .join(Vendor, PendingOrder.vendor_id == Vendor.id)
+        .filter(PendingOrder.status == "pending")
+        .order_by(PendingOrder.created_at.desc())
+        .all()
+    )
+    return [
+        {
+            "id": o.id,
+            "vendor_name": v.name,
+            "vendor_dni": v.dni,
+            "total": o.total,
+            "items": json.loads(o.items_json),
+            "created_at": str(o.created_at),
+        }
+        for o, v in orders
+    ]
+
+@router.post("")
+def create_pending(data: PendingOrderCreate, db: Session = Depends(get_db)):
+    vendor = db.query(Vendor).filter(Vendor.id == data.vendor_id, Vendor.is_active == True).first()
+    if not vendor:
+        raise HTTPException(404, "Vendedor no encontrado")
+
+    items_dict = [item.model_dump() for item in data.items]
+    total = sum(item.quantity * item.unit_price for item in data.items)
+
+    order = PendingOrder(
+        vendor_id=data.vendor_id,
+        total=total,
+        items_json=json.dumps(items_dict),
+    )
+    db.add(order)
+    db.commit()
+    db.refresh(order)
+
+    return {"id": order.id, "total": total, "status": "pending"}
+
+@router.post("/{order_id}/approve")
+def approve(order_id: int, db: Session = Depends(get_db)):
+    order = db.query(PendingOrder).filter(PendingOrder.id == order_id).first()
+    if not order:
+        raise HTTPException(404, "Pedido no encontrado")
+    if order.status != "pending":
+        raise HTTPException(400, "El pedido ya fue procesado")
+
+    items = json.loads(order.items_json)
+
+    sale = Sale(
+        sale_date=date.today(),
+        total=order.total,
+        payment_method="a confirmar",
+        notes=f"Pedido #{order.id}",
+        vendor_id=order.vendor_id,
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(sale)
+    db.flush()
+
+    for item in items:
+        si = SaleItem(
+            sale_id=sale.id,
+            product_id=item["product_id"],
+            quantity=item["quantity"],
+            unit_price=item["unit_price"],
+            subtotal=item["quantity"] * item["unit_price"],
+        )
+        db.add(si)
+
+        cs = db.query(CurrentStock).filter(CurrentStock.product_id == item["product_id"]).first()
+        if cs:
+            cs.quantity = max(0.0, cs.quantity - item["quantity"])
+        else:
+            db.add(CurrentStock(product_id=item["product_id"], quantity=0.0))
+
+        movement = StockMovement(
+            product_id=item["product_id"],
+            quantity=item["quantity"],
+            movement_type="exit",
+            reference_type="sale",
+            reference_id=sale.id,
+        )
+        db.add(movement)
+
+    order.status = "approved"
+    order.processed_at = datetime.now(timezone.utc)
+    db.commit()
+
+    return {"id": order.id, "sale_id": sale.id, "status": "approved", "total": order.total}
+
+@router.post("/{order_id}/reject")
+def reject(order_id: int, db: Session = Depends(get_db)):
+    order = db.query(PendingOrder).filter(PendingOrder.id == order_id).first()
+    if not order:
+        raise HTTPException(404, "Pedido no encontrado")
+    if order.status != "pending":
+        raise HTTPException(400, "El pedido ya fue procesado")
+
+    order.status = "rejected"
+    order.processed_at = datetime.now(timezone.utc)
+    db.commit()
+
+    return {"id": order.id, "status": "rejected"}
+
+@router.post("/clear")
+def clear_vendor_orders(vendor_id: int, db: Session = Depends(get_db)):
+    db.query(PendingOrder).filter(
+        PendingOrder.vendor_id == vendor_id,
+        PendingOrder.status == "pending",
+    ).delete(synchronize_session=False)
+    db.commit()
+    return {"ok": True}

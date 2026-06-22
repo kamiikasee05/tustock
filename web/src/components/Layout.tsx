@@ -4,6 +4,7 @@ import { api, LowStockItem } from '../api/client'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: '📊' },
+  { to: '/pedidos', label: 'Pedidos', icon: '📝' },
   { to: '/products', label: 'Productos', icon: '📦' },
   { to: '/sales', label: 'Ventas', icon: '💰' },
   { to: '/audits', label: 'Auditorías', icon: '🔍' },
@@ -14,6 +15,7 @@ const navItems = [
 export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation()
   const [alerts, setAlerts] = useState<LowStockItem[]>([])
+  const [pendingCount, setPendingCount] = useState(0)
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking')
 
   useEffect(() => {
@@ -24,12 +26,12 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (serverStatus === 'online') {
-      api.get<LowStockItem[]>('/products/alerts/low-stock')
-        .then(setAlerts)
-        .catch(() => {})
-      const interval = setInterval(() => {
+      const poll = () => {
         api.get<LowStockItem[]>('/products/alerts/low-stock').then(setAlerts).catch(() => {})
-      }, 30000)
+        api.get<any[]>('/pending-orders').then(o => setPendingCount(o.length)).catch(() => {})
+      }
+      poll()
+      const interval = setInterval(poll, 10000)
       return () => clearInterval(interval)
     }
   }, [serverStatus])
@@ -86,6 +88,19 @@ export default function Layout({ children }: { children: ReactNode }) {
                   fontWeight: 700,
                 }}>
                   {alerts.length}
+                </span>
+              )}
+              {item.to === '/pedidos' && pendingCount > 0 && (
+                <span style={{
+                  marginLeft: 'auto',
+                  background: 'var(--warning)',
+                  color: '#000',
+                  borderRadius: 10,
+                  padding: '1px 7px',
+                  fontSize: 11,
+                  fontWeight: 700,
+                }}>
+                  {pendingCount}
                 </span>
               )}
             </NavLink>

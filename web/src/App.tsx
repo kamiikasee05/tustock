@@ -6,6 +6,7 @@ import Sales from './pages/Sales'
 import Audits from './pages/Audits'
 import Reports from './pages/Reports'
 import ScannerConnect from './pages/ScannerConnect'
+import Pedidos from './pages/Pedidos'
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/audits" element={<Audits />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/scanner" element={<ScannerConnect />} />
+        <Route path="/pedidos" element={<Pedidos />} />
       </Routes>
     </Layout>
   )

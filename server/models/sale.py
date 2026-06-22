@@ -13,6 +13,7 @@ class Sale(Base):
     payment_method = Column(String(50), nullable=True)
     notes = Column(Text, nullable=True)
     cashier = Column(String(100), nullable=True)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")

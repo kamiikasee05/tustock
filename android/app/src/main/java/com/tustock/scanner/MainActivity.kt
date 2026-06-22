@@ -18,7 +18,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var serverUrlInput: EditText
     private lateinit var connectButton: Button
-    private lateinit var scanButton: Button
+    private lateinit var dniInput: EditText
+    private lateinit var loginButton: Button
+    private lateinit var loginError: TextView
+    private var isConnected = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,27 +31,29 @@ class MainActivity : AppCompatActivity() {
         statusText = findViewById(R.id.statusText)
         serverUrlInput = findViewById(R.id.serverUrlInput)
         connectButton = findViewById(R.id.connectButton)
-        scanButton = findViewById(R.id.scanButton)
+        dniInput = findViewById(R.id.dniInput)
+        loginButton = findViewById(R.id.loginButton)
+        loginError = findViewById(R.id.loginError)
 
         val savedUrl = prefs.getString("server_url", "http://192.168.1.100:8090")
         serverUrlInput.setText(savedUrl)
         ApiClient.baseUrl = savedUrl ?: "http://192.168.1.100:8090"
 
-        connectButton.setOnClickListener { checkConnection() }
-        scanButton.setOnClickListener { startScanner() }
+        connectButton.setOnClickListener { connect() }
+        loginButton.setOnClickListener { login() }
 
-        findViewById<Button>(R.id.settingsButton).setOnClickListener {
+        findViewById<Button>(R.id.configButton).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
         scope.launch {
             delay(500)
-            checkConnection()
+            connect()
         }
     }
 
-    private fun checkConnection() {
-        statusText.text = "Verificando conexion..."
+    private fun connect() {
+        statusText.text = "Verificando..."
         statusIndicator.setBackgroundColor(getColor(android.R.color.holo_orange_light))
 
         val url = serverUrlInput.text.toString().trim()
@@ -60,20 +65,45 @@ class MainActivity : AppCompatActivity() {
         scope.launch {
             val ok = ApiClient.healthCheck()
             if (ok) {
+                isConnected = true
                 statusText.text = "Conectado a $url"
                 statusIndicator.setBackgroundColor(getColor(android.R.color.holo_green_light))
-                scanButton.isEnabled = true
-                Toast.makeText(this@MainActivity, "Servidor conectado", Toast.LENGTH_SHORT).show()
+                loginButton.isEnabled = true
+                loginError.visibility = View.GONE
             } else {
-                statusText.text = "Sin conexion - Verifique la URL y que el servidor este corriendo"
+                isConnected = false
+                statusText.text = "Sin conexion - Verifique URL"
                 statusIndicator.setBackgroundColor(getColor(android.R.color.holo_red_light))
-                scanButton.isEnabled = false
+                loginButton.isEnabled = false
             }
         }
     }
 
-    private fun startScanner() {
-        startActivity(Intent(this, ScannerActivity::class.java))
+    private fun login() {
+        val dni = dniInput.text.toString().trim()
+        if (dni.isEmpty()) {
+            loginError.text = "Ingrese su DNI"
+            loginError.visibility = View.VISIBLE
+            return
+        }
+
+        loginButton.isEnabled = false
+        loginButton.text = "Ingresando..."
+        loginError.visibility = View.GONE
+
+        scope.launch {
+            val result = ApiClient.vendorLogin(dni)
+            loginButton.isEnabled = true
+            loginButton.text = "Ingresar"
+
+            result.onSuccess {
+                startActivity(Intent(this@MainActivity, POSActivity::class.java))
+            }
+            result.onFailure {
+                loginError.text = it.message ?: "DNI no registrado"
+                loginError.visibility = View.VISIBLE
+            }
+        }
     }
 
     override fun onDestroy() {
