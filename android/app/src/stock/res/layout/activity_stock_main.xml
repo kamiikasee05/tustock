@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/previewView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Top config button -->
+    <Button
+        android:id="@+id/configButton"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:text="⚙"
+        android:textSize="16sp"
+        android:layout_gravity="end|top"
+        android:layout_margin="12dp"
+        android:backgroundTint="#334155"
+        android:textColor="#94a3b8"
+        android:padding="0dp" />
+
+    <TextView
+        android:id="@+id/scanHint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Escanee un codigo para registrar stock"
+        android:textColor="#ffffff"
+        android:textSize="14sp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:background="#99000000"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp" />
+
+    <!-- Product found card -->
+    <LinearLayout
+        android:id="@+id/resultCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#1e293b"
+        android:padding="20dp"
+        android:layout_gravity="bottom"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/productNameText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#ffffff"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/productCodeText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#94a3b8"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/productPriceText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#22c55e"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/productStockText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#e2e8f0"
+                android:textSize="16sp"
+                android:gravity="end" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical">
+
+            <EditText
+                android:id="@+id/quantityInput"
+                android:layout_width="80dp"
+                android:layout_height="42dp"
+                android:hint="Cant."
+                android:textColor="#e2e8f0"
+                android:textColorHint="#475569"
+                android:background="@drawable/edit_text_bg"
+                android:inputType="number"
+                android:padding="8dp"
+                android:text="1"
+                android:textAlignment="center" />
+
+            <Button
+                android:id="@+id/addStockButton"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:text="Agregar al stock"
+                android:textStyle="bold"
+                android:backgroundTint="#22c55e"
+                android:textColor="#ffffff"
+                android:layout_marginStart="8dp" />
+
+            <Button
+                android:id="@+id/scanAgainButton"
+                android:layout_width="wrap_content"
+                android:layout_height="42dp"
+                android:text="Otro"
+                android:backgroundTint="#334155"
+                android:textColor="#e2e8f0"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Product not found card -->
+    <LinearLayout
+        android:id="@+id/notFoundCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#1e293b"
+        android:padding="20dp"
+        android:layout_gravity="bottom"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Producto no encontrado"
+            android:textColor="#f59e0b"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/notFoundCode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#94a3b8"
+            android:textSize="13sp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/registerNameInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nombre del producto"
+            android:textColor="#e2e8f0"
+            android:textColorHint="#475569"
+            android:background="@drawable/edit_text_bg"
+            android:padding="12dp"
+            android:layout_marginBottom="6dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp">
+
+            <EditText
+                android:id="@+id/registerPriceInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Precio $"
+                android:textColor="#e2e8f0"
+                android:textColorHint="#475569"
+                android:background="@drawable/edit_text_bg"
+                android:padding="12dp"
+                android:inputType="numberDecimal"
+                android:layout_marginEnd="6dp" />
+
+            <EditText
+                android:id="@+id/registerQuantityInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Cantidad"
+                android:textColor="#e2e8f0"
+                android:textColorHint="#475569"
+                android:background="@drawable/edit_text_bg"
+                android:padding="12dp"
+                android:inputType="number" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/notFoundAgainButton"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:text="Cancelar"
+                android:backgroundTint="#334155"
+                android:textColor="#e2e8f0"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/registerSubmitButton"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="2"
+                android:text="Registrar producto"
+                android:textStyle="bold"
+                android:backgroundTint="#22c55e"
+                android:textColor="#ffffff" />
+        </LinearLayout>
+    </LinearLayout>
+
+</FrameLayout>

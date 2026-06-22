@@ -8,11 +8,25 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.tustock.scanner"
         minSdk 24
         targetSdk 34
         versionCode 1
         versionName "1.0.0"
+    }
+
+    flavorDimensions += "app"
+
+    productFlavors {
+        pos {
+            dimension "app"
+            applicationId "com.tustock.pos"
+            versionNameSuffix "-pos"
+        }
+        stock {
+            dimension "app"
+            applicationId "com.tustock.stock"
+            versionNameSuffix "-stock"
+        }
     }
 
     buildTypes {
