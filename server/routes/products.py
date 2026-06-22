@@ -20,8 +20,11 @@ def list_products(
     db: Session = Depends(get_db),
     search: str = Query(default="", max_length=200),
     category_id: int = None,
+    include_inactive: bool = False,
 ):
-    q = db.query(Product).filter(Product.is_active == True)
+    q = db.query(Product)
+    if not include_inactive:
+        q = q.filter(Product.is_active == True)
     if search:
         q = q.filter(Product.name.ilike(f"%{search}%") | Product.code.ilike(f"%{search}%"))
     if category_id:
@@ -62,6 +65,15 @@ def deactivate_product(product_id: int, db: Session = Depends(get_db)):
     if not p:
         raise HTTPException(404, "Producto no encontrado")
     p.is_active = False
+    db.commit()
+    return {"ok": True}
+
+@router.post("/{product_id}/reactivate")
+def reactivate_product(product_id: int, db: Session = Depends(get_db)):
+    p = db.query(Product).filter(Product.id == product_id).first()
+    if not p:
+        raise HTTPException(404, "Producto no encontrado")
+    p.is_active = True
     db.commit()
     return {"ok": True}
 
