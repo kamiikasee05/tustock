@@ -11,7 +11,8 @@
         android:allowBackup="true"
         android:label="TUSTOCK Scanner"
         android:theme="@style/Theme.TUSTOCK"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="true">
 
         <activity
             android:name=".MainActivity"
