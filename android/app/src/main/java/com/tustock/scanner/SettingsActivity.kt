@@ -56,6 +56,7 @@ class SettingsActivity : AppCompatActivity() {
         val codeInput = findViewById<EditText>(R.id.registerCodeInput)
         val nameInput = findViewById<EditText>(R.id.registerNameInput)
         val priceInput = findViewById<EditText>(R.id.registerPriceInput)
+        val quantityInput = findViewById<EditText>(R.id.registerQuantityInput)
         val submitBtn = findViewById<Button>(R.id.registerSubmitButton)
 
         if (registerCode != null) {
@@ -68,6 +69,7 @@ class SettingsActivity : AppCompatActivity() {
             val code = codeInput.text.toString().trim()
             val name = nameInput.text.toString().trim()
             val price = priceInput.text.toString().toDoubleOrNull() ?: 0.0
+            val qty = quantityInput.text.toString().toDoubleOrNull() ?: 0.0
 
             if (code.isEmpty() || name.isEmpty()) {
                 Toast.makeText(this, "Codigo y nombre son requeridos", Toast.LENGTH_SHORT).show()
@@ -76,20 +78,36 @@ class SettingsActivity : AppCompatActivity() {
 
             submitBtn.isEnabled = false
             submitBtn.text = "Registrando..."
-            Toast.makeText(this, "Enviando a $savedUrl...", Toast.LENGTH_SHORT).show()
 
             scope.launch {
                 val result = ApiClient.createProduct(
                     CreateProductRequest(code = code, name = name, selling_price = price)
                 )
-                submitBtn.isEnabled = true
-                submitBtn.text = "Registrar producto"
 
-                result.onSuccess {
-                    Toast.makeText(this@SettingsActivity, "Producto registrado: ${it.name}", Toast.LENGTH_SHORT).show()
-                    finish()
+                result.onSuccess { product ->
+                    if (qty > 0) {
+                        submitBtn.text = "Cargando stock..."
+                        val stockResult = ApiClient.adjustStock(product.id, qty)
+                        stockResult.onSuccess {
+                            Toast.makeText(this@SettingsActivity,
+                                "${product.name} registrado con $qty unidades", Toast.LENGTH_SHORT).show()
+                            finish()
+                        }
+                        stockResult.onFailure {
+                            Toast.makeText(this@SettingsActivity,
+                                "Producto creado pero fallo carga de stock: ${it.message}", Toast.LENGTH_LONG).show()
+                            finish()
+                        }
+                    } else {
+                        Toast.makeText(this@SettingsActivity,
+                            "Producto registrado: ${product.name}", Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
                 }
+
                 result.onFailure {
+                    submitBtn.isEnabled = true
+                    submitBtn.text = "Registrar producto"
                     Toast.makeText(this@SettingsActivity, "Error: ${it.message}", Toast.LENGTH_LONG).show()
                 }
             }

@@ -101,6 +101,35 @@ object ApiClient {
         }
     }
 
+    data class StockAdjustRequest(
+        val product_id: Int,
+        val quantity: Double,
+        val movement_type: String,
+        val notes: String? = null
+    )
+
+    suspend fun adjustStock(productId: Int, quantity: Double): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val body = StockAdjustRequest(
+                product_id = productId,
+                quantity = quantity,
+                movement_type = "entry",
+                notes = "Carga inicial desde app"
+            )
+            val json = gson.toJson(body)
+            val request = authorizedBuilder()
+                .url("$baseUrl/api/stock/adjust")
+                .post(json.toRequestBody(jsonType))
+                .build()
+
+            val response = client.newCall(request).execute()
+            if (response.isSuccessful) Result.success(Unit)
+            else Result.failure(Exception("Error al cargar stock"))
+        } catch (e: Exception) {
+            Result.failure(Exception("Error: ${e.message}"))
+        }
+    }
+
     suspend fun healthCheck(): Boolean = withContext(Dispatchers.IO) {
         try {
             val request = Request.Builder()
