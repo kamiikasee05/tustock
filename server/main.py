@@ -24,6 +24,25 @@ app.add_middleware(
 def health():
     return {"status": "ok"}
 
+@app.get("/api/server-info")
+def server_info():
+    import socket
+    hostname = socket.gethostname()
+    ips = []
+    try:
+        for info in socket.getaddrinfo(hostname, None):
+            ip = info[4][0]
+            if ip not in ips and not ip.startswith("127.") and ":" not in ip:
+                ips.append(ip)
+    except:
+        pass
+    return {
+        "hostname": hostname,
+        "ips": ips,
+        "port": API_PORT,
+        "urls": [f"http://{ip}:{API_PORT}" for ip in ips],
+    }
+
 from routes.products import router as products_router
 from routes.stock import router as stock_router
 from routes.sales import router as sales_router
