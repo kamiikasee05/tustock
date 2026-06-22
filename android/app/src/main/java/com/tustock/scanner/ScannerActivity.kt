@@ -13,7 +13,6 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import kotlinx.coroutines.*
 import java.util.concurrent.Executors
@@ -32,9 +31,7 @@ class ScannerActivity : AppCompatActivity() {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                this, arrayOf(Manifest.permission.CAMERA), 100
-            )
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 100)
         } else {
             startCamera()
         }
@@ -44,13 +41,9 @@ class ScannerActivity : AppCompatActivity() {
         super.onResume()
         isProcessing = false
         lastScannedCode = null
-        val resultCard = findViewById<View>(R.id.resultCard)
-        val overlayText = findViewById<TextView>(R.id.overlayText)
-        val registerButton = findViewById<Button>(R.id.registerButton)
-        resultCard.visibility = View.GONE
-        overlayText?.text = "Apunte la camara al codigo"
-        overlayText?.visibility = View.VISIBLE
-        registerButton.visibility = View.GONE
+        findViewById<View>(R.id.resultCard).visibility = View.GONE
+        findViewById<View>(R.id.notFoundCard).visibility = View.GONE
+        findViewById<TextView>(R.id.overlayText).visibility = View.VISIBLE
     }
 
     override fun onRequestPermissionsResult(
@@ -61,7 +54,7 @@ class ScannerActivity : AppCompatActivity() {
             && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             startCamera()
         } else {
-            Toast.makeText(this, "Permiso de camara necesario para escanear", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Permiso de camara necesario", Toast.LENGTH_LONG).show()
             finish()
         }
     }
@@ -74,22 +67,30 @@ class ScannerActivity : AppCompatActivity() {
         val productCodeText = findViewById<TextView>(R.id.productCodeText)
         val productPriceText = findViewById<TextView>(R.id.productPriceText)
         val productStockText = findViewById<TextView>(R.id.productStockText)
-        val registerButton = findViewById<Button>(R.id.registerButton)
         val scanAgainButton = findViewById<Button>(R.id.scanAgainButton)
 
-        var lastScanned: ProductResponse? = null
+        val notFoundCard = findViewById<View>(R.id.notFoundCard)
+        val notFoundCode = findViewById<TextView>(R.id.notFoundCode)
+        val registerButton = findViewById<Button>(R.id.registerButton)
+        val scanAgainFromNotFound = findViewById<Button>(R.id.scanAgainFromNotFoundButton)
 
         scanAgainButton.setOnClickListener {
             resultCard.visibility = View.GONE
             lastScannedCode = null
             isProcessing = false
-            lastScanned = null
+            overlayText.visibility = View.VISIBLE
+        }
+
+        scanAgainFromNotFound.setOnClickListener {
+            notFoundCard.visibility = View.GONE
+            lastScannedCode = null
+            isProcessing = false
+            overlayText.visibility = View.VISIBLE
         }
 
         registerButton.setOnClickListener {
-            val code = lastScanned?.code ?: lastScannedCode ?: return@setOnClickListener
             val intent = android.content.Intent(this, SettingsActivity::class.java).apply {
-                putExtra("register_code", code)
+                putExtra("register_code", lastScannedCode ?: "")
             }
             startActivity(intent)
         }
@@ -112,8 +113,7 @@ class ScannerActivity : AppCompatActivity() {
                             return@setAnalyzer
                         }
 
-                        val mediaImage = imageProxy.image
-                        if (mediaImage == null) {
+                        val mediaImage = imageProxy.image ?: run {
                             imageProxy.close()
                             return@setAnalyzer
                         }
@@ -129,8 +129,8 @@ class ScannerActivity : AppCompatActivity() {
                                     val code = barcodes[0].rawValue ?: return@addOnSuccessListener
                                     val now = System.currentTimeMillis()
 
-                                    if (code == lastScannedCode && now - lastScanTime < 3000) {
-                                        isProcessing = false
+                                    if (code == lastScannedCode && now - lastScanTime < 2000) {
+                                        imageProxy.close()
                                         return@addOnSuccessListener
                                     }
 
@@ -139,15 +139,17 @@ class ScannerActivity : AppCompatActivity() {
                                     isProcessing = true
 
                                     runOnUiThread {
-                                        overlayText?.text = "Escaneado: $code\nConsultando..."
-                                        overlayText?.visibility = View.VISIBLE
+                                        overlayText.text = "Escaneado: $code\nConsultando..."
+                                        overlayText.visibility = View.VISIBLE
 
                                         scope.launch {
                                             val result = ApiClient.scanProduct(code)
-                                            overlayText?.visibility = View.GONE
+                                            overlayText.visibility = View.GONE
 
                                             result.onSuccess { product ->
-                                                lastScanned = product
+                                                resultCard.visibility = View.GONE
+                                                notFoundCard.visibility = View.GONE
+
                                                 productNameText.text = product.name
                                                 productCodeText.text = "Codigo: ${product.code}"
                                                 productPriceText.text = "Precio: $${product.selling_price}"
@@ -165,15 +167,12 @@ class ScannerActivity : AppCompatActivity() {
                                                 isProcessing = false
                                             }
 
-                                            result.onFailure { error ->
-                                                Toast.makeText(
-                                                    this@ScannerActivity,
-                                                    error.message ?: "Producto no encontrado",
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                                overlayText?.text = "No encontrado: $code\nToca Registrar"
-                                                overlayText?.visibility = View.VISIBLE
-                                                registerButton.visibility = View.VISIBLE
+                                            result.onFailure {
+                                                resultCard.visibility = View.GONE
+                                                notFoundCard.visibility = View.GONE
+
+                                                notFoundCode.text = "Codigo: $code"
+                                                notFoundCard.visibility = View.VISIBLE
                                                 isProcessing = false
                                             }
                                         }
