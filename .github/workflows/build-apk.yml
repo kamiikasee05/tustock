@@ -29,10 +29,12 @@ jobs:
           yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
           echo "sdk.dir=${ANDROID_HOME}" > android/local.properties
 
-      - name: Setup Gradle wrapper
+      - name: Download Gradle wrapper
         working-directory: android
         run: |
-          gradle wrapper --gradle-version 8.4
+          mkdir -p gradle/wrapper
+          curl -sL "https://services.gradle.org/distributions/gradle-8.4-bin.zip" -o /tmp/gradle.zip
+          curl -sL "https://raw.githubusercontent.com/gradle/gradle/v8.4.0/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar
           chmod +x gradlew
 
       - name: Build APK
