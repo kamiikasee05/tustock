@@ -1,4 +1,6 @@
 <Configuration>
+  <VGpu>Default</VGpu>
+  <Networking>Enable</Networking>
   <MappedFolders>
     <MappedFolder>
       <HostFolder>E:\TUSTOCK</HostFolder>
@@ -9,5 +11,4 @@
   <LogonCommand>
     <Command>powershell -ExecutionPolicy Bypass -File C:\Users\WDAGUtilityAccount\Desktop\TUSTOCK\scripts\sandbox_setup.ps1</Command>
   </LogonCommand>
-  <Networking>Enable</Networking>
 </Configuration>

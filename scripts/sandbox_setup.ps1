@@ -1,92 +1,88 @@
 <#
   TUSTOCK Windows Sandbox Setup
-  Instala Python 3.9+, Node.js 18+ y dependencias del proyecto
-  Se ejecuta automaticamente al abrir sandbox.wsb
+  Instala Python, Node.js y dependencias. Inicia el servidor.
 #>
-
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 $projectDir = "C:\Users\WDAGUtilityAccount\Desktop\TUSTOCK"
 
+function Refresh-Path {
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+}
+
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  TUSTOCK - Configurando entorno Sandbox" -ForegroundColor Cyan
+Write-Host "  TUSTOCK - Entorno Sandbox" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host ""
 
 # --- Python ---
-Write-Host "[1/4] Verificando Python..." -ForegroundColor Yellow
-$python = Get-Command python -ErrorAction SilentlyContinue
-if (-not $python) {
-    Write-Host "  Python no encontrado. Instalando via winget..." -ForegroundColor Gray
+Write-Host "[1/4] Python..." -ForegroundColor Yellow
+$pythonCmd = Get-Command python -ErrorAction SilentlyContinue
+if (-not $pythonCmd) { $pythonCmd = Get-Command "$env:LOCALAPPDATA\Programs\Python\Python3*\python.exe" -ErrorAction SilentlyContinue }
+if (-not $pythonCmd) { $pythonCmd = Get-Command "C:\Program Files\Python3*\python.exe" -ErrorAction SilentlyContinue }
+
+if (-not $pythonCmd) {
+    Write-Host "  Instalando Python 3.12..." -ForegroundColor Gray
     winget install Python.Python.3.12 --accept-package-agreements --silent
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "  winget fallo. Descargando instalador..." -ForegroundColor Gray
-        $pyInstaller = "$env:TEMP\python-installer.exe"
-        Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.12.9/python-3.12.9-amd64.exe" -OutFile $pyInstaller
-        & $pyInstaller /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
-        Remove-Item $pyInstaller
+    Start-Sleep -Seconds 15
+    Refresh-Path
+    $pythonExe = "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe"
+    if (-not (Test-Path $pythonExe)) {
+        $pythonExe = "C:\Program Files\Python312\python.exe"
     }
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-    Write-Host "  Python instalado. Cerrando y reabriendo sesion para refrescar PATH..." -ForegroundColor Gray
-    # Needed to pick up new PATH entries
-    refreshenv -ErrorAction SilentlyContinue
+} else {
+    $pythonExe = $pythonCmd.Source
 }
-python --version
-Write-Host ""
+Write-Host "  Python: $pythonExe" -ForegroundColor Green
+& $pythonExe --version
 
 # --- Node.js ---
-Write-Host "[2/4] Verificando Node.js..." -ForegroundColor Yellow
-$node = Get-Command node -ErrorAction SilentlyContinue
-if (-not $node) {
-    Write-Host "  Node.js no encontrado. Instalando via winget..." -ForegroundColor Gray
+Write-Host "[2/4] Node.js..." -ForegroundColor Yellow
+$nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+if (-not $nodeCmd) { $nodeCmd = Get-Command "C:\Program Files\nodejs\node.exe" -ErrorAction SilentlyContinue }
+
+if (-not $nodeCmd) {
+    Write-Host "  Instalando Node.js LTS..." -ForegroundColor Gray
     winget install OpenJS.NodeJS.LTS --accept-package-agreements --silent
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "  winget fallo. Descargando instalador..." -ForegroundColor Gray
-        $nodeInstaller = "$env:TEMP\node-installer.msi"
-        Invoke-WebRequest -Uri "https://nodejs.org/dist/v22.14.0/node-v22.14.0-x64.msi" -OutFile $nodeInstaller
-        Start-Process msiexec.exe -ArgumentList "/i `"$nodeInstaller`" /quiet /norestart" -NoNewWindow -Wait
-        Remove-Item $nodeInstaller
-    }
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-    refreshenv -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 15
+    Refresh-Path
+    $nodeExe = "C:\Program Files\nodejs\node.exe"
+} else {
+    $nodeExe = $nodeCmd.Source
 }
-node --version
-Write-Host ""
+Write-Host "  Node: $nodeExe" -ForegroundColor Green
+& $nodeExe --version
+
+$npmExe = "C:\Program Files\nodejs\npm.cmd"
+if (-not (Test-Path $npmExe)) {
+    $npmExe = (Join-Path (Split-Path $nodeExe -Parent) "npm.cmd")
+}
 
 # --- Dependencias del proyecto ---
-Write-Host "[3/4] Instalando dependencias del proyecto..." -ForegroundColor Yellow
+Write-Host "[3/4] Instalando dependencias..." -ForegroundColor Yellow
 
-Write-Host "  Python dependencies (server)..." -ForegroundColor Gray
+Write-Host "  pip install..." -ForegroundColor Gray
 Set-Location "$projectDir\server"
-python -m pip install -r requirements.txt
+& $pythonExe -m pip install -r requirements.txt --quiet
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "ERROR: Fallo pip install" -ForegroundColor Red
-    Read-Host "Presiona Enter para salir"
-    exit 1
+    Write-Host "  ERROR: pip install fallo. Reintentando..." -ForegroundColor Red
+    & $pythonExe -m pip install -r requirements.txt
 }
 
-Write-Host "  Node dependencies (web)..." -ForegroundColor Gray
+Write-Host "  npm install + build..." -ForegroundColor Gray
 Set-Location "$projectDir\web"
-npm install
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "ERROR: Fallo npm install" -ForegroundColor Red
-    Read-Host "Presiona Enter para salir"
-    exit 1
+& $npmExe install
+if ($LASTEXITCODE -eq 0) {
+    & $npmExe run build
 }
 
-Write-Host "  Compilando frontend..." -ForegroundColor Gray
-npm run build
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "ERROR: Fallo build frontend" -ForegroundColor Red
-    Read-Host "Presiona Enter para salir"
-    exit 1
-}
-
-# --- Iniciar servidor ---
+# --- Iniciar ---
 Write-Host ""
-Write-Host "[4/4] Iniciando servidor..." -ForegroundColor Yellow
+Write-Host "[4/4] Iniciando TUSTOCK..." -ForegroundColor Yellow
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Abri http://localhost:8090 en Edge" -ForegroundColor Green
+Write-Host "  Abri http://localhost:8090" -ForegroundColor Green
+Write-Host "  Token: tustock-local-token" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 
 Set-Location "$projectDir\server"
-python main.py
+& $pythonExe main.py
+
+Read-Host "Presiona Enter para cerrar"
