@@ -40,6 +40,19 @@ class ScannerActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        isProcessing = false
+        lastScannedCode = null
+        val resultCard = findViewById<View>(R.id.resultCard)
+        val overlayText = findViewById<TextView>(R.id.overlayText)
+        val registerButton = findViewById<Button>(R.id.registerButton)
+        resultCard.visibility = View.GONE
+        overlayText?.text = "Apunte la camara al codigo"
+        overlayText?.visibility = View.VISIBLE
+        registerButton.visibility = View.GONE
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
