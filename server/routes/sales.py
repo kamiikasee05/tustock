@@ -9,7 +9,7 @@ from schemas import SaleCreate, SaleItemData
 
 router = APIRouter(prefix="/api/sales", tags=["sales"])
 
-@router.get("/")
+@router.get("")
 def list_sales(db: Session = Depends(get_db), sale_date: str = None, limit: int = 100):
     q = db.query(Sale)
     if sale_date:
@@ -41,7 +41,7 @@ def get_sale(sale_id: int, db: Session = Depends(get_db)):
         ],
     }
 
-@router.post("/")
+@router.post("")
 def create_sale(data: SaleCreate, db: Session = Depends(get_db)):
     subtotal = sum(item.quantity * item.unit_price for item in data.items)
     total = subtotal - data.discount

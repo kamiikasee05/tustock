@@ -6,7 +6,7 @@ from services.stock_service import get_all_stock, adjust_stock, get_low_stock
 
 router = APIRouter(prefix="/api/stock", tags=["stock"])
 
-@router.get("/")
+@router.get("")
 def list_stock(db: Session = Depends(get_db)):
     return get_all_stock(db)
 

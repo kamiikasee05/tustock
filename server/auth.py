@@ -1,18 +1,12 @@
-from fastapi import Request, HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Request, HTTPException
 from config import TUSTOCK_TOKEN
-import os
 
-_scheme = HTTPBearer(auto_error=False)
-
-async def verify_token(
-    request: Request,
-    credentials: HTTPAuthorizationCredentials | None = Depends(_scheme),
-):
+async def verify_token(request: Request):
     token = None
+    auth_header = request.headers.get("Authorization", "")
 
-    if credentials:
-        token = credentials.credentials
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:]
 
     if not token:
         token = request.query_params.get("token")

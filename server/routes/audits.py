@@ -9,11 +9,11 @@ from services.audit_service import (
 
 router = APIRouter(prefix="/api/audits", tags=["audits"])
 
-@router.get("/")
+@router.get("")
 def list_all(db: Session = Depends(get_db)):
     return list_audits(db)
 
-@router.post("/")
+@router.post("")
 def new_audit(data: AuditCreate, db: Session = Depends(get_db)):
     return create_audit(db, data.notes, data.created_by or "local")
 

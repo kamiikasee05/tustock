@@ -15,7 +15,7 @@ def to_product_out(p: Product) -> dict:
         unit=p.unit, is_active=p.is_active,
     ).model_dump()
 
-@router.get("/")
+@router.get("")
 def list_products(
     db: Session = Depends(get_db),
     search: str = Query(default="", max_length=200),
@@ -35,7 +35,7 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
         raise HTTPException(404, "Producto no encontrado")
     return to_product_out(p)
 
-@router.post("/")
+@router.post("")
 def create_product(data: ProductCreate, db: Session = Depends(get_db)):
     existing = db.query(Product).filter(Product.code == data.code).first()
     if existing:

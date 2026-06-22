@@ -1,7 +1,8 @@
 import uvicorn
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from database import init_db
 from config import API_HOST, API_PORT, WEB_DIR, CORS_ORIGINS
 from auth import verify_token
@@ -19,6 +20,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/api/health")
+def health():
+    return {"status": "ok"}
+
 from routes.products import router as products_router
 from routes.stock import router as stock_router
 from routes.sales import router as sales_router
@@ -32,14 +37,19 @@ app.include_router(audits_router, dependencies=[Depends(verify_token)])
 app.include_router(reports_router, dependencies=[Depends(verify_token)])
 
 if WEB_DIR.exists():
-    app.mount("/", StaticFiles(directory=str(WEB_DIR), html=True), name="web")
+    @app.middleware("http")
+    async def spa_fallback(request: Request, call_next):
+        response = await call_next(request)
+        if response.status_code == 404 and not request.url.path.startswith("/api"):
+            index = WEB_DIR / "index.html"
+            if index.exists():
+                return FileResponse(index)
+        return response
 
-@app.get("/api/health")
-def health():
-    return {"status": "ok"}
+    if (WEB_DIR / "assets").exists():
+        app.mount("/assets", StaticFiles(directory=str(WEB_DIR / "assets")), name="assets")
 
 if __name__ == "__main__":
     init_db()
     print(f"TUSTOCK corriendo en http://{API_HOST}:{API_PORT}")
-    print(f"Token de acceso: configurado (variable TUSTOCK_TOKEN)")
     uvicorn.run(app, host=API_HOST, port=API_PORT)
