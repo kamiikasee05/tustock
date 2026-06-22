@@ -35,24 +35,32 @@ jobs:
           mkdir -p gradle/wrapper
           curl -sL "https://raw.githubusercontent.com/gradle/gradle/v8.4.0/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar
 
-      - name: Build APK
+      - name: Build APKs
         working-directory: android
         run: |
           java -cp gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain assembleDebug
 
-      - name: Upload APK
+      - name: Upload POS APK
         uses: actions/upload-artifact@v4
         with:
-          name: tustock-scanner
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: tustock-pos
+          path: android/app/build/outputs/apk/pos/debug/app-pos-debug.apk
+
+      - name: Upload Stock APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tustock-stock
+          path: android/app/build/outputs/apk/stock/debug/app-stock-debug.apk
 
       - name: Create Release
         if: github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v1
         with:
-          name: "APK #${{ github.run_number }}"
+          name: "APKs #${{ github.run_number }}"
           tag_name: "apk-${{ github.run_number }}"
-          files: android/app/build/outputs/apk/debug/app-debug.apk
+          files: |
+            android/app/build/outputs/apk/pos/debug/app-pos-debug.apk
+            android/app/build/outputs/apk/stock/debug/app-stock-debug.apk
           draft: false
           prerelease: false
         env:
