@@ -65,6 +65,17 @@ Para ajustes mayores, usá la sección [[Guía de Usuario#Ajustes de stock manua
 
 Usá la barra de búsqueda para filtrar por nombre o código. Funciona con búsqueda parcial: escribí "coc" y encuentra "Coca-Cola", "Coco rallado", etc.
 
+### Desactivar y reactivar productos
+
+Para dar de baja un producto sin perder el historial de ventas:
+
+- Click en **×** para **desactivar** un producto. No se borra: desaparece de la lista principal y de ventas, pero conserva todo su historial (ventas pasadas, movimientos de stock, auditorías).
+- Click en **☠ Ver inactivos** para ver la lista de productos desactivados.
+- En un producto inactivo, click en **Reactivar** para restaurarlo. Vuelve a la lista de activos con stock en 0 (debés ajustarlo manualmente con **+1**).
+
+> [!tip]
+> El borrado lógico (soft delete) preserva la integridad de tus informes y auditorías. Reactivar un producto no borra su historial anterior.
+
 ### Estados de stock
 
 | Color | Significado |
@@ -165,6 +176,9 @@ Ver la guía completa en [[Auditorías de Stock]].
 ## App Android
 
 Ver la guía completa en [[App Android - Scanner]].
+
+> [!info] Ícono de la app
+> La app tiene ícono propio: **caja azul con código de barras y tilde verde**. Una vez instalada, lo ves en el cajón de apps del celular.
 
 ---
 

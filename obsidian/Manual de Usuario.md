@@ -421,15 +421,56 @@ Botones para ir directo a lo que más usás, sin tener que navegar por el menú.
 > [!warning]
 > El **código** del producto no se puede cambiar una vez creado. Si necesitás cambiarlo, vas a tener que borrar el producto y crear uno nuevo con el código correcto. Esto es a propósito: evita confusiones con el historial de ventas.
 
-### 5.3 Desactivar (eliminar) un producto
+### 5.3 Desactivar un producto (soft delete)
+
+Cuando un producto ya no se vende más pero querés conservar su historial:
 
 1. En la lista de productos, click en el botón **×** del producto que querés eliminar
 2. Confirmá la operación
 
-> [!tip]
-> El producto no se borra para siempre. Se **desactiva**: deja de aparecer en ventas y en stock, pero el historial de ventas anteriores se conserva. Si algún día lo volvés a necesitar, podés reactivarlo desde la base de datos o creando uno nuevo con otro código.
+El sistema hace un **borrado lógico** (soft delete):
 
-### 5.4 Ajustar el stock manualmente
+- El producto **desaparece de la lista principal** de productos activos
+- Deja de aparecer en ventas y búsquedas normales
+- **Todo el historial de ventas se conserva** — las ventas pasadas, los movimientos de stock y las auditorías donde participó quedan intactos
+- El stock se pone en 0 automáticamente
+
+> [!tip]
+> El producto **no se borra de la base de datos**. Solo se marca como inactivo. Esto permite que los informes y el historial sigan siendo consistentes.
+
+### 5.4 Ver productos inactivos
+
+Si necesitás ver los productos que desactivaste:
+
+1. Click en el botón **☠ Ver inactivos** (arriba, junto a "+ Nuevo producto")
+2. Se muestra la lista de todos los productos desactivados
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Productos inactivos                  [☠ Ocultar inactivos]   │
+│                                                               │
+│  ┌──────┬───────────────┬────────┬──────┬─────┬────────────┐ │
+│  │Código│ Nombre        │P. Venta│Stock │Mín. │Acción      │ │
+│  ├──────┼───────────────┼────────┼──────┼─────┼────────────┤ │
+│  │779...│Yerba vieja    │ $1.500 │  0   │  8  │  [Reactivar]│ │
+│  │789...│Gaseosa X      │ $1.200 │  0   │  5  │  [Reactivar]│ │
+│  └──────┴───────────────┴────────┴──────┴─────┴────────────┘ │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### 5.5 Reactivar un producto
+
+Si desactivaste un producto por error o volviste a venderlo:
+
+1. Click en **☠ Ver inactivos** para ver los productos desactivados
+2. Buscá el producto que querés restaurar
+3. Click en el botón **Reactivar** (verde) al lado del producto
+4. El producto vuelve a la lista de activos
+
+> [!tip]
+> Al reactivar un producto, su **stock arranca en 0**. Vas a tener que ajustarlo manualmente con los botones **+1** o cargando una entrada de stock. El historial de ventas anterior y los movimientos de stock viejos se conservan.
+
+### 5.6 Ajustar el stock manualmente
 
 En la columna **Acciones** de cada producto tenés dos botones:
 
@@ -452,7 +493,7 @@ Ejemplo de uso:
 
 Para ajustes de cantidades grandes (ej: sumar 50 unidades de una vez), consultá la sección [[Manual de Usuario#13 Solución de problemas|Solución de problemas]].
 
-### 5.5 Buscar productos
+### 5.7 Buscar productos
 
 Usá la barra de búsqueda para encontrar productos:
 
@@ -467,7 +508,7 @@ Escribí parte del nombre o del código. La búsqueda es **parcial**: si escrib�
 > [!tip]
 > La búsqueda se ejecuta automáticamente mientras escribís. No hace falta presionar Enter.
 
-### 5.6 Estados del stock
+### 5.8 Estados del stock
 
 Cada producto muestra su estado con colores:
 
@@ -837,6 +878,9 @@ La app TUSTOCK Scanner convierte tu celular Android en un lector de códigos QR 
 - Escanear productos cuando no tenés lector USB
 - Contar stock en el depósito (movés el celular, no la PC)
 - Registrar productos nuevos escaneando su código
+
+> [!info] Ícono de la app
+> La app Android ahora tiene su propio ícono: una **caja azul con un código de barras y una tilde verde** (✓). Lo vas a ver en el cajón de aplicaciones del celular una vez instalada. El ícono está diseñado para que lo ubiques rápido entre tus otras apps.
 
 ```
 ┌─────────────────────────────────────────────┐
