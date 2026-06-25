@@ -3,9 +3,12 @@ package com.tustock.scanner
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
+import android.app.AlertDialog
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -236,24 +239,26 @@ class POSActivity : AppCompatActivity() {
 
     private fun askQuantity(product: ProductResponse, callback: (Double) -> Unit) {
         val input = EditText(this)
-        input.inputType = android.text.InputType.TYPE_CLASS_NUMBER
+        input.inputType = InputType.TYPE_CLASS_NUMBER
         input.setText("1")
-        input.selectAll()
 
         val existing = cartItems.find { it.product_id == product.id }
         val title = if (existing != null) "${product.name} (ya hay ${existing.quantity.toInt()})" else product.name
 
-        android.app.AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage("Cuantas unidades?")
-            .setView(input)
-            .setPositiveButton("Agregar") { _, _ ->
+            .setView(input as View)
+            .setPositiveButton("Agregar") { _: android.content.DialogInterface, _: Int ->
                 val qty = input.text.toString().toDoubleOrNull() ?: 1.0
                 callback(if (qty <= 0) 1.0 else qty)
             }
-            .setNegativeButton("Cancelar") { _, _ -> isProcessing = false }
+            .setNegativeButton("Cancelar") { _: android.content.DialogInterface, _: Int ->
+                isProcessing = false
+            }
             .setOnCancelListener { isProcessing = false }
-            .show()
+            .create()
+        dialog.show()
         input.requestFocus()
     }
 
