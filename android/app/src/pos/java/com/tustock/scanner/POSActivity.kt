@@ -118,22 +118,24 @@ class POSActivity : AppCompatActivity() {
                                             val result = ApiClient.scanProduct(code)
 
                                             result.onSuccess { product ->
-                                                val existing = cartItems.find { it.product_id == product.id }
-                                                if (existing != null) {
-                                                    val idx = cartItems.indexOf(existing)
-                                                    cartItems[idx] = existing.copy(quantity = existing.quantity + 1)
-                                                } else {
-                                                    cartItems.add(OrderItem(
-                                                        product_id = product.id,
-                                                        code = product.code,
-                                                        name = product.name,
-                                                        quantity = 1.0,
-                                                        unit_price = product.selling_price
-                                                    ))
+                                                askQuantity(product) { qty ->
+                                                    val existing = cartItems.find { it.product_id == product.id }
+                                                    if (existing != null) {
+                                                        val idx = cartItems.indexOf(existing)
+                                                        cartItems[idx] = existing.copy(quantity = existing.quantity + qty)
+                                                    } else {
+                                                        cartItems.add(OrderItem(
+                                                            product_id = product.id,
+                                                            code = product.code,
+                                                            name = product.name,
+                                                            quantity = qty,
+                                                            unit_price = product.selling_price
+                                                        ))
+                                                    }
+                                                    updateCartUI()
+                                                    scanHint.text = "+${qty.toInt()} ${product.name}"
+                                                    isProcessing = false
                                                 }
-                                                updateCartUI()
-                                                scanHint.text = "+1 ${product.name}"
-                                                isProcessing = false
                                             }
 
                                             result.onFailure {
@@ -230,6 +232,29 @@ class POSActivity : AppCompatActivity() {
             btn.isEnabled = true
             btn.text = "Enviar pedido"
         }
+    }
+
+    private fun askQuantity(product: ProductResponse, callback: (Double) -> Unit) {
+        val input = EditText(this)
+        input.inputType = android.text.InputType.TYPE_CLASS_NUMBER
+        input.setText("1")
+        input.selectAll()
+
+        val existing = cartItems.find { it.product_id == product.id }
+        val title = if (existing != null) "${product.name} (ya hay ${existing.quantity.toInt()})" else product.name
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage("Cuantas unidades?")
+            .setView(input)
+            .setPositiveButton("Agregar") { _, _ ->
+                val qty = input.text.toString().toDoubleOrNull() ?: 1.0
+                callback(if (qty <= 0) 1.0 else qty)
+            }
+            .setNegativeButton("Cancelar") { _, _ -> isProcessing = false }
+            .setOnCancelListener { isProcessing = false }
+            .show()
+        input.requestFocus()
     }
 
     private fun clearCart() {

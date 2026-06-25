@@ -31,6 +31,40 @@ def list_products(
         q = q.filter(Product.category_id == category_id)
     return [to_product_out(p) for p in q.order_by(Product.name).all()]
 
+@router.get("/generate-code")
+def generate_barcode(db: Session = Depends(get_db)):
+    import random, string
+    prefix = "TST"
+    while True:
+        code = prefix + "".join(random.choices(string.digits, k=10))
+        existing = db.query(Product).filter(Product.code == code).first()
+        if not existing:
+            break
+    return {"code": code}
+
+@router.get("/scan/{code}")
+def scan_product(code: str, db: Session = Depends(get_db)):
+    p = db.query(Product).filter(Product.code == code).first()
+    if not p:
+        raise HTTPException(404, "Codigo no encontrado")
+    return {
+        "id": p.id,
+        "code": p.code,
+        "name": p.name,
+        "description": p.description,
+        "selling_price": p.selling_price,
+        "stock": get_current_stock(db, p.id),
+        "unit": p.unit,
+    }
+
+@router.get("/alerts/low-stock")
+def low_stock_alerts(db: Session = Depends(get_db)):
+    return get_low_stock(db)
+
+@router.get("/categories")
+def list_categories(db: Session = Depends(get_db)):
+    return db.query(Category).all()
+
 @router.get("/{product_id}")
 def get_product(product_id: int, db: Session = Depends(get_db)):
     p = db.query(Product).filter(Product.id == product_id).first()
@@ -76,29 +110,6 @@ def reactivate_product(product_id: int, db: Session = Depends(get_db)):
     p.is_active = True
     db.commit()
     return {"ok": True}
-
-@router.get("/scan/{code}")
-def scan_product(code: str, db: Session = Depends(get_db)):
-    p = db.query(Product).filter(Product.code == code).first()
-    if not p:
-        raise HTTPException(404, "Codigo no encontrado")
-    return {
-        "id": p.id,
-        "code": p.code,
-        "name": p.name,
-        "description": p.description,
-        "selling_price": p.selling_price,
-        "stock": get_current_stock(db, p.id),
-        "unit": p.unit,
-    }
-
-@router.get("/alerts/low-stock")
-def low_stock_alerts(db: Session = Depends(get_db)):
-    return get_low_stock(db)
-
-@router.get("/categories")
-def list_categories(db: Session = Depends(get_db)):
-    return db.query(Category).all()
 
 @router.post("/categories")
 def create_category(data: CategoryCreate, db: Session = Depends(get_db)):

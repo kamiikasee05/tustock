@@ -120,7 +120,23 @@ export default function Products() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
               <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Codigo</label>
-              <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} style={{ width: '100%' }} disabled={!!editing} />
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} style={{ flex: 1 }} disabled={!!editing} />
+                {!editing && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const data = await api.get<{ code: string }>('/products/generate-code')
+                        setForm({ ...form, code: data.code })
+                      } catch (e) {}
+                    }}
+                    style={{ padding: '8px 14px', background: 'var(--surface-hover)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer' }}
+                  >
+                    Generar
+                  </button>
+                )}
+              </div>
             </div>
             <div>
               <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Nombre</label>

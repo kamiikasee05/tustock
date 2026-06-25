@@ -7,6 +7,7 @@ const navItems = [
   { to: '/pedidos', label: 'Pedidos', icon: '📝' },
   { to: '/products', label: 'Productos', icon: '📦' },
   { to: '/sales', label: 'Ventas', icon: '💰' },
+  { to: '/customers', label: 'Clientes', icon: '👥' },
   { to: '/audits', label: 'Auditorías', icon: '🔍' },
   { to: '/reports', label: 'Informes', icon: '📋' },
   { to: '/scanner', label: 'Scanner', icon: '📱' },
