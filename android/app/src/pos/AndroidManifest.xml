@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application>
+    <application
+        android:label="TUSTOCK POS">
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:label="TUSTOCK POS"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -14,6 +16,7 @@
         <activity
             android:name=".POSActivity"
             android:exported="false"
+            android:label="Punto de Venta"
             android:screenOrientation="portrait" />
     </application>
 </manifest>

@@ -5,6 +5,7 @@
         <activity
             android:name=".StockMainActivity"
             android:exported="true"
+            android:label="TUSTOCK Stock"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

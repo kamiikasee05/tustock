@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Box body: green -->
+    <path
+        android:fillColor="#16a34a"
+        android:pathData="M28,42 L54,30 L80,42 L80,78 L54,90 L28,78 Z" />
+    <!-- Box lid -->
+    <path
+        android:fillColor="#22c55e"
+        android:pathData="M28,42 L54,30 L80,42 L54,50 Z" />
+    <!-- Lid triangle -->
+    <path
+        android:fillColor="#86efac"
+        android:pathData="M28,42 L54,50 L54,30 Z" />
+    <!-- Barcode bars -->
+    <path android:strokeColor="#ffffff" android:strokeWidth="2" android:pathData="M42,58 L42,68" />
+    <path android:strokeColor="#ffffff" android:strokeWidth="1.5" android:pathData="M47,58 L47,68" />
+    <path android:strokeColor="#ffffff" android:strokeWidth="2.5" android:pathData="M52,58 L52,68" />
+    <path android:strokeColor="#ffffff" android:strokeWidth="1" android:pathData="M57,58 L57,68" />
+    <path android:strokeColor="#ffffff" android:strokeWidth="2" android:pathData="M62,58 L62,68" />
+    <path android:strokeColor="#ffffff" android:strokeWidth="1.5" android:pathData="M67,58 L67,68" />
+    <!-- Plus symbol -->
+    <path
+        android:strokeColor="#ffffff"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M54,76 L54,84 M50,80 L58,80" />
+</vector>
