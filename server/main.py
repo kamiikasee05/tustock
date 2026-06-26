@@ -76,6 +76,7 @@ from routes.reports import router as reports_router
 from routes.vendors import router as vendors_router
 from routes.pending_orders import router as pending_orders_router
 from routes.customers import router as customers_router
+from routes.budgets import router as budgets_router
 
 app.include_router(products_router, dependencies=[Depends(verify_token)])
 app.include_router(stock_router, dependencies=[Depends(verify_token)])
@@ -85,6 +86,7 @@ app.include_router(reports_router, dependencies=[Depends(verify_token)])
 app.include_router(vendors_router, dependencies=[Depends(verify_token)])
 app.include_router(pending_orders_router, dependencies=[Depends(verify_token)])
 app.include_router(customers_router, dependencies=[Depends(verify_token)])
+app.include_router(budgets_router, dependencies=[Depends(verify_token)])
 
 if WEB_DIR.exists():
     @app.middleware("http")

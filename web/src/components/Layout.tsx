@@ -5,11 +5,12 @@ import { api, LowStockItem } from '../api/client'
 const navItems = [
   { to: '/', label: 'Dashboard', icon: '📊' },
   { to: '/pedidos', label: 'Pedidos', icon: '📝' },
+  { to: '/presupuestos', label: 'Presupuestos', icon: '📋' },
   { to: '/products', label: 'Productos', icon: '📦' },
   { to: '/sales', label: 'Ventas', icon: '💰' },
   { to: '/customers', label: 'Clientes', icon: '👥' },
   { to: '/audits', label: 'Auditorías', icon: '🔍' },
-  { to: '/reports', label: 'Informes', icon: '📋' },
+  { to: '/reports', label: 'Informes', icon: '📊' },
   { to: '/scanner', label: 'Scanner', icon: '📱' },
 ]
 
