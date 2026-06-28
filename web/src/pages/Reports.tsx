@@ -1,11 +1,28 @@
 import { useState } from 'react'
 import { api, DailyReport } from '../api/client'
 
+const TOKEN = 'tustock-local-token'
+const tokenQs = `token=${TOKEN}`
+
+function exportUrl(path: string) {
+  return `/api${path}${path.includes('?') ? '&' : '?'}${tokenQs}`
+}
+
+function downloadExport(path: string) {
+  window.open(exportUrl(path), '_blank')
+}
+
 export default function Reports() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [report, setReport] = useState<DailyReport | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const now = new Date()
+  const [rngStart, setRngStart] = useState(`${now.getFullYear()}-${String(now.getMonth()).padStart(2,'0')}-01`)
+  const [rngEnd, setRngEnd] = useState(now.toISOString().slice(0, 10))
+  const [myMonth, setMyMonth] = useState(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`)
+  const [fmt, setFmt] = useState<'csv'|'xlsx'>('csv')
 
   const loadReport = async () => {
     setLoading(true)
@@ -117,6 +134,56 @@ export default function Reports() {
           </div>
         </div>
       )}
+
+      <hr style={{ margin: '32px 0', border: 'none', borderTop: '1px solid var(--border)' }} />
+
+      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Exportar Reportes</h2>
+
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center' }}>
+        <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Formato:</span>
+        <button onClick={() => setFmt('csv')} style={{ padding: '6px 16px', borderRadius: 6, border: fmt==='csv' ? '2px solid var(--primary)' : '1px solid var(--border)', background: fmt==='csv' ? 'var(--primary)' : 'var(--surface)', color: fmt==='csv' ? 'white' : 'var(--text)', fontWeight: 600, fontSize: 13 }}>CSV</button>
+        <button onClick={() => setFmt('xlsx')} style={{ padding: '6px 16px', borderRadius: 6, border: fmt==='xlsx' ? '2px solid var(--primary)' : '1px solid var(--border)', background: fmt==='xlsx' ? 'var(--primary)' : 'var(--surface)', color: fmt==='xlsx' ? 'white' : 'var(--text)', fontWeight: 600, fontSize: 13 }}>Excel</button>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <ExportSection title="Ventas por período" fields={
+          <>
+            <FilterGroup label="Desde" value={rngStart} onChange={setRngStart} />
+            <FilterGroup label="Hasta" value={rngEnd} onChange={setRngEnd} />
+          </>
+        } onExport={() => downloadExport(`/reports/export/sales?start=${rngStart}&end=${rngEnd}&format=${fmt}`)} />
+
+        <ExportSection title="Productos vendidos" fields={
+          <>
+            <FilterGroup label="Desde" value={rngStart} onChange={setRngStart} />
+            <FilterGroup label="Hasta" value={rngEnd} onChange={setRngEnd} />
+          </>
+        } onExport={() => downloadExport(`/reports/export/products?start=${rngStart}&end=${rngEnd}&format=${fmt}`)} />
+
+        <ExportSection title="Vendedores" fields={
+          <>
+            <FilterGroup label="Desde" value={rngStart} onChange={setRngStart} />
+            <FilterGroup label="Hasta" value={rngEnd} onChange={setRngEnd} />
+          </>
+        } onExport={() => downloadExport(`/reports/export/vendors?start=${rngStart}&end=${rngEnd}&format=${fmt}`)} />
+
+        <ExportSection title="Resumen Mensual" fields={
+          <FilterGroup label="Mes" value={myMonth} onChange={v => setMyMonth(v)} type="month" />
+        } onExport={() => {
+          const [y, m] = myMonth.split('-')
+          downloadExport(`/reports/export/monthly?year=${y}&month=${parseInt(m)}&format=${fmt}`)
+        }} />
+      </div>
+
+      <div style={{ marginTop: 24, padding: 16, background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border)' }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: 'var(--text-muted)' }}>Para el contador</h3>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+          Exportá los reportes de cada mes en Excel con los botones de arriba.
+          El resumen mensual incluye: total facturado, cantidad de ventas, método de pago (efectivo/tarjeta),
+          costo de mercadería vendida y ganancia bruta. 
+          Exportá también el detalle de ventas para que el contador concilie contra los comprobantes emitidos.
+        </p>
+      </div>
     </div>
   )
 }
@@ -140,6 +207,29 @@ function MethodBar({ label, value, total, color }: { label: string; value: numbe
       </div>
       <div style={{ background: 'var(--bg)', borderRadius: 4, height: 8, overflow: 'hidden' }}>
         <div style={{ background: color, height: '100%', width: `${pct}%`, borderRadius: 4 }} />
+      </div>
+    </div>
+  )
+}
+
+function FilterGroup({ label, value, onChange, type = 'date' }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  return (
+    <div>
+      <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 2 }}>{label}</label>
+      <input type={type} value={value} onChange={e => onChange(e.target.value)} style={{ padding: '8px 10px', width: '100%', boxSizing: 'border-box' }} />
+    </div>
+  )
+}
+
+function ExportSection({ title, fields, onExport }: { title: string; fields: React.ReactNode; onExport: () => void }) {
+  return (
+    <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 20, border: '1px solid var(--border)' }}>
+      <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>{title}</h3>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        {fields}
+        <button onClick={onExport} style={{ padding: '8px 18px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>
+          Exportar
+        </button>
       </div>
     </div>
   )

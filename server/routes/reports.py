@@ -1,8 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from datetime import date
 from database import get_db
-from services.report_service import generate_daily_report, get_report, get_report_range
+from services.report_service import (
+    generate_daily_report, get_report, get_report_range,
+    export_sales_csv, export_products_csv, export_vendors_csv,
+    export_monthly_csv, csv_to_xlsx,
+)
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
@@ -35,6 +40,65 @@ def generate_for_date(report_date: str, db: Session = Depends(get_db)):
     except ValueError:
         raise HTTPException(400, "Formato de fecha invalido")
     return generate_daily_report(db, d)
+
+def _export_response(csv_data: str, filename: str, fmt: str):
+    if fmt == "xlsx":
+        xlsx = csv_to_xlsx(csv_data)
+        return StreamingResponse(
+            iter([xlsx]),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f'attachment; filename="{filename}.xlsx"'},
+        )
+    return StreamingResponse(
+        iter([csv_data]),
+        media_type="text/csv; charset=utf-8-sig",
+        headers={"Content-Disposition": f'attachment; filename="{filename}.csv"'},
+    )
+
+@router.get("/export/sales")
+def export_sales(
+    start: str = Query(...), end: str = Query(...),
+    vendor_id: int = None, format: str = "csv",
+    db: Session = Depends(get_db),
+):
+    try:
+        s, e = date.fromisoformat(start), date.fromisoformat(end)
+    except ValueError:
+        raise HTTPException(400, "Formato de fecha invalido")
+    csv_data = export_sales_csv(db, s, e, vendor_id)
+    return _export_response(csv_data, f"ventas_{start}_{end}", format)
+
+@router.get("/export/products")
+def export_products(
+    start: str = Query(...), end: str = Query(...),
+    format: str = "csv", db: Session = Depends(get_db),
+):
+    try:
+        s, e = date.fromisoformat(start), date.fromisoformat(end)
+    except ValueError:
+        raise HTTPException(400, "Formato de fecha invalido")
+    csv_data = export_products_csv(db, s, e)
+    return _export_response(csv_data, f"productos_{start}_{end}", format)
+
+@router.get("/export/vendors")
+def export_vendors(
+    start: str = Query(...), end: str = Query(...),
+    format: str = "csv", db: Session = Depends(get_db),
+):
+    try:
+        s, e = date.fromisoformat(start), date.fromisoformat(end)
+    except ValueError:
+        raise HTTPException(400, "Formato de fecha invalido")
+    csv_data = export_vendors_csv(db, s, e)
+    return _export_response(csv_data, f"vendedores_{start}_{end}", format)
+
+@router.get("/export/monthly")
+def export_monthly(
+    year: int = Query(...), month: int = Query(...),
+    format: str = "csv", db: Session = Depends(get_db),
+):
+    csv_data = export_monthly_csv(db, year, month)
+    return _export_response(csv_data, f"mensual_{year}_{month:02d}", format)
 
 @router.get("/range")
 def range_reports(start: str, end: str, db: Session = Depends(get_db)):
