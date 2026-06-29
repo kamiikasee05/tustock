@@ -15,16 +15,16 @@ echo.
 echo Para DETENERLO:  stop.bat
 echo.
 
-:: Buscar pythonw (sin consola), fallback a python
-set PYTHON=pythonw.exe
-where %PYTHON% >nul 2>&1
-if errorlevel 1 set PYTHON=python.exe
-
-:: Iniciar servidor oculto
-start /B "" "%PYTHON%" main.py >> logs\server.log 2>&1
+:: Iniciar servidor completamente oculto (pythonw = sin consola)
+where pythonw.exe >nul 2>&1
+if %errorlevel% equ 0 (
+    start "" pythonw.exe main.py
+) else (
+    start /B "" python.exe main.py >> logs\server.log 2>&1
+)
 
 :: Esperar que escriba el PID
-timeout /t 3 /nobreak >nul
+timeout /t 4 /nobreak >nul
 if exist logs\server.pid (
     set /p PID=<logs\server.pid
     echo [OK] Servidor corriendo (PID: %PID%)
