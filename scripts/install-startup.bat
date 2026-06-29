@@ -1,37 +1,25 @@
 @echo off
-title TUSTOCK - Instalar inicio automatico
+title TUSTOCK - Inicio automatico
 cd /d "%~dp0"
 
 echo ========================================
 echo  TUSTOCK - Inicio automatico con Windows
 echo ========================================
 echo.
-echo Se creara una tarea en el Programador de Tareas
-echo para iniciar TUSTOCK cuando inicie sesion.
+echo Esto hace que TUSTOCK arranque solo al
+echo encender la computadora e iniciar sesion.
 echo.
 
-:: Ruta completa al start.bat
-set START_SCRIPT=%~dp0start.bat
-
-:: Verificar que existe
-if not exist "%START_SCRIPT%" (
-    echo [ERROR] No se encuentra %START_SCRIPT%
-    pause
-    exit /b 1
-)
-
-:: Crear tarea programada (se ejecuta al iniciar sesion de cualquier usuario)
-schtasks /CREATE /SC ONLOGON /TN "TUSTOCK Server" /TR "'%START_SCRIPT%'" /F /RL HIGHEST 2>&1
+schtasks /CREATE /SC ONLOGON /TN "TUSTOCK" /TR "'%CD%\..\TUSTOCK.bat'" /F /RL HIGHEST 2>&1
 
 if %errorlevel% equ 0 (
+    echo [OK] Instalado.
+    echo TUSTOCK arrancara solo al iniciar sesion.
     echo.
-    echo [OK] Tarea creada: "TUSTOCK Server"
-    echo      Se ejecutara automaticamente al iniciar sesion.
-    echo.
-    echo Para desinstalar:  uninstall-startup.bat
+    echo Para quitarlo:  quitar-auto-inicio.bat
 ) else (
-    echo [ERROR] No se pudo crear la tarea.
-    echo        Ejecute como Administrador (clic derecho ^> Ejecutar como administrador).
+    echo [ERROR] Ejecute como Administrador
+    echo        (clic derecho ^> Ejecutar como administrador).
     pause
     exit /b 1
 )
