@@ -62,11 +62,13 @@ products_data = [
 ]
 
 product_map = {}
-for code, name, cost, price, min_stock, parent_cat, sub_cat in products_data:
+barcode_start = 200000000000
+for i, (code, name, cost, price, min_stock, parent_cat, sub_cat) in enumerate(products_data):
     p = Product(
         code=code, name=name, cost_price=cost, selling_price=price,
         min_stock=min_stock, unit="unidad", category_id=cat_map.get(sub_cat),
-        description=f"{name} - Categoría: {parent_cat}"
+        description=f"{name} - Categoría: {parent_cat}",
+        barcode=str(barcode_start + i),
     )
     db.add(p)
     db.flush()

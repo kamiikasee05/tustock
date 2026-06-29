@@ -12,7 +12,7 @@ def to_product_out(p: Product) -> dict:
         id=p.id, code=p.code, name=p.name, description=p.description or "",
         category_id=p.category_id, cost_price=p.cost_price,
         selling_price=p.selling_price, min_stock=p.min_stock,
-        unit=p.unit, is_active=p.is_active,
+        unit=p.unit, is_active=p.is_active, barcode=p.barcode,
     ).model_dump()
     data["category_name"] = p.category.name if p.category else None
     return data
@@ -46,7 +46,7 @@ def generate_barcode(db: Session = Depends(get_db)):
 
 @router.get("/scan/{code}")
 def scan_product(code: str, db: Session = Depends(get_db)):
-    p = db.query(Product).filter(Product.code == code).first()
+    p = db.query(Product).filter((Product.code == code) | (Product.barcode == code)).first()
     if not p:
         raise HTTPException(404, "Codigo no encontrado")
     return {
@@ -58,6 +58,53 @@ def scan_product(code: str, db: Session = Depends(get_db)):
         "stock": get_current_stock(db, p.id),
         "unit": p.unit,
     }
+
+@router.get("/barcode/next")
+def next_barcode(db: Session = Depends(get_db)):
+    import random
+    while True:
+        code = "2" + "".join(random.choices("0123456789", k=11))
+        existing = db.query(Product).filter(Product.barcode == code).first()
+        if not existing:
+            break
+    return {"barcode": code}
+
+@router.post("/{product_id}/barcode")
+def generate_product_barcode(product_id: int, db: Session = Depends(get_db)):
+    import random
+    p = db.query(Product).filter(Product.id == product_id).first()
+    if not p:
+        raise HTTPException(404, "Producto no encontrado")
+    if p.barcode:
+        return {"barcode": p.barcode}
+    for _ in range(100):
+        code = "2" + "".join(random.choices("0123456789", k=11))
+        existing = db.query(Product).filter(Product.barcode == code).first()
+        if not existing:
+            p.barcode = code
+            db.commit()
+            return {"barcode": code}
+    raise HTTPException(500, "No se pudo generar un codigo unico")
+
+@router.get("/{product_id}/barcode.png")
+def barcode_image(product_id: int, db: Session = Depends(get_db)):
+    from io import BytesIO
+    import barcode
+    from barcode.writer import ImageWriter
+    from fastapi.responses import Response
+
+    p = db.query(Product).filter(Product.id == product_id).first()
+    if not p:
+        raise HTTPException(404, "Producto no encontrado")
+    code = p.barcode or p.code
+    try:
+        Code128 = barcode.get_barcode_class("code128")
+        buf = BytesIO()
+        Code128(code, writer=ImageWriter()).write(buf)
+        buf.seek(0)
+        return Response(content=buf.getvalue(), media_type="image/png")
+    except:
+        raise HTTPException(400, "No se pudo generar la imagen del codigo")
 
 @router.get("/alerts/low-stock")
 def low_stock_alerts(db: Session = Depends(get_db)):

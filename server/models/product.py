@@ -25,6 +25,7 @@ class Product(Base):
     selling_price = Column(Float, default=0.0)
     min_stock = Column(Integer, default=5)
     unit = Column(String(20), default="unidad")
+    barcode = Column(String(50), unique=True, nullable=True, index=True)
     image_path = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

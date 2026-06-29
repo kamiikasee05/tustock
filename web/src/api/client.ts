@@ -39,6 +39,7 @@ export interface Product {
   min_stock: number
   unit: string
   is_active: boolean
+  barcode?: string | null
 }
 
 export interface StockItem {

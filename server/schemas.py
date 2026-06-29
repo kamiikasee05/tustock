@@ -10,6 +10,7 @@ class ProductCreate(BaseModel):
     selling_price: float = Field(default=0.0, ge=0)
     min_stock: int = Field(default=5, ge=0)
     unit: str = Field(default="unidad", max_length=20)
+    barcode: Optional[str] = Field(default=None, max_length=50)
 
 class ProductUpdate(BaseModel):
     name: Optional[str] = Field(default=None, max_length=200)
@@ -20,6 +21,7 @@ class ProductUpdate(BaseModel):
     min_stock: Optional[int] = Field(default=None, ge=0)
     unit: Optional[str] = Field(default=None, max_length=20)
     is_active: Optional[bool] = None
+    barcode: Optional[str] = Field(default=None, max_length=50)
 
 class ProductOut(BaseModel):
     id: int
@@ -32,6 +34,7 @@ class ProductOut(BaseModel):
     min_stock: int
     unit: str
     is_active: bool
+    barcode: Optional[str] = None
 
 class CategoryCreate(BaseModel):
     name: str = Field(..., max_length=100)

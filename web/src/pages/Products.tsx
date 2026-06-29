@@ -15,7 +15,7 @@ export default function Products() {
   const [loading, setLoading] = useState(true)
 
   const [form, setForm] = useState({
-    code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '' as number | ''
+    code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '' as number | '', barcode: '' as string
   })
 
   const load = () => {
@@ -44,13 +44,13 @@ export default function Products() {
     }
     setShowForm(false)
     setEditing(null)
-    setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '' })
+    setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '', barcode: '' })
     load()
   }
 
   const handleEdit = (p: Product) => {
     setEditing(p)
-    setForm({ code: p.code, name: p.name, description: p.description || '', cost_price: p.cost_price, selling_price: p.selling_price, min_stock: p.min_stock, unit: p.unit, category_id: p.category_id ?? '' })
+    setForm({ code: p.code, name: p.name, description: p.description || '', cost_price: p.cost_price, selling_price: p.selling_price, min_stock: p.min_stock, unit: p.unit, category_id: p.category_id ?? '', barcode: p.barcode || '' })
     setShowForm(true)
   }
 
@@ -104,7 +104,7 @@ export default function Products() {
             {showInactive ? '✓ Inactivos' : '☠ Ver inactivos'}
           </button>
           <button
-            onClick={() => { setEditing(null); setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '' }); setShowForm(!showForm) }}
+            onClick={() => { setEditing(null); setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '', barcode: '' }); setShowForm(!showForm) }}
             style={{ padding: '10px 20px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600 }}
           >
             + Nuevo producto
@@ -147,6 +147,24 @@ export default function Products() {
                     Generar
                   </button>
                 )}
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Codigo de barras</label>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} style={{ flex: 1 }} placeholder="Ej: 7791234567890" />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const data = await api.get<{ barcode: string }>('/products/barcode/next')
+                      setForm({ ...form, barcode: data.barcode })
+                    } catch (e) {}
+                  }}
+                  style={{ padding: '8px 14px', background: 'var(--surface-hover)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer' }}
+                >
+                  Generar
+                </button>
               </div>
             </div>
             <div>
@@ -213,6 +231,7 @@ export default function Products() {
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg)' }}>
               <th style={th}>Codigo</th>
+              <th style={th}>Codigo Barras</th>
               <th style={th}>Nombre</th>
               <th style={th}>Categoría</th>
               <th style={{ ...th, textAlign: 'right' }}>P. Venta</th>
@@ -235,6 +254,26 @@ export default function Products() {
                   background: inactive ? 'var(--bg)' : 'transparent',
                 }}>
                   <td style={td}>{p.code}</td>
+                  <td style={{ ...td, fontSize: 12 }}>
+                    {p.barcode ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <img src={`/api/products/${p.id}/barcode.png`} alt={p.barcode} style={{ height: 28 }} />
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{p.barcode}</span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={async () => {
+                          try {
+                            await api.post(`/products/${p.id}/barcode`)
+                            load()
+                          } catch (e) {}
+                        }}
+                        style={{ padding: '4px 10px', borderRadius: 4, border: '1px solid var(--border)', background: 'var(--surface-hover)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        Generar
+                      </button>
+                    )}
+                  </td>
                   <td style={td}>
                     <div style={{ fontWeight: 500 }}>
                       {p.name}
@@ -287,7 +326,7 @@ export default function Products() {
               )
             })}
             {products.length === 0 && (
-              <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
+              <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
                 {showInactive ? 'No hay productos inactivos' : 'No se encontraron productos'}
               </td></tr>
             )}
