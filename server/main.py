@@ -1,4 +1,6 @@
 import uvicorn
+from datetime import datetime
+from pathlib import Path
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -102,6 +104,32 @@ if WEB_DIR.exists():
         app.mount("/assets", StaticFiles(directory=str(WEB_DIR / "assets")), name="assets")
 
 if __name__ == "__main__":
+    import signal, sys, os
+
     init_db()
-    print(f"TUSTOCK corriendo en http://{API_HOST}:{API_PORT}")
-    uvicorn.run(app, host=API_HOST, port=API_PORT)
+
+    log_dir = Path(__file__).resolve().parent / "logs"
+    log_dir.mkdir(exist_ok=True)
+    log_file = log_dir / "server.log"
+
+    pid_file = log_dir / "server.pid"
+    with open(pid_file, "w") as f:
+        f.write(str(os.getpid()))
+
+    def handle_exit(*_):
+        pid_file.unlink(missing_ok=True)
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, handle_exit)
+    signal.signal(signal.SIGINT, handle_exit)
+
+    try:
+        uvicorn.run(app, host=API_HOST, port=API_PORT, log_config=None)
+    except SystemExit:
+        pass
+    except KeyboardInterrupt:
+        pass
+    finally:
+        pid_file.unlink(missing_ok=True)
+        with open(log_file, "a") as f:
+            f.write(f"[{datetime.now().isoformat()}] Servidor detenido\n")
