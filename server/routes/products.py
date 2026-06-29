@@ -8,12 +8,14 @@ from services.stock_service import get_current_stock, get_low_stock
 router = APIRouter(prefix="/api/products", tags=["products"])
 
 def to_product_out(p: Product) -> dict:
-    return ProductOut(
+    data = ProductOut(
         id=p.id, code=p.code, name=p.name, description=p.description or "",
         category_id=p.category_id, cost_price=p.cost_price,
         selling_price=p.selling_price, min_stock=p.min_stock,
         unit=p.unit, is_active=p.is_active,
     ).model_dump()
+    data["category_name"] = p.category.name if p.category else None
+    return data
 
 @router.get("")
 def list_products(

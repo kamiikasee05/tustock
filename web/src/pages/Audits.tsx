@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { api, Audit } from '../api/client'
+import { useToast } from '../components/Toast'
 
 export default function Audits() {
+  const { toast } = useToast()
   const [audits, setAudits] = useState<Audit[]>([])
   const [currentAudit, setCurrentAudit] = useState<any>(null)
   const [scanCode, setScanCode] = useState('')
@@ -17,10 +19,10 @@ export default function Audits() {
   const createAudit = async () => {
     try {
       const result = await api.post<any>('/audits', { notes, created_by: 'Usuario' })
-      alert(`Auditoría #${result.id} creada con ${result.items_count} productos`)
+      toast(`Auditoría #${result.id} creada con ${result.items_count} productos`, 'success')
       setNotes('')
       loadAudits()
-    } catch (e: any) { alert('Error: ' + e.message) }
+    } catch (e: any) { toast('Error: ' + e.message, 'error') }
   }
 
   const startAudit = async (id: number) => {

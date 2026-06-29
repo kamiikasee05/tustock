@@ -33,6 +33,7 @@ export interface Product {
   name: string
   description: string
   category_id: number | null
+  category_name?: string
   cost_price: number
   selling_price: number
   min_stock: number
@@ -67,8 +68,8 @@ export interface Sale {
   payment_method: string
   notes: string
   cashier: string
-  items: SaleItem[]
-  created_at: string
+  items_count?: number
+  created_at: string | null
 }
 
 export interface SaleItem {

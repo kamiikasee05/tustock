@@ -52,3 +52,8 @@ input:focus, select:focus, textarea:focus {
 
 a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}

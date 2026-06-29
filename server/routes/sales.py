@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import func
 from datetime import date, datetime, timezone
 from database import get_db
 from models.sale import Sale, SaleItem
@@ -11,10 +12,25 @@ router = APIRouter(prefix="/api/sales", tags=["sales"])
 
 @router.get("")
 def list_sales(db: Session = Depends(get_db), sale_date: str = None, limit: int = 100):
-    q = db.query(Sale)
+    q = db.query(Sale).options(selectinload(Sale.items))
     if sale_date:
         q = q.filter(Sale.sale_date == sale_date)
-    return q.order_by(Sale.created_at.desc()).limit(limit).all()
+    sales = q.order_by(Sale.created_at.desc()).limit(limit).all()
+    return [
+        {
+            "id": s.id,
+            "sale_date": str(s.sale_date),
+            "total": s.total,
+            "discount": s.discount,
+            "payment_method": s.payment_method,
+            "notes": s.notes,
+            "cashier": s.cashier,
+            "vendor_id": s.vendor_id,
+            "created_at": str(s.created_at) if s.created_at else None,
+            "items_count": len(s.items),
+        }
+        for s in sales
+    ]
 
 @router.get("/{sale_id}")
 def get_sale(sale_id: int, db: Session = Depends(get_db)):

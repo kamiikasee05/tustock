@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api/client'
+import { useToast } from '../components/Toast'
 
 interface OrderItem {
   product_id: number
@@ -19,6 +20,7 @@ interface PendingOrder {
 }
 
 export default function Pedidos() {
+  const { toast } = useToast()
   const [orders, setOrders] = useState<PendingOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<PendingOrder | null>(null)

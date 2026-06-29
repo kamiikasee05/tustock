@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '../api/client'
+import { useToast } from '../components/Toast'
 
 interface BudgetItem {
   product_id: number
@@ -26,6 +27,7 @@ interface Product {
 }
 
 export default function Presupuestos() {
+  const { toast } = useToast()
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'list' | 'new'>('list')
@@ -54,7 +56,7 @@ export default function Presupuestos() {
 
   const addToCart = (code: string) => {
     const prod = products.find(p => p.code === code)
-    if (!prod) { alert('Producto no encontrado'); return }
+    if (!prod) { toast('Producto no encontrado', 'error'); return }
     const existing = cart.find(i => i.product_id === prod.id)
     if (existing) {
       setCart(cart.map(i => i.product_id === prod.id ? { ...i, quantity: i.quantity + 1 } : i))
@@ -67,16 +69,16 @@ export default function Presupuestos() {
   const subtotal = cart.reduce((s, i) => s + i.quantity * i.unit_price, 0)
 
   const createBudget = async () => {
-    if (cart.length === 0) return alert('Agrega productos al presupuesto')
+    if (cart.length === 0) return toast('Agrega productos al presupuesto', 'error')
     try {
       await api.post('/budgets', { customer_name: customerName || null, items: cart })
-      alert('Presupuesto creado')
+      toast('Presupuesto creado correctamente', 'success')
       setCart([])
       setCustomerName('')
       setTab('list')
       loadBudgets()
     } catch (e: any) {
-      alert('Error: ' + e.message)
+      toast('Error: ' + e.message, 'error')
     }
   }
 

@@ -1,49 +1,56 @@
 import { useState, useEffect } from 'react'
 import { api, Product, StockItem } from '../api/client'
 
+interface Category { id: number; name: string; parent_id: number | null }
+
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([])
   const [stock, setStock] = useState<StockItem[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [search, setSearch] = useState('')
+  const [filterCat, setFilterCat] = useState<number | ''>('')
   const [showInactive, setShowInactive] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
 
   const [form, setForm] = useState({
-    code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad'
+    code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '' as number | ''
   })
 
   const load = () => {
     setLoading(true)
-    const qs = `?search=${encodeURIComponent(search)}&include_inactive=${showInactive}`
+    let qs = `?search=${encodeURIComponent(search)}&include_inactive=${showInactive}`
+    if (filterCat !== '') qs += `&category_id=${filterCat}`
     Promise.all([
       api.get<Product[]>(`/products${qs}`),
       api.get<StockItem[]>('/stock'),
+      api.get<Category[]>('/products/categories'),
     ])
-      .then(([prods, stk]) => { setProducts(prods); setStock(stk) })
+      .then(([prods, stk, cats]) => { setProducts(prods); setStock(stk); setCategories(cats) })
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [search, showInactive])
+  useEffect(() => { load() }, [search, showInactive, filterCat])
 
   const getStock = (id: number) => stock.find(s => s.id === id)?.quantity || 0
 
   const handleSubmit = async () => {
+    const body = form.category_id !== '' ? { ...form, category_id: form.category_id } : { ...form, category_id: null }
     if (editing) {
-      await api.put(`/products/${editing.id}`, form)
+      await api.put(`/products/${editing.id}`, body)
     } else {
-      await api.post('/products', form)
+      await api.post('/products', body)
     }
     setShowForm(false)
     setEditing(null)
-    setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad' })
+    setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '' })
     load()
   }
 
   const handleEdit = (p: Product) => {
     setEditing(p)
-    setForm({ code: p.code, name: p.name, description: p.description || '', cost_price: p.cost_price, selling_price: p.selling_price, min_stock: p.min_stock, unit: p.unit })
+    setForm({ code: p.code, name: p.name, description: p.description || '', cost_price: p.cost_price, selling_price: p.selling_price, min_stock: p.min_stock, unit: p.unit, category_id: p.category_id ?? '' })
     setShowForm(true)
   }
 
@@ -97,7 +104,7 @@ export default function Products() {
             {showInactive ? '✓ Inactivos' : '☠ Ver inactivos'}
           </button>
           <button
-            onClick={() => { setEditing(null); setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad' }); setShowForm(!showForm) }}
+            onClick={() => { setEditing(null); setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '' }); setShowForm(!showForm) }}
             style={{ padding: '10px 20px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600 }}
           >
             + Nuevo producto
@@ -112,6 +119,10 @@ export default function Products() {
           onChange={e => setSearch(e.target.value)}
           style={{ flex: 1, padding: '10px 14px' }}
         />
+        <select value={filterCat} onChange={e => setFilterCat(e.target.value ? +e.target.value : '')} style={{ padding: '10px 14px', minWidth: 150 }}>
+          <option value="">Todas las categorías</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
       </div>
 
       {showForm && (
@@ -158,6 +169,29 @@ export default function Products() {
               <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Unidad</label>
               <input value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} style={{ width: '100%' }} />
             </div>
+            <div>
+              <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Categoría</label>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <select value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value ? +e.target.value : '' })} style={{ flex: 1, padding: '8px 10px' }}>
+                  <option value="">Sin categoría</option>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const name = prompt('Nombre de la nueva categoría:')
+                    if (name) {
+                      await api.post('/products/categories', { name })
+                      const cats = await api.get<Category[]>('/products/categories')
+                      setCategories(cats)
+                    }
+                  }}
+                  style={{ padding: '8px 12px', background: 'var(--surface-hover)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  + Nueva
+                </button>
+              </div>
+            </div>
           </div>
           <div>
             <label style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 12, display: 'block' }}>Descripcion</label>
@@ -180,6 +214,7 @@ export default function Products() {
             <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg)' }}>
               <th style={th}>Codigo</th>
               <th style={th}>Nombre</th>
+              <th style={th}>Categoría</th>
               <th style={{ ...th, textAlign: 'right' }}>P. Venta</th>
               <th style={{ ...th, textAlign: 'center' }}>Stock</th>
               <th style={{ ...th, textAlign: 'center' }}>Min</th>
@@ -206,6 +241,9 @@ export default function Products() {
                       {inactive && <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--danger)' }}>INACTIVO</span>}
                     </div>
                     {p.description && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.description}</div>}
+                  </td>
+                  <td style={{ ...td, fontSize: 13, color: 'var(--text-muted)' }}>
+                    {(p as any).category_name || '-'}
                   </td>
                   <td style={{ ...td, textAlign: 'right', fontWeight: 600, color: inactive ? 'var(--text-muted)' : 'var(--success)' }}>
                     ${p.selling_price.toLocaleString()}
@@ -249,7 +287,7 @@ export default function Products() {
               )
             })}
             {products.length === 0 && (
-              <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
+              <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
                 {showInactive ? 'No hay productos inactivos' : 'No se encontraron productos'}
               </td></tr>
             )}

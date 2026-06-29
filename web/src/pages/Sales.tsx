@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api, Sale, Product, StockItem } from '../api/client'
+import { useToast } from '../components/Toast'
 
 interface CartItem {
   product_id: number
@@ -10,6 +11,7 @@ interface CartItem {
 }
 
 export default function Sales() {
+  const { toast } = useToast()
   const [sales, setSales] = useState<Sale[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [stock, setStock] = useState<StockItem[]>([])
@@ -37,7 +39,7 @@ export default function Sales() {
   const addToCart = (code: string) => {
     const prod = products.find(p => p.code === code)
     if (!prod) {
-      alert(`Código no encontrado: ${code}`)
+      toast(`Código no encontrado: ${code}`, 'error')
       return
     }
     const existing = cart.find(i => i.product_id === prod.id)
@@ -53,7 +55,7 @@ export default function Sales() {
   const total = subtotal - discount
 
   const completeSale = async () => {
-    if (cart.length === 0) return alert('Agregá productos al carrito')
+    if (cart.length === 0) return toast('Agregá productos al carrito', 'error')
     try {
       const result = await api.post<any>('/sales', {
         items: cart.map(i => ({ product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price })),
@@ -61,13 +63,13 @@ export default function Sales() {
         payment_method: paymentMethod,
         cashier: 'Mostrador',
       })
-      alert(`Venta #${result.id} registrada - Total: $${result.total.toLocaleString()}`)
+      toast(`Venta #${result.id} registrada - $${result.total.toLocaleString()}`, 'success')
       setCart([])
       setDiscount(0)
       loadSales()
       api.get<StockItem[]>('/stock').then(setStock)
     } catch (e: any) {
-      alert('Error: ' + e.message)
+      toast('Error: ' + e.message, 'error')
     }
   }
 
@@ -206,12 +208,12 @@ export default function Sales() {
               {sales.map(s => (
                 <tr key={s.id} style={{ borderBottom: '1px solid var(--border)' }}>
                   <td style={tdSty}>#{s.id}</td>
-                  <td style={tdSty}>{s.sale_date} {s.created_at?.split('T')[1]?.slice(0, 5)}</td>
+                  <td style={tdSty}>{s.sale_date}{s.created_at ? ' ' + s.created_at.split('T')[1]?.slice(0, 5) : ''}</td>
                   <td style={{ ...tdSty, textAlign: 'right', fontWeight: 700, color: 'var(--success)' }}>${s.total.toLocaleString()}</td>
                   <td style={{ ...tdSty, textAlign: 'center' }}>
                     <span style={{ padding: '3px 8px', borderRadius: 20, fontSize: 11, background: 'var(--bg)' }}>{s.payment_method}</span>
                   </td>
-                  <td style={{ ...tdSty, textAlign: 'center' }}>{s.items?.length || '-'}</td>
+                  <td style={{ ...tdSty, textAlign: 'center' }}>{s.items_count ?? '-'}</td>
                   <td style={tdSty}>{s.cashier || '-'}</td>
                 </tr>
               ))}

@@ -9,6 +9,7 @@ import ScannerConnect from './pages/ScannerConnect'
 import Pedidos from './pages/Pedidos'
 import Customers from './pages/Customers'
 import Presupuestos from './pages/Presupuestos'
+import Vendors from './pages/Vendors'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/products" element={<Products />} />
         <Route path="/sales" element={<Sales />} />
         <Route path="/customers" element={<Customers />} />
+        <Route path="/vendors" element={<Vendors />} />
         <Route path="/audits" element={<Audits />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/scanner" element={<ScannerConnect />} />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api, Product } from '../api/client'
+import { useToast } from '../components/Toast'
 
 interface ServerInfo {
   hostname: string
@@ -11,6 +12,7 @@ interface ServerInfo {
 }
 
 export default function ScannerConnect() {
+  const { toast } = useToast()
   const [serverInfo, setServerInfo] = useState<ServerInfo | null>(null)
   const [serverIP, setServerIP] = useState('')
   const [scannedCode, setScannedCode] = useState('')
@@ -51,9 +53,9 @@ export default function ScannerConnect() {
       const result = await api.post<Product>('/products', newProduct)
       setProduct(result)
       setError('')
-      alert('Producto registrado exitosamente')
+      toast('Producto registrado exitosamente', 'success')
     } catch (e: any) {
-      alert('Error: ' + e.message)
+      toast('Error: ' + e.message, 'error')
     }
   }
 
