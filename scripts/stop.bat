@@ -7,20 +7,25 @@ echo     TUSTOCK - Deteniendo
 echo ========================================
 echo.
 
-:: Matar por PID si existe el archivo
+:: Matar servidor principal
 if exist logs\server.pid (
     set /p PID=<logs\server.pid
     taskkill /PID %PID% /F >nul 2>&1
-    timeout /t 2 /nobreak >nul
     if not exist logs\server.pid (
-        echo [OK] TUSTOCK detenido.
-        timeout /t 3 /nobreak >nul
-        exit /b 0
+        echo [OK] Servidor detenido.
     )
 )
 
-:: Si no, matar cualquier proceso python corriendo main.py
-echo Buscando procesos...
+:: Matar monitor si existe
+if exist logs\monitor.pid (
+    set /p PID=<logs\monitor.pid
+    taskkill /PID %PID% /F >nul 2>&1
+    if not exist logs\monitor.pid (
+        echo [OK] Monitor detenido.
+    )
+)
+
+:: Force kill por si queda algun proceso colgado
 taskkill /IM pythonw.exe /F >nul 2>&1
 taskkill /IM python.exe /F >nul 2>&1
 
