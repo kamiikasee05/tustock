@@ -1,3 +1,5 @@
+"""Generación y exportación de reportes diarios, de ventas, productos y vendedores."""
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -13,6 +15,7 @@ router = APIRouter(prefix="/api/reports", tags=["reports"])
 
 @router.get("/daily/{report_date}")
 def daily_report(report_date: str, db: Session = Depends(get_db)):
+    """Obtiene el reporte diario ya generado para una fecha específica."""
     try:
         d = date.fromisoformat(report_date)
     except ValueError:
@@ -25,6 +28,7 @@ def daily_report(report_date: str, db: Session = Depends(get_db)):
 
 @router.post("/daily/generate")
 def generate(report_date: str = None, db: Session = Depends(get_db)):
+    """Genera o actualiza el reporte diario para la fecha indicada (o la actual)."""
     d = None
     if report_date:
         try:
@@ -35,6 +39,7 @@ def generate(report_date: str = None, db: Session = Depends(get_db)):
 
 @router.post("/daily/{report_date}")
 def generate_for_date(report_date: str, db: Session = Depends(get_db)):
+    """Genera el reporte diario para una fecha específica (vía POST)."""
     try:
         d = date.fromisoformat(report_date)
     except ValueError:
@@ -42,6 +47,7 @@ def generate_for_date(report_date: str, db: Session = Depends(get_db)):
     return generate_daily_report(db, d)
 
 def _export_response(csv_data: str, filename: str, fmt: str):
+    """Devuelve un StreamingResponse con CSV o XLSX según el formato solicitado."""
     if fmt == "xlsx":
         xlsx = csv_to_xlsx(csv_data)
         return StreamingResponse(
@@ -61,6 +67,7 @@ def export_sales(
     vendor_id: int = None, format: str = "csv",
     db: Session = Depends(get_db),
 ):
+    """Exporta ventas en un rango de fechas a CSV o XLSX, opcionalmente filtrado por vendedor."""
     try:
         s, e = date.fromisoformat(start), date.fromisoformat(end)
     except ValueError:
@@ -73,6 +80,7 @@ def export_products(
     start: str = Query(...), end: str = Query(...),
     format: str = "csv", db: Session = Depends(get_db),
 ):
+    """Exporta el rendimiento de productos en un rango de fechas a CSV o XLSX."""
     try:
         s, e = date.fromisoformat(start), date.fromisoformat(end)
     except ValueError:
@@ -85,6 +93,7 @@ def export_vendors(
     start: str = Query(...), end: str = Query(...),
     format: str = "csv", db: Session = Depends(get_db),
 ):
+    """Exporta el desempeño de vendedores en un rango de fechas a CSV o XLSX."""
     try:
         s, e = date.fromisoformat(start), date.fromisoformat(end)
     except ValueError:
@@ -97,11 +106,13 @@ def export_monthly(
     year: int = Query(...), month: int = Query(...),
     format: str = "csv", db: Session = Depends(get_db),
 ):
+    """Exporta un resumen mensual con ventas, costos y ganancia bruta a CSV o XLSX."""
     csv_data = export_monthly_csv(db, year, month)
     return _export_response(csv_data, f"mensual_{year}_{month:02d}", format)
 
 @router.get("/range")
 def range_reports(start: str, end: str, db: Session = Depends(get_db)):
+    """Obtiene los reportes diarios dentro de un rango de fechas."""
     try:
         s = date.fromisoformat(start)
         e = date.fromisoformat(end)

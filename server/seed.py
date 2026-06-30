@@ -1,3 +1,5 @@
+"""Carga datos de prueba: categorías, productos, stock, ventas, clientes, vendedores y más."""
+
 from sqlalchemy import text
 from database import init_db, SessionLocal
 from models.product import Product, Category

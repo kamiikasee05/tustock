@@ -1,3 +1,5 @@
+"""Servicios para generar reportes diarios, exportación CSV y conversión a XLSX."""
+
 import csv, io, json
 from datetime import date, datetime, timezone
 from sqlalchemy.orm import Session, joinedload
@@ -8,6 +10,7 @@ from models.vendor import Vendor
 from models.report import DailyReport
 
 def generate_daily_report(db: Session, report_date: date = None):
+    """Genera o actualiza el reporte diario con totales, métodos de pago y top productos."""
     if report_date is None:
         report_date = date.today()
 
@@ -91,6 +94,7 @@ def generate_daily_report(db: Session, report_date: date = None):
     }
 
 def get_report(db: Session, report_date: date = None):
+    """Obtiene el reporte diario ya generado para una fecha específica."""
     if report_date is None:
         report_date = date.today()
 
@@ -107,11 +111,12 @@ def get_report(db: Session, report_date: date = None):
         "cash_sales": dr.cash_sales,
         "card_sales": dr.card_sales,
         "other_sales": dr.other_sales,
-        "top_items": json.loads(dr.report_data)["top_items"] if dr.report_data else [],
+        "top_items": json.loads(dr.report_data).get("top_items", []) if dr.report_data else [],
         "generated_at": str(dr.generated_at) if dr.generated_at else None,
     }
 
 def get_report_range(db: Session, start: date, end: date):
+    """Retorna los reportes diarios dentro de un rango de fechas ordenados descendente."""
     reports = db.query(DailyReport).filter(
         DailyReport.report_date >= start,
         DailyReport.report_date <= end,
@@ -129,6 +134,7 @@ def get_report_range(db: Session, start: date, end: date):
     ]
 
 def export_sales_csv(db: Session, start: date, end: date, vendor_id: int = None):
+    """Genera un CSV con el detalle de ventas en un rango de fechas, filtrable por vendedor."""
     q = (
         db.query(
             Sale.sale_date, Sale.created_at, Vendor.name.label("vendor_name"),
@@ -160,6 +166,7 @@ def export_sales_csv(db: Session, start: date, end: date, vendor_id: int = None)
     return out.getvalue()
 
 def export_products_csv(db: Session, start: date, end: date):
+    """Genera un CSV con el rendimiento de productos vendidos en un rango de fechas."""
     data = (
         db.query(
             Product.name, Product.code, Product.cost_price,
@@ -184,6 +191,7 @@ def export_products_csv(db: Session, start: date, end: date):
     return out.getvalue()
 
 def export_vendors_csv(db: Session, start: date, end: date):
+    """Genera un CSV con el desempeño de vendedores en un rango de fechas."""
     data = (
         db.query(
             Vendor.name, Vendor.dni,
@@ -205,6 +213,7 @@ def export_vendors_csv(db: Session, start: date, end: date):
     return out.getvalue()
 
 def export_monthly_csv(db: Session, year: int, month: int):
+    """Genera un CSV con el resumen mensual: ventas, costos, ganancia bruta y métodos de pago."""
     from calendar import monthrange
     start = date(year, month, 1)
     end = date(year, month, monthrange(year, month)[1])
@@ -238,6 +247,8 @@ def export_monthly_csv(db: Session, year: int, month: int):
     return out.getvalue()
 
 def csv_to_xlsx(csv_content: str, sheet_name: str = "Reporte") -> bytes:
+    """Convierte contenido CSV a un archivo XLSX usando openpyxl."""
+    import openpyxl
     import openpyxl
     wb = openpyxl.Workbook()
     ws = wb.active

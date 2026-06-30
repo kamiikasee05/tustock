@@ -49,7 +49,7 @@ def server_info():
             ip = info[4][0]
             if ip not in all_ips and not ip.startswith("127.") and ":" not in ip:
                 all_ips.append(ip)
-    except:
+    except Exception:
         pass
 
     real_ips = []

@@ -1,8 +1,11 @@
+"""Modelo de reporte diario de ventas."""
+
 from sqlalchemy import Column, Integer, String, Float, Date, DateTime, Text
 from datetime import datetime, timezone
 from database import Base
 
 class DailyReport(Base):
+    """Reporte resumen de ventas de un día específico con totales, métodos de pago y top productos."""
     __tablename__ = "daily_reports"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

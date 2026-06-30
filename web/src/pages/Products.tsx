@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { api, Product, StockItem } from '../api/client'
+import { useToast } from '../components/Toast'
 
 interface Category { id: number; name: string; parent_id: number | null }
 
 export default function Products() {
+  const { toast } = useToast()
   const [products, setProducts] = useState<Product[]>([])
   const [stock, setStock] = useState<StockItem[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -11,6 +13,7 @@ export default function Products() {
   const [filterCat, setFilterCat] = useState<number | ''>('')
   const [showInactive, setShowInactive] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -28,6 +31,7 @@ export default function Products() {
       api.get<Category[]>('/products/categories'),
     ])
       .then(([prods, stk, cats]) => { setProducts(prods); setStock(stk); setCategories(cats) })
+      .catch(() => toast('Error al cargar productos', 'error'))
       .finally(() => setLoading(false))
   }
 
@@ -36,16 +40,23 @@ export default function Products() {
   const getStock = (id: number) => stock.find(s => s.id === id)?.quantity || 0
 
   const handleSubmit = async () => {
-    const body = form.category_id !== '' ? { ...form, category_id: form.category_id } : { ...form, category_id: null }
-    if (editing) {
-      await api.put(`/products/${editing.id}`, body)
-    } else {
-      await api.post('/products', body)
+    setSubmitting(true)
+    try {
+      const body = form.category_id !== '' ? { ...form, category_id: form.category_id } : { ...form, category_id: null }
+      if (editing) {
+        await api.put(`/products/${editing.id}`, body)
+      } else {
+        await api.post('/products', body)
+      }
+      setShowForm(false)
+      setEditing(null)
+      setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '', barcode: '' })
+      load()
+    } catch (e: any) {
+      toast('Error: ' + e.message, 'error')
+    } finally {
+      setSubmitting(false)
     }
-    setShowForm(false)
-    setEditing(null)
-    setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '', barcode: '' })
-    load()
   }
 
   const handleEdit = (p: Product) => {

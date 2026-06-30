@@ -1,3 +1,5 @@
+"""Gestión de pedidos pendientes: creación, aprobación, rechazo y limpieza."""
+
 import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -13,6 +15,7 @@ router = APIRouter(prefix="/api/pending-orders", tags=["pending-orders"])
 
 @router.get("")
 def list_pending(db: Session = Depends(get_db)):
+    """Lista los pedidos pendientes con datos del vendedor y sus items."""
     orders = (
         db.query(PendingOrder, Vendor)
         .join(Vendor, PendingOrder.vendor_id == Vendor.id)
@@ -34,6 +37,7 @@ def list_pending(db: Session = Depends(get_db)):
 
 @router.post("")
 def create_pending(data: PendingOrderCreate, db: Session = Depends(get_db)):
+    """Crea un nuevo pedido pendiente asociado a un vendedor activo."""
     vendor = db.query(Vendor).filter(Vendor.id == data.vendor_id, Vendor.is_active == True).first()
     if not vendor:
         raise HTTPException(404, "Vendedor no encontrado")
@@ -54,6 +58,7 @@ def create_pending(data: PendingOrderCreate, db: Session = Depends(get_db)):
 
 @router.post("/{order_id}/approve")
 def approve(order_id: int, db: Session = Depends(get_db)):
+    """Aprueba un pedido, genera una venta automática y descuenta stock."""
     order = db.query(PendingOrder).filter(PendingOrder.id == order_id).first()
     if not order:
         raise HTTPException(404, "Pedido no encontrado")
@@ -106,6 +111,8 @@ def approve(order_id: int, db: Session = Depends(get_db)):
 
 @router.post("/{order_id}/reject")
 def reject(order_id: int, db: Session = Depends(get_db)):
+    """Rechaza un pedido pendiente sin generar venta."""
+    order = db.query(PendingOrder).filter(PendingOrder.id == order_id).first()
     order = db.query(PendingOrder).filter(PendingOrder.id == order_id).first()
     if not order:
         raise HTTPException(404, "Pedido no encontrado")
@@ -120,6 +127,7 @@ def reject(order_id: int, db: Session = Depends(get_db)):
 
 @router.post("/clear")
 def clear_vendor_orders(vendor_id: int, db: Session = Depends(get_db)):
+    """Elimina todos los pedidos pendientes de un vendedor específico."""
     db.query(PendingOrder).filter(
         PendingOrder.vendor_id == vendor_id,
         PendingOrder.status == "pending",

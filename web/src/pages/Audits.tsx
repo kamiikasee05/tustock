@@ -13,7 +13,7 @@ export default function Audits() {
   useEffect(() => { loadAudits() }, [])
 
   const loadAudits = () => {
-    api.get<Audit[]>('/audits').then(au => { setAudits(au); setLoading(false) })
+    api.get<Audit[]>('/audits').then(au => { setAudits(au) }).catch(() => toast('Error al cargar auditorías', 'error')).finally(() => setLoading(false))
   }
 
   const createAudit = async () => {
@@ -26,9 +26,11 @@ export default function Audits() {
   }
 
   const startAudit = async (id: number) => {
-    await api.post(`/audits/${id}/start`)
-    const detail = await api.get<any>(`/audits/${id}`)
-    setCurrentAudit(detail)
+    try {
+      await api.post(`/audits/${id}/start`)
+      const detail = await api.get<any>(`/audits/${id}`)
+      setCurrentAudit(detail)
+    } catch (e: any) { toast('Error: ' + e.message, 'error') }
   }
 
   const scanToAudit = async (code: string) => {
@@ -38,16 +40,18 @@ export default function Audits() {
       const detail = await api.get<any>(`/audits/${currentAudit.id}`)
       setCurrentAudit(detail)
       setScanCode('')
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { toast('Error: ' + e.message, 'error') }
   }
 
   const completeAudit = async () => {
     if (!currentAudit) return
     if (!confirm('¿Completar auditoría y aplicar correcciones?')) return
-    const result = await api.post<any>(`/audits/${currentAudit.id}/complete?apply_corrections=true`)
-    alert(`Auditoría completada. ${result.discrepancies.length} diferencias encontradas.`)
-    setCurrentAudit(null)
-    loadAudits()
+    try {
+      const result = await api.post<any>(`/audits/${currentAudit.id}/complete?apply_corrections=true`)
+      toast(`Auditoría completada. ${result.discrepancies.length} diferencias encontradas.`, 'success')
+      setCurrentAudit(null)
+      loadAudits()
+    } catch (e: any) { toast('Error: ' + e.message, 'error') }
   }
 
   const getStatusColor = (status: string) =>

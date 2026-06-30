@@ -1,7 +1,10 @@
+"""Modelo de vendedor con DNI único y estado de actividad."""
+
 from sqlalchemy import Column, Integer, String, Boolean
 from database import Base
 
 class Vendor(Base):
+    """Vendedor identificado por DNI que puede realizar ventas y pedidos."""
     __tablename__ = "vendors"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

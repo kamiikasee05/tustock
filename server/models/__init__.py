@@ -1,3 +1,5 @@
+"""Importaciones centralizadas de todos los modelos SQLAlchemy."""
+
 from .product import Product, Category
 from .stock import StockMovement, CurrentStock
 from .sale import Sale, SaleItem

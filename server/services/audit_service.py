@@ -1,3 +1,5 @@
+"""Servicios para crear, ejecutar y completar auditorías de stock."""
+
 from datetime import datetime, timezone, date
 from sqlalchemy.orm import Session
 from models.audit import StockAudit, AuditItem
@@ -6,6 +8,7 @@ from models.stock import CurrentStock, StockMovement
 from services.stock_service import get_current_stock
 
 def create_audit(db: Session, notes: str = None, created_by: str = None):
+    """Crea una auditoría en borrador con todos los productos activos y su stock teórico."""
     audit = StockAudit(
         audit_date=date.today(),
         status="draft",
@@ -29,6 +32,7 @@ def create_audit(db: Session, notes: str = None, created_by: str = None):
     return {"id": audit.id, "status": audit.status, "items_count": len(products)}
 
 def start_audit(db: Session, audit_id: int):
+    """Cambia el estado de la auditoría a 'en progreso'."""
     audit = db.query(StockAudit).filter(StockAudit.id == audit_id).first()
     if not audit:
         return None
@@ -37,6 +41,7 @@ def start_audit(db: Session, audit_id: int):
     return {"id": audit.id, "status": audit.status}
 
 def update_audit_item(db: Session, audit_id: int, product_id: int, counted_qty: float, notes: str = None):
+    """Actualiza el conteo real de un producto en la auditoría y calcula la diferencia."""
     item = (
         db.query(AuditItem)
         .filter(AuditItem.audit_id == audit_id, AuditItem.product_id == product_id)
@@ -59,6 +64,7 @@ def update_audit_item(db: Session, audit_id: int, product_id: int, counted_qty: 
     }
 
 def complete_audit(db: Session, audit_id: int, apply_corrections: bool = True):
+    """Finaliza la auditoría, lista las discrepancias y opcionalmente corrige el stock."""
     audit = db.query(StockAudit).filter(StockAudit.id == audit_id).first()
     if not audit:
         return None
@@ -102,6 +108,7 @@ def complete_audit(db: Session, audit_id: int, apply_corrections: bool = True):
     }
 
 def get_audit_detail(db: Session, audit_id: int):
+    """Retorna el detalle completo de una auditoría con los items que tienen diferencias."""
     audit = db.query(StockAudit).filter(StockAudit.id == audit_id).first()
     if not audit:
         return None
@@ -135,6 +142,7 @@ def get_audit_detail(db: Session, audit_id: int):
     }
 
 def list_audits(db: Session):
+    """Lista todas las auditorías ordenadas por fecha de creación descendente."""
     audits = db.query(StockAudit).order_by(StockAudit.created_at.desc()).all()
     return [
         {"id": a.id, "audit_date": str(a.audit_date), "status": a.status, "created_by": a.created_by, "notes": a.notes}
@@ -142,6 +150,7 @@ def list_audits(db: Session):
     ]
 
 def scan_to_audit(db: Session, audit_id: int, product_code: str):
+    """Incrementa en 1 el conteo de un producto al escanear su código durante la auditoría."""
     product = db.query(Product).filter(Product.code == product_code).first()
     if not product:
         return {"error": "Producto no encontrado", "code": product_code}

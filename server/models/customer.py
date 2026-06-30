@@ -1,8 +1,11 @@
+"""Modelos de clientes y sus transacciones (deudas y pagos)."""
+
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean
 from datetime import datetime, timezone
 from database import Base
 
 class Customer(Base):
+    """Cliente con datos de contacto, DNI y estado de actividad."""
     __tablename__ = "customers"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -14,6 +17,7 @@ class Customer(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 class CustomerTransaction(Base):
+    """Movimiento de deuda o pago asociado a un cliente."""
     __tablename__ = "customer_transactions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

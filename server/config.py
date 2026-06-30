@@ -1,3 +1,5 @@
+"""Variables de configuración de la aplicación (base de datos, host, token, CORS)."""
+
 import os
 from pathlib import Path
 

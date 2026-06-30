@@ -1,9 +1,12 @@
+"""Modelos de categorías y productos."""
+
 from sqlalchemy import Column, Integer, String, Text, Float, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from database import Base
 
 class Category(Base):
+    """Categoría de productos con soporte para subcategorías (parent_id)."""
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -14,6 +17,7 @@ class Category(Base):
     children = relationship("Category", backref="parent", remote_side=[id])
 
 class Product(Base):
+    """Producto del catálogo con precio, código, stock mínimo y código de barras."""
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

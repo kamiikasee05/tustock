@@ -1,8 +1,11 @@
+"""Modelo de presupuestos (cotizaciones) para clientes."""
+
 from sqlalchemy import Column, Integer, String, Float, DateTime, Text
 from datetime import datetime, timezone
 from database import Base
 
 class Budget(Base):
+    """Presupuesto con items en JSON, total, estado (pending/approved/rejected) y nombre del cliente."""
     __tablename__ = "budgets"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

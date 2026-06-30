@@ -1,3 +1,5 @@
+"""Consulta y gestión de productos y categorías."""
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from database import get_db
@@ -8,6 +10,7 @@ from services.stock_service import get_current_stock, get_low_stock
 router = APIRouter(prefix="/api/products", tags=["products"])
 
 def to_product_out(p: Product) -> dict:
+    """Convierte un modelo Product en diccionario con nombre de categoría incluido."""
     data = ProductOut(
         id=p.id, code=p.code, name=p.name, description=p.description or "",
         category_id=p.category_id, cost_price=p.cost_price,
@@ -24,6 +27,7 @@ def list_products(
     category_id: int = None,
     include_inactive: bool = False,
 ):
+    """Lista todos los productos activos con filtros opcionales de búsqueda y categoría."""
     q = db.query(Product)
     if not include_inactive:
         q = q.filter(Product.is_active == True)
@@ -35,6 +39,7 @@ def list_products(
 
 @router.get("/generate-code")
 def generate_barcode(db: Session = Depends(get_db)):
+    """Genera un código único aleatorio con prefijo TST para un nuevo producto."""
     import random, string
     prefix = "TST"
     while True:
@@ -46,6 +51,7 @@ def generate_barcode(db: Session = Depends(get_db)):
 
 @router.get("/scan/{code}")
 def scan_product(code: str, db: Session = Depends(get_db)):
+    """Busca un producto por código o código de barras y devuelve su info básica con stock actual."""
     p = db.query(Product).filter((Product.code == code) | (Product.barcode == code)).first()
     if not p:
         raise HTTPException(404, "Codigo no encontrado")
@@ -61,6 +67,7 @@ def scan_product(code: str, db: Session = Depends(get_db)):
 
 @router.get("/barcode/next")
 def next_barcode(db: Session = Depends(get_db)):
+    """Genera un código de barras numérico único de 12 dígitos comenzando con 2."""
     import random
     while True:
         code = "2" + "".join(random.choices("0123456789", k=11))
@@ -71,6 +78,7 @@ def next_barcode(db: Session = Depends(get_db)):
 
 @router.post("/{product_id}/barcode")
 def generate_product_barcode(product_id: int, db: Session = Depends(get_db)):
+    """Asigna un código de barras único a un producto que aún no tenga uno."""
     import random
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
@@ -88,14 +96,19 @@ def generate_product_barcode(product_id: int, db: Session = Depends(get_db)):
 
 @router.get("/alerts/low-stock")
 def low_stock_alerts(db: Session = Depends(get_db)):
+    """Devuelve los productos cuyo stock actual es menor o igual al stock mínimo."""
     return get_low_stock(db)
 
 @router.get("/categories")
 def list_categories(db: Session = Depends(get_db)):
+    """Obtiene la lista completa de categorías."""
+    return db.query(Category).all()
     return db.query(Category).all()
 
 @router.get("/{product_id}")
 def get_product(product_id: int, db: Session = Depends(get_db)):
+    """Obtiene un producto por su ID con toda su información."""
+    p = db.query(Product).filter(Product.id == product_id).first()
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
         raise HTTPException(404, "Producto no encontrado")
@@ -103,6 +116,7 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 
 @router.post("")
 def create_product(data: ProductCreate, db: Session = Depends(get_db)):
+    """Crea un nuevo producto validando que el código no esté duplicado."""
     existing = db.query(Product).filter(Product.code == data.code).first()
     if existing:
         raise HTTPException(400, "El codigo ya esta en uso")
@@ -114,16 +128,24 @@ def create_product(data: ProductCreate, db: Session = Depends(get_db)):
 
 @router.put("/{product_id}")
 def update_product(product_id: int, data: ProductUpdate, db: Session = Depends(get_db)):
+    """Actualiza los campos enviados de un producto existente."""
+    from sqlalchemy.exc import IntegrityError
+    from sqlalchemy.exc import IntegrityError
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
         raise HTTPException(404, "Producto no encontrado")
     for k, v in data.model_dump(exclude_unset=True).items():
         setattr(p, k, v)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(400, "El código o código de barras ya está en uso")
     return to_product_out(p)
 
 @router.delete("/{product_id}")
 def deactivate_product(product_id: int, db: Session = Depends(get_db)):
+    """Desactiva un producto (borrado lógico) sin eliminarlo de la base de datos."""
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
         raise HTTPException(404, "Producto no encontrado")
@@ -133,6 +155,8 @@ def deactivate_product(product_id: int, db: Session = Depends(get_db)):
 
 @router.post("/{product_id}/reactivate")
 def reactivate_product(product_id: int, db: Session = Depends(get_db)):
+    """Reactivar un producto previamente desactivado."""
+    p = db.query(Product).filter(Product.id == product_id).first()
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
         raise HTTPException(404, "Producto no encontrado")
@@ -142,6 +166,8 @@ def reactivate_product(product_id: int, db: Session = Depends(get_db)):
 
 @router.post("/categories")
 def create_category(data: CategoryCreate, db: Session = Depends(get_db)):
+    """Crea una nueva categoría o subcategoría."""
+    c = Category(**data.model_dump())
     c = Category(**data.model_dump())
     db.add(c)
     db.commit()

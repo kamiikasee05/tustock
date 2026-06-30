@@ -1,9 +1,12 @@
+"""Modelos de ventas y sus items."""
+
 from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone, date
 from database import Base
 
 class Sale(Base):
+    """Venta realizada con fecha, total, descuento, método de pago y cliente opcional."""
     __tablename__ = "sales"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -21,6 +24,7 @@ class Sale(Base):
     customer = relationship("Customer")
 
 class SaleItem(Base):
+    """Producto individual dentro de una venta con cantidad, precio unitario y subtotal."""
     __tablename__ = "sale_items"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

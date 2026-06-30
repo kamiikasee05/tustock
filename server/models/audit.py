@@ -1,9 +1,12 @@
+"""Modelos de auditorías de stock y sus items de conteo."""
+
 from sqlalchemy import Column, Integer, String, Float, Date, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone, date
 from database import Base
 
 class StockAudit(Base):
+    """Auditoría de inventario con fecha, estado (draft/in_progress/completed) y responsable."""
     __tablename__ = "stock_audits"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -17,6 +20,7 @@ class StockAudit(Base):
     items = relationship("AuditItem", back_populates="audit", cascade="all, delete-orphan")
 
 class AuditItem(Base):
+    """Conteo individual de un producto dentro de una auditoría, con diferencia teórico vs real."""
     __tablename__ = "audit_items"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

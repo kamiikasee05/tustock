@@ -1,3 +1,5 @@
+"""Gestión de presupuestos: creación, aprobación y rechazo."""
+
 import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -11,6 +13,7 @@ from models.stock import CurrentStock, StockMovement
 router = APIRouter(prefix="/api/budgets", tags=["budgets"])
 
 class BudgetItem(BaseModel):
+    """Producto individual dentro de un presupuesto."""
     product_id: int
     code: str
     name: str
@@ -18,11 +21,13 @@ class BudgetItem(BaseModel):
     unit_price: float = Field(..., ge=0)
 
 class BudgetCreate(BaseModel):
+    """Datos para crear un nuevo presupuesto con sus items."""
     customer_name: str | None = Field(default=None, max_length=200)
     items: list[BudgetItem]
 
 @router.get("")
 def list_budgets(db: Session = Depends(get_db), status: str = "pending"):
+    """Lista los presupuestos filtrados por estado (pending, approved, rejected)."""
     budgets = db.query(Budget).filter(Budget.status == status).order_by(Budget.created_at.desc()).all()
     return [
         {
@@ -35,6 +40,7 @@ def list_budgets(db: Session = Depends(get_db), status: str = "pending"):
 
 @router.post("")
 def create_budget(data: BudgetCreate, db: Session = Depends(get_db)):
+    """Crea un nuevo presupuesto con items y calcula el total automáticamente."""
     items_dict = [item.model_dump() for item in data.items]
     total = sum(item.quantity * item.unit_price for item in data.items)
 
@@ -46,6 +52,7 @@ def create_budget(data: BudgetCreate, db: Session = Depends(get_db)):
 
 @router.post("/{budget_id}/approve")
 def approve(budget_id: int, db: Session = Depends(get_db)):
+    """Aprueba un presupuesto, genera una venta automática y descuenta stock."""
     b = db.query(Budget).filter(Budget.id == budget_id).first()
     if not b:
         raise HTTPException(404, "Presupuesto no encontrado")
@@ -87,6 +94,7 @@ def approve(budget_id: int, db: Session = Depends(get_db)):
 
 @router.post("/{budget_id}/reject")
 def reject(budget_id: int, db: Session = Depends(get_db)):
+    """Rechaza un presupuesto sin generar venta."""
     b = db.query(Budget).filter(Budget.id == budget_id).first()
     if not b:
         raise HTTPException(404, "Presupuesto no encontrado")

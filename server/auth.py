@@ -1,20 +1,14 @@
+"""Autenticación mediante token Bearer para proteger los endpoints."""
+
 from fastapi import Request, HTTPException
 from config import TUSTOCK_TOKEN
 
 async def verify_token(request: Request):
-    token = None
+    """Valida el token Bearer del header Authorization contra TUSTOCK_TOKEN."""
     auth_header = request.headers.get("Authorization", "")
-
-    if auth_header.startswith("Bearer "):
-        token = auth_header[7:]
-
-    if not token:
-        token = request.query_params.get("token")
-
-    if not token:
-        token = request.headers.get("X-TUSTOCK-Token")
-
-    if not token or token != TUSTOCK_TOKEN:
-        raise HTTPException(status_code=401, detail="Token invalido o faltante")
-
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido o faltante")
+    token = auth_header[7:]
+    if token != TUSTOCK_TOKEN:
+        raise HTTPException(status_code=401, detail="Token inválido o faltante")
     return True

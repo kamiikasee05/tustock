@@ -1,8 +1,11 @@
+"""Modelo de pedidos pendientes realizados por vendedores."""
+
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
 from datetime import datetime, timezone
 from database import Base
 
 class PendingOrder(Base):
+    """Pedido pendiente de aprobación con items en JSON y estado (pending/approved/rejected)."""
     __tablename__ = "pending_orders"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

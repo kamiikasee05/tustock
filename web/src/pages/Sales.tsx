@@ -22,10 +22,11 @@ export default function Sales() {
   const [selectedCustomer, setSelectedCustomer] = useState<number | ''>('')
   const [discount, setDiscount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [tab, setTab] = useState<'new' | 'history'>('new')
 
   const loadSales = () => {
-    api.get<Sale[]>('/sales?limit=50').then(setSales)
+    api.get<Sale[]>('/sales?limit=50').then(setSales).catch(() => {})
   }
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export default function Sales() {
       api.get<CustomerBrief[]>('/customers'),
     ])
       .then(([prods, stk, s, c]) => { setProducts(prods); setStock(stk); setSales(s); setCustomers(c) })
+      .catch(() => toast('Error al cargar datos', 'error'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -45,12 +47,13 @@ export default function Sales() {
       toast(`Código no encontrado: ${code}`, 'error')
       return
     }
-    const existing = cart.find(i => i.product_id === prod.id)
-    if (existing) {
-      setCart(cart.map(i => i.product_id === prod.id ? { ...i, quantity: i.quantity + 1 } : i))
-    } else {
-      setCart([...cart, { product_id: prod.id, code: prod.code, name: prod.name, quantity: 1, unit_price: prod.selling_price }])
-    }
+    setCart(prev => {
+      const existing = prev.find(i => i.product_id === prod.id)
+      if (existing) {
+        return prev.map(i => i.product_id === prod.id ? { ...i, quantity: i.quantity + 1 } : i)
+      }
+      return [...prev, { product_id: prod.id, code: prod.code, name: prod.name, quantity: 1, unit_price: prod.selling_price }]
+    })
     setInputCode('')
   }
 
@@ -60,6 +63,7 @@ export default function Sales() {
   const completeSale = async () => {
     if (cart.length === 0) return toast('Agregá productos al carrito', 'error')
     if (paymentMethod === 'fiado' && selectedCustomer === '') return toast('Seleccioná un cliente para vender fiado', 'error')
+    setSubmitting(true)
     try {
       const result = await api.post<any>('/sales', {
         items: cart.map(i => ({ product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price })),
@@ -76,6 +80,8 @@ export default function Sales() {
       api.get<StockItem[]>('/stock').then(setStock)
     } catch (e: any) {
       toast('Error: ' + e.message, 'error')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -193,14 +199,15 @@ export default function Sales() {
               <button
                 onClick={completeSale}
                 disabled={cart.length === 0}
+                disabled={submitting}
                 style={{
-                  marginTop: 20, width: '100%', padding: '14px',
-                  background: cart.length === 0 ? 'var(--border)' : 'var(--success)',
+                  padding: '14px',
+                  background: cart.length === 0 || submitting ? 'var(--border)' : 'var(--success)',
                   color: 'white', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700,
-                  cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
+                  cursor: cart.length === 0 || submitting ? 'not-allowed' : 'pointer',
                 }}
               >
-                Cobrar ${total.toFixed(2)}
+                {submitting ? 'Procesando...' : `Cobrar ${total.toFixed(2)}`}
               </button>
             </div>
           </div>

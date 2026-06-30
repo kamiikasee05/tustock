@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+"""Consulta y registro de ventas, items y resúmenes diarios."""
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import func
 from datetime import date, datetime, timezone
 from database import get_db
 from models.sale import Sale, SaleItem
@@ -12,10 +13,16 @@ from schemas import SaleCreate, SaleItemData
 router = APIRouter(prefix="/api/sales", tags=["sales"])
 
 @router.get("")
-def list_sales(db: Session = Depends(get_db), sale_date: str = None, limit: int = 100):
+def list_sales(db: Session = Depends(get_db), sale_date: str = Query(default=None), limit: int = 100):
+    """Lista las ventas con filtro opcional de fecha, ordenadas por fecha descendente."""
     q = db.query(Sale).options(selectinload(Sale.items), selectinload(Sale.customer))
     if sale_date:
-        q = q.filter(Sale.sale_date == sale_date)
+        from datetime import date as dt_date
+        try:
+            parsed = dt_date.fromisoformat(sale_date)
+        except ValueError:
+            raise HTTPException(400, "Formato de fecha inválido. Usá YYYY-MM-DD")
+        q = q.filter(Sale.sale_date == parsed)
     sales = q.order_by(Sale.created_at.desc()).limit(limit).all()
     return [
         {
@@ -37,6 +44,7 @@ def list_sales(db: Session = Depends(get_db), sale_date: str = None, limit: int 
 
 @router.get("/{sale_id}")
 def get_sale(sale_id: int, db: Session = Depends(get_db)):
+    """Obtiene una venta específica con todos sus items y datos del cliente."""
     sale = db.query(Sale).options(selectinload(Sale.customer)).filter(Sale.id == sale_id).first()
     if not sale:
         raise HTTPException(404, "Venta no encontrada")
@@ -64,6 +72,7 @@ def get_sale(sale_id: int, db: Session = Depends(get_db)):
 
 @router.post("")
 def create_sale(data: SaleCreate, db: Session = Depends(get_db)):
+    """Registra una nueva venta, descuenta stock, y crea deuda si es fiado."""
     subtotal = sum(item.quantity * item.unit_price for item in data.items)
     total = subtotal - data.discount
 
@@ -128,8 +137,9 @@ def create_sale(data: SaleCreate, db: Session = Depends(get_db)):
 
 @router.get("/today/summary")
 def today_summary(db: Session = Depends(get_db)):
+    """Resumen de ventas del día actual: total, cantidad, items y ticket promedio."""
     today = date.today()
-    sales = db.query(Sale).filter(Sale.sale_date == today).all()
+    sales = db.query(Sale).options(selectinload(Sale.items)).filter(Sale.sale_date == today).all()
     total = sum(s.total for s in sales)
     count = len(sales)
     items = sum(len(s.items) for s in sales)
