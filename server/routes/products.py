@@ -86,26 +86,6 @@ def generate_product_barcode(product_id: int, db: Session = Depends(get_db)):
             return {"barcode": code}
     raise HTTPException(500, "No se pudo generar un codigo unico")
 
-@router.get("/{product_id}/barcode.png")
-def barcode_image(product_id: int, db: Session = Depends(get_db)):
-    from io import BytesIO
-    import barcode
-    from barcode.writer import ImageWriter
-    from fastapi.responses import Response
-
-    p = db.query(Product).filter(Product.id == product_id).first()
-    if not p:
-        raise HTTPException(404, "Producto no encontrado")
-    code = p.barcode or p.code
-    try:
-        Code128 = barcode.get_barcode_class("code128")
-        buf = BytesIO()
-        Code128(code, writer=ImageWriter()).write(buf)
-        buf.seek(0)
-        return Response(content=buf.getvalue(), media_type="image/png")
-    except:
-        raise HTTPException(400, "No se pudo generar la imagen del codigo")
-
 @router.get("/alerts/low-stock")
 def low_stock_alerts(db: Session = Depends(get_db)):
     return get_low_stock(db)

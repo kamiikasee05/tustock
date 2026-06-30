@@ -257,7 +257,7 @@ export default function Products() {
                   <td style={{ ...td, fontSize: 12 }}>
                     {p.barcode ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <img src={`/api/products/${p.id}/barcode.png`} alt={p.barcode} style={{ height: 28 }} />
+                        <img src={`/api/products/${p.id}/barcode.png`} alt={p.barcode} style={{ height: 60 }} />
                         <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{p.barcode}</span>
                       </div>
                     ) : (

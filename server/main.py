@@ -4,10 +4,13 @@ from pathlib import Path
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from database import init_db
+from fastapi.responses import FileResponse, Response
+from fastapi import HTTPException
+from database import init_db, get_db
 from config import API_HOST, API_PORT, WEB_DIR, CORS_ORIGINS
 from auth import verify_token
+from sqlalchemy.orm import Session
+from models.product import Product
 
 app = FastAPI(
     title="TUSTOCK",
@@ -79,6 +82,56 @@ from routes.vendors import router as vendors_router
 from routes.pending_orders import router as pending_orders_router
 from routes.customers import router as customers_router
 from routes.budgets import router as budgets_router
+
+@app.get("/api/products/{product_id}/barcode.png")
+def public_barcode_image(product_id: int, db: Session = Depends(get_db)):
+    from io import BytesIO
+    import barcode
+    from barcode.writer import ImageWriter
+    from PIL import Image, ImageDraw, ImageFont
+    p = db.query(Product).filter(Product.id == product_id).first()
+    if not p:
+        raise HTTPException(404, "Producto no encontrado")
+    code = p.barcode or p.code
+    try:
+        Code128 = barcode.get_barcode_class("code128")
+        writer = ImageWriter()
+        bc = Code128(code, writer=writer).render()
+
+        draw = ImageDraw.Draw(bc)
+        try:
+            font = ImageFont.truetype("segoeui.ttf", 16)
+            font_price = ImageFont.truetype("segoeui.ttf", 20)
+        except:
+            font = ImageFont.load_default()
+            font_price = font
+
+        name = p.name
+        price = f"${p.selling_price:,.0f}"
+        line_h = 22
+        padding = 16
+
+        bc_w, bc_h = bc.size
+        total_h = bc_h + line_h * 2 + padding
+
+        label = Image.new("RGB", (bc_w, total_h), "white")
+        label.paste(bc, (0, 0))
+
+        draw = ImageDraw.Draw(label)
+        name_bbox = draw.textbbox((0, 0), name, font=font)
+        name_w = name_bbox[2] - name_bbox[0]
+        price_bbox = draw.textbbox((0, 0), price, font=font_price)
+        price_w = price_bbox[2] - price_bbox[0]
+
+        draw.text(((bc_w - name_w) // 2, bc_h + 2), name, fill="black", font=font)
+        draw.text(((bc_w - price_w) // 2, bc_h + line_h + 2), price, fill="black", font=font_price)
+
+        buf = BytesIO()
+        label.save(buf, format="PNG")
+        buf.seek(0)
+        return Response(content=buf.getvalue(), media_type="image/png")
+    except:
+        raise HTTPException(400, "No se pudo generar la imagen del codigo")
 
 app.include_router(products_router, dependencies=[Depends(verify_token)])
 app.include_router(stock_router, dependencies=[Depends(verify_token)])
