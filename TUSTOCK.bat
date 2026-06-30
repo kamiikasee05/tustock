@@ -17,12 +17,14 @@ echo  2. Asistente de configuracion
 echo  3. Crear acceso directo escritorio
 echo  4. Iniciar Monitor Premium
 echo  5. Tunnel (exponer monitor a Internet)
-echo  6. Detener TUSTOCK
-echo  7. Salir
+echo  6. Configurar Monitor Cloud
+echo  7. Detener TUSTOCK
+echo  8. Salir
 echo.
-choice /C 1234567 /N /M "Elegi una opcion: "
-if errorlevel 7 exit /b
-if errorlevel 6 goto stop
+choice /C 12345678 /N /M "Elegi una opcion: "
+if errorlevel 8 exit /b
+if errorlevel 7 goto stop
+if errorlevel 6 goto cloud
 if errorlevel 5 goto tunnel
 if errorlevel 4 goto monitor
 if errorlevel 3 goto shortcut
@@ -47,7 +49,11 @@ call scripts\start-monitor.bat
 exit /b
 
 :tunnel
-call scripts\tunnel-monitor.bat
+python scripts\launcher.py --tunnel
+exit /b
+
+:cloud
+python scripts\launcher.py --cloud-setup
 exit /b
 
 :stop

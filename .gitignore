@@ -46,3 +46,10 @@ logs/
 # Backup
 backups/
 *.backup
+
+# Cloud config (client-specific)
+config/cloud.json
+cloud/*.db
+
+# Setup flag (generated on client PC)
+config/.setup_done

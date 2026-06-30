@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api, DailyReport } from '../api/client'
+import { useLicense } from '../hooks/useLicense'
 
 const TOKEN = 'tustock-local-token'
 const tokenQs = `token=${TOKEN}`
@@ -12,7 +13,17 @@ function downloadExport(path: string) {
   window.open(exportUrl(path), '_blank')
 }
 
+function UpgradeBlock({ feature }: { feature: string }) {
+  return (
+    <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)', background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border)' }}>
+      <p style={{ marginBottom: 8 }}>{feature === 'export' ? 'Exportación' : 'Informes'} no disponible en tu plan actual.</p>
+      <a href="/upgrade" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'underline' }}>Ver planes disponibles →</a>
+    </div>
+  )
+}
+
 export default function Reports() {
+  const { canUse, status } = useLicense()
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [report, setReport] = useState<DailyReport | null>(null)
   const [loading, setLoading] = useState(false)
@@ -55,6 +66,8 @@ export default function Reports() {
     <div>
       <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 20 }}>Informes Diarios</h2>
 
+      {!canUse('reports') ? <UpgradeBlock feature="reports" /> : (
+      <>
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, alignItems: 'flex-end' }}>
         <div>
           <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Fecha</label>
@@ -134,9 +147,11 @@ export default function Reports() {
           </div>
         </div>
       )}
+      </>)}
+      {canUse('reports') && (<hr style={{ margin: '32px 0', border: 'none', borderTop: '1px solid var(--border)' }} />)}
 
-      <hr style={{ margin: '32px 0', border: 'none', borderTop: '1px solid var(--border)' }} />
-
+      {!canUse('export') ? <UpgradeBlock feature="export" /> : (
+      <>
       <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Exportar Reportes</h2>
 
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center' }}>
@@ -184,6 +199,7 @@ export default function Reports() {
           Exportá también el detalle de ventas para que el contador concilie contra los comprobantes emitidos.
         </p>
       </div>
+      </>)}
     </div>
   )
 }

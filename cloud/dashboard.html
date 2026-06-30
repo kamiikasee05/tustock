@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TUSTOCK Monitor Cloud</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f2f5;color:#1a1a2e;padding-bottom:80px}
+.header{background:#1a1a2e;color:#fff;padding:16px 20px;position:sticky;top:0;z-index:10}
+.header h1{font-size:18px;font-weight:700}
+.header .sub{font-size:12px;color:#94a3b8;margin-top:2px}
+.header .refresh{float:right;font-size:12px;color:#94a3b8}
+.header .logout{float:right;font-size:12px;color:#94a3b8;margin-right:16px;cursor:pointer;text-decoration:underline}
+.container{padding:12px}
+
+.row{display:flex;gap:10px;margin-bottom:10px}
+.col{flex:1}
+.card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:10px}
+.card-title{font-size:11px;font-weight:600;text-transform:uppercase;color:#6b7280;margin-bottom:6px;letter-spacing:.5px}
+.card .big{font-size:28px;font-weight:800;line-height:1.2}
+.card .big.green{color:#059669}
+.card .big.blue{color:#2563eb}
+.card .big.orange{color:#d97706}
+.card .big.red{color:#dc2626}
+.card .label{font-size:12px;color:#6b7280;margin-top:2px}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:6px 4px;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;border-bottom:1px solid #e5e7eb}
+td{padding:8px 4px;border-bottom:1px solid #f3f4f6}
+tr:last-child td{border-bottom:none}
+.text-right{text-align:right}
+.text-center{text-align:center}
+.text-muted{color:#6b7280}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.tag.green{background:#d1fae5;color:#065f46}
+.tag.yellow{background:#fef3c7;color:#92400e}
+.tag.red{background:#fee2e2;color:#991b1b}
+.tag.blue{background:#dbeafe;color:#1e40af}
+.tag.gray{background:#f3f4f6;color:#374151}
+
+.empty{text-align:center;padding:24px;color:#9ca3af;font-size:13px}
+
+.login-container{display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
+.login-card{background:#fff;border-radius:16px;padding:40px;width:100%;max-width:380px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.login-card h1{font-size:22px;margin-bottom:4px;color:#1a1a2e}
+.login-card p{font-size:13px;color:#6b7280;margin-bottom:24px}
+.login-card label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px}
+.login-card input{width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-bottom:16px}
+.login-card button{width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer}
+.login-card button:hover{background:#1d4ed8}
+.login-card .error{color:#dc2626;font-size:13px;margin-bottom:12px;display:none}
+.login-card .register-link{text-align:center;margin-top:16px;font-size:13px;color:#6b7280}
+.login-card .register-link a{color:#2563eb;cursor:pointer;text-decoration:underline}
+
+@media(max-width:480px){
+.header{padding:12px 14px}
+.container{padding:8px}
+.row{flex-direction:column;gap:6px}
+.card{padding:12px;border-radius:10px}
+.card .big{font-size:24px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const TOKEN_KEY = 'tustock_cloud_token';
+const API = '/api';
+
+function fmt(n){return Number(n).toLocaleString('es-AR',{minimumFractionDigits:0})}
+function fmtMoney(n){return '$'+Number(n).toLocaleString('es-AR',{minimumFractionDigits:0})}
+
+function showLogin(){
+document.getElementById('app').innerHTML=`
+<div class="login-container">
+<div class="login-card">
+<h1>TUSTOCK Monitor</h1>
+<p>Accedé al panel de tu negocio</p>
+<div id="login-error" class="error"></div>
+<label>Email</label>
+<input type="email" id="login-email" autofocus>
+<label>Contraseña</label>
+<input type="password" id="login-pass" onkeydown="if(event.key==='Enter')doLogin()">
+<button onclick="doLogin()">Ingresar</button>
+<div class="register-link">¿No tenés cuenta? <a onclick="showRegister()">Registrate</a></div>
+</div>
+</div>`;
+}
+
+function showRegister(){
+document.getElementById('app').innerHTML=`
+<div class="login-container">
+<div class="login-card">
+<h1>Crear cuenta</h1>
+<p>Registrá tu negocio en el Monitor Cloud</p>
+<div id="reg-error" class="error"></div>
+<label>Nombre del negocio</label>
+<input type="text" id="reg-name" autofocus>
+<label>Email</label>
+<input type="email" id="reg-email">
+<label>Contraseña</label>
+<input type="password" id="reg-pass" onkeydown="if(event.key==='Enter')doRegister()">
+<button onclick="doRegister()">Crear cuenta</button>
+<div class="register-link">¿Ya tenés cuenta? <a onclick="showLogin()">Iniciar sesión</a></div>
+</div>
+</div>`;
+}
+
+async function doLogin(){
+const email=document.getElementById('login-email').value.trim();
+const pass=document.getElementById('login-pass').value;
+if(!email||!pass)return;
+try{
+const r=await fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+if(!r.ok){const e=await r.json();document.getElementById('login-error').style.display='block';document.getElementById('login-error').textContent=e.detail||'Error';return}
+const d=await r.json();
+localStorage.setItem(TOKEN_KEY,d.token);
+showDashboard();
+}catch(e){document.getElementById('login-error').style.display='block';document.getElementById('login-error').textContent='Error de conexión'}
+}
+
+async function doRegister(){
+const name=document.getElementById('reg-name').value.trim();
+const email=document.getElementById('reg-email').value.trim();
+const pass=document.getElementById('reg-pass').value;
+if(!name||!email||!pass)return;
+try{
+const r=await fetch(API+'/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password:pass})});
+if(!r.ok){const e=await r.json();document.getElementById('reg-error').style.display='block';document.getElementById('reg-error').textContent=e.detail||'Error';return}
+const d=await r.json();
+alert('Cuenta creada! Tu API key es: '+d.api_key+'\n\nGuardala para configurar el agente local.');
+showLogin();
+}catch(e){document.getElementById('reg-error').style.display='block';document.getElementById('reg-error').textContent='Error de conexión'}
+}
+
+function logout(){
+localStorage.removeItem(TOKEN_KEY);
+showLogin();
+}
+
+async function loadMetrics(){
+const token=localStorage.getItem(TOKEN_KEY);
+if(!token){showLogin();return}
+try{
+const r=await fetch(API+'/metrics',{headers:{'Authorization':'Bearer '+token}});
+if(r.status===401){logout();return}
+const d=await r.json();
+renderMetrics(d);
+}catch(e){document.getElementById('dash-content').innerHTML='<div class="empty" style="padding:60px">Error de conexión. Reintentando...</div>'}
+}
+
+function renderMetrics(d){
+const c=document.getElementById('dash-content');
+if(!d.has_data){
+c.innerHTML='<div class="card"><div class="empty" style="padding:40px"><strong>Sin datos aún</strong><br><br>Configurá el agente local en tu PC para comenzar a recibir métricas.<br><br>Tu API key es: <code style="background:#f3f4f6;padding:4px 8px;border-radius:4px;font-size:12px">'+localStorage.getItem('tustock_api_key')+'</code></div></div>';
+return;
+}
+const data=d.data;
+const s=data.sales_today||{};
+let html='';
+
+html+=`<div class="row">`;
+html+=`<div class="col"><div class="card"><div class="card-title">Ventas Hoy</div><div class="big green">${fmtMoney(s.total||0)}</div><div class="label">${s.count||0} transacciones · ${s.items_sold||0} items</div></div></div>`;
+html+=`<div class="col"><div class="card"><div class="card-title">Ticket Prom.</div><div class="big blue">${fmtMoney((s.count||0)>0?s.total/s.count:0)}</div><div class="label">por venta</div></div></div>`;
+html+=`</div>`;
+
+if(data.by_method&&data.by_method.length){
+html+=`<div class="card"><div class="card-title">Métodos de Pago Hoy</div><table><tr><th>Método</th><th class="text-center">Ventas</th><th class="text-right">Total</th></tr>`;
+for(const m of data.by_method){
+const tag=m.method==='efectivo'?'green':m.method==='tarjeta'?'blue':m.method==='transferencia'?'yellow':m.method==='fiado'?'red':'gray';
+html+=`<tr><td><span class="tag ${tag}">${m.method||'sin método'}</span></td><td class="text-center">${m.count}</td><td class="text-right">${fmtMoney(m.total)}</td></tr>`;
+}
+html+=`</table></div>`;
+}
+
+if(data.low_stock&&data.low_stock.length){
+html+=`<div class="card"><div class="card-title">⚠️ Stock Bajo</div><table><tr><th>Producto</th><th class="text-center">Actual</th><th class="text-center">Mín</th></tr>`;
+for(const l of data.low_stock){
+const cls=l.current===0?'red':l.current<=l.min_stock?'orange':'';
+html+=`<tr><td>${l.name}</td><td class="text-center"><strong class="${cls}">${l.current}</strong></td><td class="text-center text-muted">${l.min_stock}</td></tr>`;
+}
+html+=`</table></div>`;
+}
+
+if(data.top_products&&data.top_products.length){
+html+=`<div class="card"><div class="card-title">🏆 Más Vendidos (7 días)</div><table><tr><th>Producto</th><th class="text-center">Cant.</th><th class="text-right">Total</th></tr>`;
+for(const t of data.top_products){
+html+=`<tr><td>${t.name}</td><td class="text-center">${t.quantity}</td><td class="text-right">${fmtMoney(t.total)}</td></tr>`;
+}
+html+=`</table></div>`;
+}
+
+if(data.debtors&&data.debtors.length){
+html+=`<div class="card"><div class="card-title">💰 Clientes con Deuda</div><table><tr><th>Cliente</th><th class="text-right">Saldo</th></tr>`;
+for(const c of data.debtors){
+html+=`<tr><td>${c.name}</td><td class="text-right" style="color:#dc2626;font-weight:600">${fmtMoney(c.balance)}</td></tr>`;
+}
+html+=`</table></div>`;
+}
+
+if((!data.low_stock||!data.low_stock.length)&&(!data.top_products||!data.top_products.length)&&(!data.debtors||!data.debtors.length)&&(!data.by_method||!data.by_method.length)){
+html+=`<div class="empty">Sin novedades para mostrar</div>`;
+}
+
+html+=`<div class="card" style="text-align:center;font-size:11px;color:#9ca3af">Última actualización: ${d.last_push ? new Date(d.last_push).toLocaleString('es-AR') : '-'}</div>`;
+c.innerHTML=html;
+}
+
+function showDashboard(){
+const token=localStorage.getItem(TOKEN_KEY);
+if(!token){showLogin();return}
+document.getElementById('app').innerHTML=`
+<div class="header">
+<div class="refresh" id="timer">actualizando en 30s</div>
+<span class="logout" onclick="logout()">Salir</span>
+<h1>TUSTOCK</h1>
+<div class="sub" id="subtitle">Monitor Cloud — Conectando...</div>
+</div>
+<div class="container" id="dash-content">
+<div style="text-align:center;padding:40px;color:#9ca3af;font-size:14px">Cargando...</div>
+</div>`;
+loadMetrics();
+let countdown=30;
+if(window._timer)clearInterval(window._timer);
+window._timer=setInterval(()=>{
+countdown--;
+const t=document.getElementById('timer');
+if(t)t.textContent='actualizando en '+countdown+'s';
+if(countdown<=0){countdown=30;loadMetrics()}
+},1000);
+}
+
+const token=localStorage.getItem(TOKEN_KEY);
+if(token){showDashboard();}else{showLogin();}
+</script>
+</body>
+</html>

@@ -10,6 +10,8 @@ import Pedidos from './pages/Pedidos'
 import Customers from './pages/Customers'
 import Presupuestos from './pages/Presupuestos'
 import Vendors from './pages/Vendors'
+import Upgrade from './pages/Upgrade'
+import Settings from './pages/Settings'
 
 export default function App() {
   return (
@@ -25,6 +27,8 @@ export default function App() {
         <Route path="/audits" element={<Audits />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/scanner" element={<ScannerConnect />} />
+        <Route path="/upgrade" element={<Upgrade />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </Layout>
   )

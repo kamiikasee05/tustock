@@ -7,10 +7,8 @@ inicio del servidor y monitor en un solo comando.
 import os
 import sys
 import subprocess
-import json
 import webbrowser
 import time
-import signal
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent.parent
@@ -113,37 +111,40 @@ def setup_autostart():
     else:
         print("  No se pudo configurar (ejecutá como Administrador manualmente)")
 
-def check_monitor_enabled():
-    """Verifica si el monitor premium está habilitado para esta instalación."""
-    lic_path = CONFIG / "license.json"
-    if lic_path.exists():
-        try:
-            lic = json.loads(lic_path.read_text("utf-8-sig"))
-            if lic.get("monitor", False):
-                return True
-        except Exception:
-            pass
-    return False
+def _db_session():
+    from database import SessionLocal
+    return SessionLocal()
 
-def enable_monitor():
-    """Habilita el monitor premium (para clienta premium)."""
-    lic_path = CONFIG / "license.json"
-    lic = {"monitor": True, "plan": "premium", "since": time.strftime("%Y-%m-%d")}
-    if lic_path.exists():
+def get_db_license_status():
+    """Lee el estado de licencia directamente de la base de datos."""
+    try:
+        import sys
+        sys.path.insert(0, str(SERVER))
+        from services.license_service import get_license_status
+        db = _db_session()
         try:
-            existing = json.loads(lic_path.read_text("utf-8"))
-            existing["monitor"] = True
-            existing["plan"] = "premium"
-            lic = existing
-        except Exception:
-            pass
-    lic_path.write_text(json.dumps(lic, indent=2), "utf-8-sig")
-    print("  Monitor Premium habilitado")
+            result = get_license_status(db)
+            return result
+        finally:
+            db.close()
+    except Exception:
+        return {"monitor_enabled": False, "plan": "trial"}
+
+def check_monitor_enabled():
+    status = get_db_license_status()
+    return status.get("monitor_enabled", False)
+
+def get_plan_name():
+    status = get_db_license_status()
+    return status.get("plan_name", "Trial")
+
+def is_trial():
+    status = get_db_license_status()
+    return status.get("trial", False) and not status.get("expired", True)
 
 def start_monitor():
     title("Monitor Premium")
     pid_path = SERVER / "logs" / "monitor.pid"
-    # verificar si ya corre
     if pid_path.exists():
         try:
             pid = int(pid_path.read_text("utf-8").strip())
@@ -163,9 +164,71 @@ def start_monitor():
     pid_path.write_text(str(proc.pid), "utf-8")
     print(f"  Monitor iniciado (PID {proc.pid})")
     print(f"  Local: http://localhost:8091")
-    print(f"  Para exponer a Internet:")
-    print(f"    scripts\\tunnel-monitor.bat")
+    print(f"  Para exponer a Internet, despues ejecuta: TUSTOCK.bat (opcion 5)")
     return proc
+
+def find_cloudflared():
+    """Busca cloudflared.exe en PATH, scripts/ o raiz."""
+    import shutil
+    exe = shutil.which("cloudflared")
+    if exe:
+        return Path(exe)
+    for d in [BASE / "scripts", BASE]:
+        p = d / "cloudflared.exe"
+        if p.exists():
+            return p
+    return None
+
+def download_cloudflared():
+    """Descarga cloudflared.exe desde GitHub."""
+    url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
+    dest = BASE / "scripts" / "cloudflared.exe"
+    print(f"  Descargando cloudflared desde GitHub...")
+    import urllib.request
+    try:
+        urllib.request.urlretrieve(url, dest)
+        print(f"  Descargado: cloudflared.exe ({dest.stat().st_size / 1024:.0f} KB)")
+        return dest
+    except Exception as e:
+        print(f"  [ERROR] No se pudo descargar: {e}")
+        return None
+
+def start_tunnel():
+    """Inicia Cloudflare Tunnel exponiendo el monitor a Internet."""
+    title("Tunnel Cloudflare")
+    cloud = find_cloudflared()
+    if not cloud:
+        if ask("Descargar cloudflared.exe de GitHub?"):
+            cloud = download_cloudflared()
+        if not cloud:
+            print()
+            print("Descargalo manualmente desde:")
+            print("  https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/")
+            print("Y guardalo en scripts/cloudflared.exe")
+            input("Presioná Enter para volver...")
+            return 1
+    print(f"  Usando: {cloud}")
+    import urllib.request
+    try:
+        r = urllib.request.urlopen("http://localhost:8091/api/health", timeout=3)
+        if r.status != 200:
+            raise Exception("status != 200")
+    except Exception:
+        print("  [ERROR] El monitor no esta corriendo en http://localhost:8091")
+        print("  Inicialo primero desde el menu (opcion 4)")
+        input("Presioná Enter para volver...")
+        return 1
+    print()
+    print("  Tunnel iniciado. Abrí esta URL desde el celular:")
+    print()
+    print("  https://XXXX.trycloudflare.com")
+    print()
+    print("  (La URL completa aparece abajo)")
+    print()
+    print("  Dejá esta ventana abierta. Para cerrar: Ctrl+C")
+    print()
+    subprocess.run([str(cloud), "tunnel", "--url", "http://localhost:8091"])
+    return 0
 
 def start_server():
     title("Iniciando TUSTOCK")
@@ -203,21 +266,101 @@ def start_server():
             if i == 9:
                 print("  [AVISO] El servidor tardó en responder, pero debería funcionar")
 
-def show_summary(monitor_proc=None):
+def start_cloud_agent():
+    """Inicia el agente cloud en segundo plano si está configurado."""
+    cfg = BASE / "config" / "cloud.json"
+    if not cfg.exists():
+        return None
+    import json
+    try:
+        config = json.loads(cfg.read_text("utf-8"))
+        if not config.get("api_url") or not config.get("api_key"):
+            return None
+    except Exception:
+        return None
+
+    pid_path = SERVER / "logs" / "cloud_agent.pid"
+    if pid_path.exists():
+        try:
+            pid = int(pid_path.read_text("utf-8").strip())
+            r = subprocess.run(f'tasklist /FI "PID eq {pid}"', shell=True, capture_output=True, text=True)
+            if "python" in r.stdout.lower():
+                return pid
+        except Exception:
+            pass
+
+    proc = subprocess.Popen(
+        [sys.executable, str(BASE / "cloud" / "agent.py")],
+        cwd=str(BASE),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0,
+    )
+    pid_path.write_text(str(proc.pid), "utf-8")
+    print(f"  Cloud Agent iniciado (PID {proc.pid})")
+    return proc
+
+
+def cloud_setup_wizard():
+    """Asistente para configurar el Monitor Cloud."""
+    title("Configurar Monitor Cloud")
+    import json
+    cfg_path = BASE / "config" / "cloud.json"
+    print("Necesitás:")
+    print("  1. Una cuenta en tustock-monitor.com (o la URL de tu cloud)")
+    print("  2. La API key que te dió el registro")
+    print()
+    api_url = input("URL del Monitor Cloud: ").strip().rstrip("/")
+    if not api_url:
+        api_url = "https://tustock-monitor.com"
+    api_key = input("API key del negocio: ").strip()
+    if not api_key:
+        print("Configuración cancelada.")
+        return
+    cfg_path.write_text(json.dumps({"api_url": api_url, "api_key": api_key}, indent=2), "utf-8")
+    print(f"Guardado en {cfg_path}")
+    if ask("Iniciar agente ahora?"):
+        start_cloud_agent()
+    print("El agente se inicia automáticamente con TUSTOCK.")
+
+
+def show_summary(monitor_proc=None, cloud_agent_proc=None):
     title("TUSTOCK corriendo")
     print(f"  Admin:    http://localhost:8090")
     print(f"  Monitor:  http://localhost:8091")
+    cloud_cfg = BASE / "config" / "cloud.json"
+    if cloud_cfg.exists():
+        import json
+        try:
+            cfg = json.loads(cloud_cfg.read_text("utf-8"))
+            print(f"  Cloud:    {cfg.get('api_url', '?')}")
+        except Exception:
+            pass
     print()
     print(f"  Para detener: scripts\\stop.bat")
     if monitor_proc:
-        print(f"  Tunnel:      scripts\\tunnel-monitor.bat")
+        print(f"  Tunnel:      TUSTOCK.bat (opcion 5)")
+    if cloud_agent_proc:
+        print(f"  Cloud Agent: activo")
     print()
     webbrowser.open("http://localhost:8090")
 
 
 def main():
     quick = "--quick" in sys.argv
+    tunnel = "--tunnel" in sys.argv
     os.chdir(str(BASE))
+
+    if tunnel:
+        sys.exit(start_tunnel())
+
+    if "--cloud-setup" in sys.argv:
+        cloud_setup_wizard()
+        return
+
+    if "--cloud-agent" in sys.argv:
+        start_cloud_agent()
+        return
 
     if not quick:
         print(c("=" * 50))
@@ -235,7 +378,6 @@ def main():
     if first_run or quick:
         check_dependencies()
 
-    monitor_enabled = check_monitor_enabled()
     monitor_proc = None
 
     if first_run and not quick:
@@ -245,13 +387,14 @@ def main():
         setup_autostart()
         print()
 
-        if ask("Habilitar Monitor Premium (acceso remoto desde el celular)?"):
-            enable_monitor()
-            monitor_enabled = True
-            if ask("Iniciar el monitor ahora?"):
-                monitor_proc = start_monitor()
-        else:
-            print("  Podés habilitarlo después editando config\\license.json")
+        print(c("Sobre el plan:"))
+        print(c("  Trial: 30 días, hasta 50 productos, sin informes ni exportación"))
+        print(c("  Básico: $80.000 único, sistema completo"))
+        print(c("  Pro:    $160.000 único, incluye monitor remoto y backup"))
+        print(c("  Suscripción: $8.000/mes, todo incluido"))
+        print()
+        print(c("Para activar una licencia, entrá a Ajustes > Licencia en el sistema."))
+        print()
 
         (BASE / "config" / ".setup_done").touch()
 
@@ -264,15 +407,16 @@ def main():
             input("Presioná Enter para salir...")
             sys.exit(0)
     else:
-        if not quick and os.getenv("TUSTOCK_NO_MONITOR") != "1" and monitor_enabled:
-            if ask("Iniciar Monitor Premium?"):
+        status = get_db_license_status()
+        if status.get("monitor_enabled") and os.getenv("TUSTOCK_NO_MONITOR") != "1":
+            if quick:
                 monitor_proc = start_monitor()
-        elif quick and monitor_enabled:
-            if (CONFIG / ".monitor_auto").exists():
+            elif ask("Iniciar Monitor Premium?"):
                 monitor_proc = start_monitor()
 
+    cloud_agent_proc = start_cloud_agent() if (BASE / "config" / "cloud.json").exists() else None
     start_server()
-    show_summary(monitor_proc)
+    show_summary(monitor_proc, cloud_agent_proc)
 
     if not quick:
         print()

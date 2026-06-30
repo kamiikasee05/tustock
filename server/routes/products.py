@@ -103,12 +103,10 @@ def low_stock_alerts(db: Session = Depends(get_db)):
 def list_categories(db: Session = Depends(get_db)):
     """Obtiene la lista completa de categorías."""
     return db.query(Category).all()
-    return db.query(Category).all()
 
 @router.get("/{product_id}")
 def get_product(product_id: int, db: Session = Depends(get_db)):
     """Obtiene un producto por su ID con toda su información."""
-    p = db.query(Product).filter(Product.id == product_id).first()
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
         raise HTTPException(404, "Producto no encontrado")
@@ -116,7 +114,11 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 
 @router.post("")
 def create_product(data: ProductCreate, db: Session = Depends(get_db)):
-    """Crea un nuevo producto validando que el código no esté duplicado."""
+    """Crea un nuevo producto validando que el código no esté duplicado y el plan lo permita."""
+    from services.license_service import can_add_product
+    ok, msg = can_add_product(db)
+    if not ok:
+        raise HTTPException(403, msg)
     existing = db.query(Product).filter(Product.code == data.code).first()
     if existing:
         raise HTTPException(400, "El codigo ya esta en uso")
@@ -129,7 +131,6 @@ def create_product(data: ProductCreate, db: Session = Depends(get_db)):
 @router.put("/{product_id}")
 def update_product(product_id: int, data: ProductUpdate, db: Session = Depends(get_db)):
     """Actualiza los campos enviados de un producto existente."""
-    from sqlalchemy.exc import IntegrityError
     from sqlalchemy.exc import IntegrityError
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
@@ -167,7 +168,6 @@ def reactivate_product(product_id: int, db: Session = Depends(get_db)):
 @router.post("/categories")
 def create_category(data: CategoryCreate, db: Session = Depends(get_db)):
     """Crea una nueva categoría o subcategoría."""
-    c = Category(**data.model_dump())
     c = Category(**data.model_dump())
     db.add(c)
     db.commit()

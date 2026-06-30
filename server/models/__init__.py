@@ -9,3 +9,4 @@ from .vendor import Vendor
 from .pending_order import PendingOrder
 from .customer import Customer, CustomerTransaction
 from .budget import Budget
+from .license import License

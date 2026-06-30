@@ -1,0 +1,189 @@
+"""Monitor Cloud TUSTOCK — API cloud con push, login multiusuario, dashboard.
+
+Recibe datos del agente local (push), los almacena por negocio,
+y los sirve via dashboard web con login JWT.
+"""
+
+import hashlib
+import secrets
+import json
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+import jwt
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
+
+from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR
+from models import init_db, get_db, Business, MetricsPush
+
+init_db()
+
+app = FastAPI(title="TUSTOCK Cloud Monitor", version="1.0.0")
+
+
+def _hash_password(password: str) -> str:
+    salt = secrets.token_hex(16)
+    h = hashlib.scrypt(password.encode(), salt=salt.encode(), n=16384, r=8, p=1, dklen=64)
+    return salt + ":" + h.hex()
+
+
+def _verify_password(password: str, stored: str) -> bool:
+    salt, hx = stored.split(":", 1)
+    h = hashlib.scrypt(password.encode(), salt=salt.encode(), n=16384, r=8, p=1, dklen=64)
+    return h.hex() == hx
+
+
+def _create_token(business_id: int, email: str) -> str:
+    payload = {
+        "business_id": business_id,
+        "email": email,
+        "exp": datetime.now(timezone.utc) + timedelta(days=JWT_EXPIRY_DAYS),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def _get_business_from_token(token: str, db: Session) -> Business:
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(401, "Token expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(401, "Token inválido")
+    biz = db.query(Business).filter(Business.id == payload["business_id"], Business.is_active == True).first()
+    if not biz:
+        raise HTTPException(401, "Negocio no encontrado")
+    return biz
+
+
+def _get_current_business(request: Request, db: Session = Depends(get_db)) -> Business:
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        raise HTTPException(401, "Token requerido")
+    return _get_business_from_token(auth[7:], db)
+
+
+@app.get("/api/health")
+def health():
+    return {"status": "ok", "service": "tustock-cloud-monitor", "version": "1.0.0"}
+
+
+@app.post("/api/register")
+def register(data: dict, db: Session = Depends(get_db)):
+    name = data.get("name", "").strip()
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+
+    if not name or not email or not password:
+        raise HTTPException(400, "Faltan campos: name, email, password")
+    if len(password) < 6:
+        raise HTTPException(400, "La contraseña debe tener al menos 6 caracteres")
+    if db.query(Business).filter(Business.email == email).first():
+        raise HTTPException(409, "El email ya está registrado")
+
+    biz = Business(
+        name=name,
+        email=email,
+        password_hash=_hash_password(password),
+        api_key=secrets.token_hex(32),
+    )
+    db.add(biz)
+    db.commit()
+    db.refresh(biz)
+
+    return {
+        "ok": True,
+        "business_id": biz.id,
+        "api_key": biz.api_key,
+        "message": "Registro exitoso. Guardá tu API key para configurar el agente local.",
+    }
+
+
+@app.post("/api/login")
+def login(data: dict, db: Session = Depends(get_db)):
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+
+    if not email or not password:
+        raise HTTPException(400, "Faltan email o contraseña")
+
+    biz = db.query(Business).filter(Business.email == email, Business.is_active == True).first()
+    if not biz or not _verify_password(password, biz.password_hash):
+        raise HTTPException(401, "Email o contraseña incorrectos")
+
+    token = _create_token(biz.id, biz.email)
+    return {"ok": True, "token": token, "business_name": biz.name}
+
+
+@app.post("/api/push")
+def push(data: dict, request: Request, db: Session = Depends(get_db)):
+    api_key = request.headers.get("X-API-Key", "")
+    if not api_key:
+        raise HTTPException(401, "API key requerida")
+
+    biz = db.query(Business).filter(Business.api_key == api_key, Business.is_active == True).first()
+    if not biz:
+        raise HTTPException(401, "API key inválida")
+
+    push = MetricsPush(business_id=biz.id, payload=data)
+    db.add(push)
+    db.commit()
+
+    return {"ok": True, "pushed_at": datetime.now(timezone.utc).isoformat()}
+
+
+@app.get("/api/metrics")
+def metrics(business: Business = Depends(_get_current_business), db: Session = Depends(get_db)):
+    last = db.query(MetricsPush).filter(
+        MetricsPush.business_id == business.id
+    ).order_by(desc(MetricsPush.pushed_at)).first()
+
+    if not last:
+        return {
+            "ok": True,
+            "has_data": False,
+            "message": "El negocio aún no ha enviado datos. Configurá el agente local.",
+            "last_push": None,
+            "data": None,
+        }
+
+    return {
+        "ok": True,
+        "has_data": True,
+        "last_push": last.pushed_at.isoformat() if last.pushed_at else None,
+        "data": last.payload,
+    }
+
+
+@app.get("/api/business")
+def get_business(business: Business = Depends(_get_current_business)):
+    return {
+        "id": business.id,
+        "name": business.name,
+        "email": business.email,
+        "api_key": business.api_key,
+    }
+
+
+@app.get("/api/regenerate-key")
+def regenerate_key(business: Business = Depends(_get_current_business), db: Session = Depends(get_db)):
+    business.api_key = secrets.token_hex(32)
+    db.commit()
+    return {"ok": True, "api_key": business.api_key}
+
+
+@app.get("/")
+def serve_app():
+    file_path = BASE_DIR / "dashboard.html"
+    if not file_path.exists():
+        return HTMLResponse("<h1>Dashboard no encontrado</h1>", status_code=404)
+    html = file_path.read_text("utf-8")
+    return HTMLResponse(html)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host=CLOUD_HOST, port=CLOUD_PORT, log_level="info")

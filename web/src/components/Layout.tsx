@@ -1,6 +1,7 @@
 import { ReactNode, useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { api, LowStockItem } from '../api/client'
+import TrialBanner from './TrialBanner'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: '📊' },
@@ -13,6 +14,8 @@ const navItems = [
   { to: '/audits', label: 'Auditorías', icon: '🔍' },
   { to: '/reports', label: 'Informes', icon: '📊' },
   { to: '/scanner', label: 'Scanner', icon: '📱' },
+  { to: '/upgrade', label: 'Planes', icon: '⭐' },
+  { to: '/settings', label: 'Ajustes', icon: '⚙️' },
 ]
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -127,9 +130,12 @@ export default function Layout({ children }: { children: ReactNode }) {
         )}
       </aside>
 
-      <main style={{ flex: 1, padding: 24, overflow: 'auto' }}>
-        {children}
-      </main>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+        <TrialBanner />
+        <main style={{ flex: 1, padding: 24 }}>
+          {children}
+        </main>
+      </div>
     </div>
   )
 }
