@@ -77,7 +77,7 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 - Servidor con SPA fallback para frontend compilado
 - Esquemas Pydantic para validación de datos (schemas.py)
 - **Monitor Premium (Fase 4 adelantada):** Servicio independiente puerto 8091, login propio, dashboard mobile responsive, API read-only. Expuesto vía Cloudflare Tunnel para acceso remoto desde el celular. Solo esta clienta lo tiene.
-- **Monitor Cloud (Fase 5):** API cloud con push del agente local, login multiusuario JWT, dashboard mobile responsive, URL fija. Reemplaza Cloudflare Tunnel. Listo para deploy en Railway/VPS.
+- **Monitor Cloud (Fase 5):** Desplegado en Railway (`tustock.up.railway.app`). API push-based, dashboard mobile responsive, login multiusuario JWT. Agente local (`cloud/agent.py`) pushea métricas cada 30s desde la PC del cliente. URL fija, sin tunnel.
 - **Launcher unificado:** `scripts/launcher.py` — inicia servidor, monitor, tunnel y cloud agent desde un solo punto. `TUSTOCK.bat` con menú interactivo de 8 opciones.
 - **Guía de Usuario PDF** generada automáticamente
 
@@ -90,7 +90,7 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 | Backup en la nube | Pro (planeado) | ❌ No existe | No prometer |
 | Multi-PC / multi-sucursal | Pro (planeado) | ❌ No existe | No prometer |
 | Múltiples perfiles de cajero | Pro (planeado) | ❌ No existe | No prometer |
-| Monitor Cloud (push-based, URL fija) | Pro (planeado) | ✅ Construido | API cloud (`cloud/api.py`), agente local (`cloud/agent.py`), dashboard responsive (`cloud/dashboard.html`). Login multiusuario JWT. Falta deploy en Railway/VPS. |
+| Monitor Cloud (push-based, URL fija) | Pro (planeado) | ✅ Construido y desplegado | `tustock.up.railway.app`. API cloud push-based, agente local, dashboard responsive, login multiusuario JWT. URL fija. |
 | Sistema de licencias | Mencionado | ✅ Construido | `server/models/license.py`, `server/services/license_service.py`, `server/routes/license.py`. Frontend: `useLicense.ts`, `Settings.tsx`, `TrialBanner.tsx`, `Upgrade.tsx` |
 | Trial mode | Mencionado | ✅ Construido | 30 días o 50 productos. Banner visible. Se auto-crea en primer arranque. |
 | Feature gating (tiers) | Mencionado | ✅ Construido | Backend: límite de productos en create, informes y export gateados con 403. Frontend: `UpgradeBlock` en Reports, `TrialBanner` global. |
@@ -142,10 +142,10 @@ PC del cliente                          Cloud (Railway/VPS)
 
 | Componente | Rol | Estado |
 |------------|-----|:------:|
-| `cloud/api.py` | API FastAPI cloud, recibe push, sirve dashboard, login multiusuario | 🔴 No existe |
-| `cloud/dashboard.html` | Dashboard responsive (adaptado del local) | 🔴 No existe |
-| `cloud/agent.py` | Agente local en PC del cliente, pushea datos cada 30s | 🔴 No existe |
-| Despliegue | Railway (tier gratis) o VPS | 🔴 No existe |
+| `cloud/api.py` | API FastAPI cloud, recibe push, sirve dashboard, login multiusuario | ✅ Desplegado en Railway |
+| `cloud/dashboard.html` | Dashboard responsive (adaptado del local) | ✅ En producción |
+| `cloud/agent.py` | Agente local en PC del cliente, pushea datos cada 30s | ✅ Funcionando |
+| Despliegue | Railway (tier gratis) | ✅ `tustock.up.railway.app` |
 
 ### Endpoints del Monitor Local (actual)
 
@@ -185,7 +185,7 @@ PC del cliente                          Cloud (Railway/VPS)
 
 ## 6. FASE ACTUAL DEL ROADMAP
 
-**Estamos en: Post-Fase 0 — Cliente validado y pagando. Auditoría + instalación en local de clienta. Próximo paso: Fase 1 (licencias + trial + feature gating).**
+**Estamos en: Fase 1 y Fase 5 completas. Fase 1 (licencias + trial + feature gating) ✅. Monitor Cloud desplegado. Próximo: integración de pagos (Mercado Pago).**
 
 ### Hitos alcanzados
 
@@ -196,6 +196,7 @@ PC del cliente                          Cloud (Railway/VPS)
 - ✅ Secuencia de WhatsApp para preventa, seguimiento y cierre
 - ✅ **PRIMER CLIENTE: Librería. Pagó $60K entry + $6K/mes suscripción. Sin objeciones.**
 - ✅ **Monitor Premium (Fase 4 adelantada)** implementado y disponible para clienta premium
+- ✅ **Monitor Cloud** implementado, desplegado en Railway (`tustock.up.railway.app`) y funcionando con datos reales
 - ✅ **Validación de mercado COMPLETA** — hay disposición a pagar. Precio validado.
 - ✅ Esquemas Pydantic para validación de datos
 - ✅ Guía de Usuario PDF generada automáticamente
@@ -211,7 +212,7 @@ PC del cliente                          Cloud (Railway/VPS)
 | 🔥 4 | **Integración Mercado Pago** | 🖥 DEV | Para cobrar automáticamente sin intervención humana |
 | 🟡 5 | **Landing page estática** | 🖥 DEV | Para tener presencia web y recibir leads |
 | 🟡 6 | **CRM en Google Sheets** | 🖥 DEV | Para no perder oportunidades de venta |
-| 🟡 5 | **Monitor Cloud (push-based, URL fija)** | 🖥 DEV | Reemplaza Cloudflare Tunnel. Arquitectura híbrida: agente local pushea a API cloud. Login multiusuario. Dominio fijo. |
+| 🟡 5 | **Monitor Cloud (push-based, URL fija)** | 🖥 DEV | **COMPLETO.** Reemplaza Cloudflare Tunnel. Arquitectura híbrida: agente local pushea a API cloud. Login multiusuario. Dominio fijo. Desplegado en Railway. |
 | 🟡 6 | **Landing page estática** | 🖥 DEV | Para tener presencia web y recibir leads |
 | 🟢 7 | **CRM en Google Sheets** | 🖥 DEV | Para no perder oportunidades de venta |
 | 🟢 8 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
@@ -324,7 +325,7 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] CONFIG OPENCODE: opencode.json con agentes dev y ventas, pipeline feature → sales material. (2026-06-30)
 - [feature] TIMESTAMPS: Todos los modelos SQLAlchemy now tienen created_at/updated_at. (2026-06-30)
 - [feature] LAUNCHER UNIFICADO: scripts/launcher.py reemplaza todos los .bat. Inicia servidor, monitor, tunnel, cloud agent. TUSTOCK.bat con menu de 8 opciones. (2026-06-30)
-- [feature] MONITOR CLOUD: API cloud con push del agente local, login multiusuario JWT, dashboard mobile responsive. Listo para deploy en Railway/VPS. (2026-06-30)
+- [feature] MONITOR CLOUD: API cloud con push del agente local, login multiusuario JWT, dashboard mobile responsive. Desplegado en Railway (`tustock.up.railway.app`). (2026-06-30)
 
 ---
 
@@ -348,6 +349,7 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-06-30 | Fase 0 considerada COMPLETA (mercado validado con venta real) | Ventas |
 | 2026-06-30 | Transición a Fase 1: prioridad licencias + trial + feature gating | Ventas |
 | 2026-06-30 | **Monitor Cloud aprobado**: Arquitectura híbrida — agente local pushea datos a API cloud con URL fija. Reemplaza Cloudflare Tunnel. Login multiusuario. Desarrollo en Fase 5. | Ventas + Humano |
+| 2026-06-30 | **Monitor Cloud desplegado en Railway**: `tustock.up.railway.app`. API push-based, agente local funcionando con datos reales, dashboard multiusuario. Clienta premium configurada (`libreria@tustock.com`). | DEV + Humano |
 
 ---
 
