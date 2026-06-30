@@ -71,6 +71,8 @@ export interface Sale {
   cashier: string
   items_count?: number
   created_at: string | null
+  customer_id?: number | null
+  customer_name?: string | null
 }
 
 export interface SaleItem {
@@ -87,6 +89,12 @@ export interface Audit {
   status: string
   created_by: string
   notes: string
+}
+
+export interface CustomerBrief {
+  id: number
+  name: string
+  balance: number
 }
 
 export interface DailyReport {

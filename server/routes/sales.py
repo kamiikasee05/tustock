@@ -5,6 +5,7 @@ from datetime import date, datetime, timezone
 from database import get_db
 from models.sale import Sale, SaleItem
 from models.product import Product
+from models.customer import Customer, CustomerTransaction
 from models.stock import CurrentStock, StockMovement
 from schemas import SaleCreate, SaleItemData
 
@@ -12,7 +13,7 @@ router = APIRouter(prefix="/api/sales", tags=["sales"])
 
 @router.get("")
 def list_sales(db: Session = Depends(get_db), sale_date: str = None, limit: int = 100):
-    q = db.query(Sale).options(selectinload(Sale.items))
+    q = db.query(Sale).options(selectinload(Sale.items), selectinload(Sale.customer))
     if sale_date:
         q = q.filter(Sale.sale_date == sale_date)
     sales = q.order_by(Sale.created_at.desc()).limit(limit).all()
@@ -26,6 +27,8 @@ def list_sales(db: Session = Depends(get_db), sale_date: str = None, limit: int 
             "notes": s.notes,
             "cashier": s.cashier,
             "vendor_id": s.vendor_id,
+            "customer_id": s.customer_id,
+            "customer_name": s.customer.name if s.customer else None,
             "created_at": str(s.created_at) if s.created_at else None,
             "items_count": len(s.items),
         }
@@ -34,7 +37,7 @@ def list_sales(db: Session = Depends(get_db), sale_date: str = None, limit: int 
 
 @router.get("/{sale_id}")
 def get_sale(sale_id: int, db: Session = Depends(get_db)):
-    sale = db.query(Sale).filter(Sale.id == sale_id).first()
+    sale = db.query(Sale).options(selectinload(Sale.customer)).filter(Sale.id == sale_id).first()
     if not sale:
         raise HTTPException(404, "Venta no encontrada")
     return {
@@ -45,6 +48,8 @@ def get_sale(sale_id: int, db: Session = Depends(get_db)):
         "payment_method": sale.payment_method,
         "notes": sale.notes,
         "cashier": sale.cashier,
+        "customer_id": sale.customer_id,
+        "customer_name": sale.customer.name if sale.customer else None,
         "items": [
             {
                 "id": i.id,
@@ -65,6 +70,9 @@ def create_sale(data: SaleCreate, db: Session = Depends(get_db)):
     if total < 0:
         raise HTTPException(400, "El descuento no puede superar el subtotal")
 
+    if data.payment_method == "fiado" and not data.customer_id:
+        raise HTTPException(400, "Seleccioná un cliente para vender fiado")
+
     sale = Sale(
         sale_date=date.today(),
         total=total,
@@ -72,6 +80,7 @@ def create_sale(data: SaleCreate, db: Session = Depends(get_db)):
         payment_method=data.payment_method,
         notes=data.notes,
         cashier=data.cashier,
+        customer_id=data.customer_id,
         created_at=datetime.now(timezone.utc),
     )
     db.add(sale)
@@ -101,6 +110,17 @@ def create_sale(data: SaleCreate, db: Session = Depends(get_db)):
             reference_id=sale.id,
         )
         db.add(movement)
+
+    # Si es fiado, crear deuda automaticamente
+    if data.payment_method == "fiado" and data.customer_id:
+        debt = CustomerTransaction(
+            customer_id=data.customer_id,
+            type="debt",
+            amount=total,
+            sale_id=sale.id,
+            notes=f"Venta #{sale.id} - fiado",
+        )
+        db.add(debt)
 
     db.commit()
     db.refresh(sale)

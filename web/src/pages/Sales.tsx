@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { api, Sale, Product, StockItem } from '../api/client'
+import { api, Sale, Product, StockItem, CustomerBrief } from '../api/client'
 import { useToast } from '../components/Toast'
 
 interface CartItem {
@@ -15,9 +15,11 @@ export default function Sales() {
   const [sales, setSales] = useState<Sale[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [stock, setStock] = useState<StockItem[]>([])
+  const [customers, setCustomers] = useState<CustomerBrief[]>([])
   const [cart, setCart] = useState<CartItem[]>([])
   const [inputCode, setInputCode] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('efectivo')
+  const [selectedCustomer, setSelectedCustomer] = useState<number | ''>('')
   const [discount, setDiscount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'new' | 'history'>('new')
@@ -31,8 +33,9 @@ export default function Sales() {
       api.get<Product[]>('/products'),
       api.get<StockItem[]>('/stock'),
       api.get<Sale[]>('/sales?limit=50'),
+      api.get<CustomerBrief[]>('/customers'),
     ])
-      .then(([prods, stk, s]) => { setProducts(prods); setStock(stk); setSales(s) })
+      .then(([prods, stk, s, c]) => { setProducts(prods); setStock(stk); setSales(s); setCustomers(c) })
       .finally(() => setLoading(false))
   }, [])
 
@@ -56,16 +59,19 @@ export default function Sales() {
 
   const completeSale = async () => {
     if (cart.length === 0) return toast('Agregá productos al carrito', 'error')
+    if (paymentMethod === 'fiado' && selectedCustomer === '') return toast('Seleccioná un cliente para vender fiado', 'error')
     try {
       const result = await api.post<any>('/sales', {
         items: cart.map(i => ({ product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price })),
         discount,
         payment_method: paymentMethod,
+        customer_id: selectedCustomer !== '' ? selectedCustomer : null,
         cashier: 'Mostrador',
       })
       toast(`Venta #${result.id} registrada - $${result.total.toLocaleString()}`, 'success')
       setCart([])
       setDiscount(0)
+      setSelectedCustomer('')
       loadSales()
       api.get<StockItem[]>('/stock').then(setStock)
     } catch (e: any) {
@@ -170,8 +176,18 @@ export default function Sales() {
                   <option value="debito">Débito</option>
                   <option value="credito">Crédito</option>
                   <option value="transferencia">Transferencia</option>
+                  <option value="fiado">Fiado</option>
                   <option value="otro">Otro</option>
                 </select>
+                {paymentMethod === 'fiado' && (
+                  <div style={{ marginTop: 8 }}>
+                    <label style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Cliente</label>
+                    <select value={selectedCustomer} onChange={e => setSelectedCustomer(e.target.value ? +e.target.value : '')} style={{ width: '100%', padding: '10px 12px' }}>
+                      <option value="">Seleccionar cliente...</option>
+                      {customers.map(c => <option key={c.id} value={c.id}>{c.name}{c.balance > 0 ? ` (adeuda $${c.balance.toLocaleString()})` : ''}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <button
@@ -200,6 +216,7 @@ export default function Sales() {
                 <th style={thSty}>Fecha</th>
                 <th style={{ ...thSty, textAlign: 'right' }}>Total</th>
                 <th style={{ ...thSty, textAlign: 'center' }}>Pago</th>
+                <th style={{ ...thSty, textAlign: 'center' }}>Cliente</th>
                 <th style={{ ...thSty, textAlign: 'center' }}>Ítems</th>
                 <th style={thSty}>Cajero</th>
               </tr>
@@ -211,8 +228,13 @@ export default function Sales() {
                   <td style={tdSty}>{s.sale_date}{s.created_at ? ' ' + s.created_at.split('T')[1]?.slice(0, 5) : ''}</td>
                   <td style={{ ...tdSty, textAlign: 'right', fontWeight: 700, color: 'var(--success)' }}>${s.total.toLocaleString()}</td>
                   <td style={{ ...tdSty, textAlign: 'center' }}>
-                    <span style={{ padding: '3px 8px', borderRadius: 20, fontSize: 11, background: 'var(--bg)' }}>{s.payment_method}</span>
+                    <span style={{
+                      padding: '3px 8px', borderRadius: 20, fontSize: 11,
+                      background: s.payment_method === 'fiado' ? 'var(--warning)' : 'var(--bg)',
+                      color: s.payment_method === 'fiado' ? '#000' : 'inherit',
+                    }}>{s.payment_method}</span>
                   </td>
+                  <td style={{ ...tdSty, textAlign: 'center', fontSize: 13 }}>{s.customer_name || '-'}</td>
                   <td style={{ ...tdSty, textAlign: 'center' }}>{s.items_count ?? '-'}</td>
                   <td style={tdSty}>{s.cashier || '-'}</td>
                 </tr>

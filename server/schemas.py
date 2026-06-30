@@ -57,6 +57,7 @@ class SaleCreate(BaseModel):
     payment_method: str = Field(default="efectivo", max_length=50)
     notes: Optional[str] = Field(default=None, max_length=2000)
     cashier: Optional[str] = Field(default=None, max_length=100)
+    customer_id: Optional[int] = Field(default=None)
 
 class AuditCreate(BaseModel):
     notes: Optional[str] = Field(default=None, max_length=2000)
