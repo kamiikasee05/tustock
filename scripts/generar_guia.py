@@ -562,9 +562,14 @@ def generate_pdf(path):
     pdf.step(2, "Se listan los pedidos recibidos con su estado.")
 
     pdf.section_title("16.2 Aprobar o Rechazar")
-    pdf.step(1, "Hace clic en 'Aprobar' para aceptar y descontar stock.")
-    pdf.step(2, 'Hace clic en "Rechazar" si no corresponde.')
+    pdf.step(1, "Hace clic en un pedido para ver su detalle.")
+    pdf.step(2, "Seleccioná el metodo de pago: Efectivo, Tarjeta, Transferencia o Fiado.")
+    pdf.step(3, 'Si elegís "Fiado", seleccioná el cliente al que se le registra la deuda.')
+    pdf.step(4, 'Hace clic en "Aprobar y descontar stock" para generar la venta.')
+    pdf.step(5, 'Hace clic en "Rechazar" si no corresponde.')
     pdf.body_text(
+        "Al aprobar, se genera automaticamente una venta con el metodo de pago "
+        "seleccionado. Si es fiado, se crea la deuda en el cliente. "
         "Tambien existe un boton 'Limpiar' para borrar todos los "
         "pedidos pendientes de un vendedor."
     )
