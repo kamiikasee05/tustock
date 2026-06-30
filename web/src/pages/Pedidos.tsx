@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { api } from '../api/client'
+import { api, CustomerBrief } from '../api/client'
 import { useToast } from '../components/Toast'
 
 interface OrderItem {
@@ -22,8 +22,17 @@ interface PendingOrder {
 export default function Pedidos() {
   const { toast } = useToast()
   const [orders, setOrders] = useState<PendingOrder[]>([])
+  const [customers, setCustomers] = useState<CustomerBrief[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<PendingOrder | null>(null)
+  const [approvePM, setApprovePM] = useState('efectivo')
+  const [approveCID, setApproveCID] = useState<number | ''>('')
+
+  const openDetail = (order: PendingOrder) => {
+    setSelected(order)
+    setApprovePM('efectivo')
+    setApproveCID('')
+  }
 
   const loadOrders = async () => {
     try {
@@ -38,13 +47,17 @@ export default function Pedidos() {
 
   useEffect(() => {
     loadOrders()
+    api.get<CustomerBrief[]>('/customers').then(setCustomers).catch(() => {})
     const interval = setInterval(loadOrders, 10000)
     return () => clearInterval(interval)
   }, [])
 
   const approveOrder = async (id: number) => {
     if (!confirm('¿Aprobar y descontar del stock?')) return
-    await api.post(`/pending-orders/${id}/approve`)
+    const body: any = { payment_method: approvePM }
+    if (approveCID !== '') body.customer_id = approveCID
+    await api.post(`/pending-orders/${id}/approve`, body)
+    toast('Pedido aprobado', 'success')
     setSelected(null)
     loadOrders()
   }
@@ -112,6 +125,42 @@ export default function Pedidos() {
               </table>
             </div>
 
+            <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 20, border: '1px solid var(--border)', marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 10 }}>METODO DE PAGO</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {['efectivo', 'tarjeta', 'transferencia', 'fiado'].map(m => (
+                  <button
+                    key={m}
+                    onClick={() => { setApprovePM(m); if (m !== 'fiado') setApproveCID('') }}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: 8,
+                      border: approvePM === m ? '2px solid var(--primary)' : '1px solid var(--border)',
+                      background: approvePM === m ? 'var(--primary)' : 'var(--surface-hover)',
+                      color: approvePM === m ? 'white' : 'var(--text)',
+                      fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    {m.charAt(0).toUpperCase() + m.slice(1)}
+                  </button>
+                ))}
+              </div>
+              {approvePM === 'fiado' && (
+                <div style={{ marginTop: 10 }}>
+                  <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Cliente</label>
+                  <select
+                    value={approveCID}
+                    onChange={e => setApproveCID(e.target.value ? +e.target.value : '')}
+                    style={{ width: '100%', padding: '10px 12px' }}
+                  >
+                    <option value="">Seleccioná un cliente</option>
+                    {customers.map(c => (
+                      <option key={c.id} value={c.id}>{c.name} {c.balance > 0 ? `(debe $${c.balance})` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
             <div style={{ display: 'flex', gap: 12 }}>
               <button onClick={() => approveOrder(selected.id)} style={{
                 flex: 1, padding: '14px', background: 'var(--success)', color: 'white',
@@ -158,7 +207,7 @@ export default function Pedidos() {
           {orders.map(order => (
             <div
               key={order.id}
-              onClick={() => setSelected(order)}
+              onClick={() => openDetail(order)}
               style={{
                 background: 'var(--surface)',
                 borderRadius: 12,

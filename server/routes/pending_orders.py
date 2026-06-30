@@ -2,6 +2,7 @@
 
 import json
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone, date
 from database import get_db
@@ -9,6 +10,7 @@ from models.pending_order import PendingOrder
 from models.vendor import Vendor
 from models.sale import Sale, SaleItem
 from models.stock import CurrentStock, StockMovement
+from models.customer import Customer, CustomerTransaction
 from schemas import PendingOrderCreate
 
 router = APIRouter(prefix="/api/pending-orders", tags=["pending-orders"])
@@ -56,8 +58,13 @@ def create_pending(data: PendingOrderCreate, db: Session = Depends(get_db)):
 
     return {"id": order.id, "total": total, "status": "pending"}
 
+class ApproveBody(BaseModel):
+    """Datos opcionales para aprobar un pedido con método de pago y cliente."""
+    payment_method: str | None = Field(default=None, max_length=50)
+    customer_id: int | None = None
+
 @router.post("/{order_id}/approve")
-def approve(order_id: int, db: Session = Depends(get_db)):
+def approve(order_id: int, body: ApproveBody = None, db: Session = Depends(get_db)):
     """Aprueba un pedido, genera una venta automática y descuenta stock."""
     order = db.query(PendingOrder).filter(PendingOrder.id == order_id).first()
     if not order:
@@ -65,14 +72,21 @@ def approve(order_id: int, db: Session = Depends(get_db)):
     if order.status != "pending":
         raise HTTPException(400, "El pedido ya fue procesado")
 
+    pm = body.payment_method if body and body.payment_method else "a confirmar"
+    cid = body.customer_id if body else None
+
+    if pm == "fiado" and not cid:
+        raise HTTPException(400, "Seleccioná un cliente para vender fiado")
+
     items = json.loads(order.items_json)
 
     sale = Sale(
         sale_date=date.today(),
         total=order.total,
-        payment_method="a confirmar",
+        payment_method=pm,
         notes=f"Pedido #{order.id}",
         vendor_id=order.vendor_id,
+        customer_id=cid,
         created_at=datetime.now(timezone.utc),
     )
     db.add(sale)
@@ -103,11 +117,22 @@ def approve(order_id: int, db: Session = Depends(get_db)):
         )
         db.add(movement)
 
+    if pm == "fiado" and cid:
+        debt = CustomerTransaction(
+            customer_id=cid,
+            type="debt",
+            amount=order.total,
+            sale_id=sale.id,
+            notes=f"Pedido #{order.id} - fiado",
+        )
+        db.add(debt)
+
     order.status = "approved"
     order.processed_at = datetime.now(timezone.utc)
     db.commit()
 
-    return {"id": order.id, "sale_id": sale.id, "status": "approved", "total": order.total}
+    pm_label = {"efectivo": "efectivo", "tarjeta": "tarjeta", "transferencia": "transferencia", "fiado": "fiado"}.get(pm, pm)
+    return {"id": order.id, "sale_id": sale.id, "status": "approved", "total": order.total, "payment_method": pm}
 
 @router.post("/{order_id}/reject")
 def reject(order_id: int, db: Session = Depends(get_db)):

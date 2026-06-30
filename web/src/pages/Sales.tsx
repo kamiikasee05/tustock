@@ -198,8 +198,7 @@ export default function Sales() {
 
               <button
                 onClick={completeSale}
-                disabled={cart.length === 0}
-                disabled={submitting}
+                disabled={cart.length === 0 || submitting}
                 style={{
                   padding: '14px',
                   background: cart.length === 0 || submitting ? 'var(--border)' : 'var(--success)',
