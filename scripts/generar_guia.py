@@ -126,9 +126,10 @@ def generate_pdf(path):
         ("15", "Presupuestos"),
         ("16", "Pedidos Pendientes"),
         ("17", "Conexion del Lector de Codigo de Barras"),
-        ("18", "Uso con Dos Computadoras"),
-        ("19", "Solucion de Problemas"),
-        ("20", "Soporte Tecnico"),
+        ("18", "Monitor Premium (acceso remoto desde el celular)"),
+        ("19", "Uso con Dos Computadoras"),
+        ("20", "Solucion de Problemas"),
+        ("21", "Soporte Tecnico"),
     ]
     for num, title in toc:
         pdf.set_font("Helvetica", "", 10)
@@ -605,20 +606,70 @@ def generate_pdf(path):
         "el producto se agrega automaticamente. Si no, presiona Enter manualmente."
     )
 
-    # --- 18. DOS PCS ---
+    # --- 18. MONITOR PREMIUM ---
     pdf.add_page()
-    pdf.chapter_title("18. Uso con Dos Computadoras")
+    pdf.chapter_title("18. Monitor Premium (Acceso Remoto)")
+
+    pdf.body_text(
+        "El Monitor Premium permite ver las ventas, el stock bajo y las deudas "
+        "desde el celular, estés donde estés. Es un panel de solo lectura que "
+        "se conecta por Internet de forma segura."
+    )
+
+    pdf.section_title("18.1 Iniciar el Monitor")
+    pdf.step(1, 'Ejecutá "scripts\\start-monitor.bat" (doble clic).')
+    pdf.step(2, "El monitor arranca en el puerto 8091.")
+    pdf.step(3, 'Abrí http://localhost:8091 en el navegador para probarlo.')
+    pdf.step(4, "Ingresá con usuario: admin, contraseña: tustock123.")
+
+    pdf.section_title("18.2 Exponer por Internet (Cloudflare Tunnel)")
+    pdf.body_text(
+        "Para ver el monitor desde el celular fuera de tu casa/negocio, "
+        "necesitás Cloudflare Tunnel. Es gratuito y seguro."
+    )
+    pdf.step(1, "Descargá cloudflared desde: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/")
+    pdf.step(2, 'Descomprimí el archivo y abrí una terminal en esa carpeta.')
+    pdf.step(3, "Ejecutá: cloudflared tunnel --url http://localhost:8091")
+    pdf.step(4, "Cloudflare te va a dar una URL tipo: https://xxx.trycloudflare.com")
+    pdf.step(5, "Abrí esa URL desde el celular e ingresá con usuario y contraseña.")
+
+    pdf.note_box(
+        "El tunnel solo apunta al monitor (puerto 8091), que es de solo lectura. "
+        "El sistema de ventas (puerto 8090) nunca se expone a Internet."
+    )
+
+    pdf.tip_box(
+        "Si querés que el monitor arranque automaticamente con Windows, "
+        "agregá scripts\\start-monitor.bat al inicio de Windows o ejecutá "
+        "scripts\\install-startup.bat como Administrador."
+    )
+
+    pdf.section_title("18.3 Que se ve en el Monitor")
+    pdf.bullet("Ventas del dia: total, cantidad de transacciones, items vendidos")
+    pdf.bullet("Ticket promedio")
+    pdf.bullet("Metodos de pago usados hoy (efectivo, tarjeta, transferencia, fiado)")
+    pdf.bullet("Productos con stock bajo")
+    pdf.bullet("Productos mas vendidos en los ultimos 7 dias")
+    pdf.bullet("Clientes con deuda y sus saldos")
+    pdf.body_text(
+        "El dashboard se actualiza automaticamente cada 30 segundos. "
+        "No se puede modificar nada desde el monitor: solo lectura."
+    )
+
+    # --- 19. DOS PCS ---
+    pdf.add_page()
+    pdf.chapter_title("19. Uso con Dos Computadoras")
 
     pdf.body_text(
         "TUSTOCK permite usar una computadora como servidor (donde corre "
         "el sistema) y otra como cliente (solo navegador web)."
     )
 
-    pdf.section_title("18.1 En la PC Servidor")
+    pdf.section_title("19.1 En la PC Servidor")
     pdf.step(1, "Iniciá TUSTOCK normalmente (doble clic en TUSTOCK.bat).")
     pdf.step(2, 'Anotá la direccion IP que aparece en el Dashboard (ej: 192.168.1.100).')
 
-    pdf.section_title("18.2 En la PC Cliente")
+    pdf.section_title("19.2 En la PC Cliente")
     pdf.step(1, "Asegurate de que ambas PCs esten en la misma red WiFi o cable.")
     pdf.step(2, "Abri el navegador web (Chrome, Edge, etc.).")
     pdf.step(3, "Escribi http://192.168.1.100:8090 (reemplazá con la IP del servidor).")
@@ -635,9 +686,9 @@ def generate_pdf(path):
         "la pantalla de Conexion de la app."
     )
 
-    # --- 19. SOLUCION DE PROBLEMAS ---
+    # --- 20. SOLUCION DE PROBLEMAS ---
     pdf.add_page()
-    pdf.chapter_title("19. Solucion de Problemas")
+    pdf.chapter_title("20. Solucion de Problemas")
 
     problems = [
         ("El sistema no abre el navegador",
@@ -680,9 +731,9 @@ def generate_pdf(path):
         pdf.multi_cell(0, 5, desc)
         pdf.ln(4)
 
-    # --- 20. SOPORTE ---
+    # --- 21. SOPORTE ---
     pdf.add_page()
-    pdf.chapter_title("20. Soporte Tecnico")
+    pdf.chapter_title("21. Soporte Tecnico")
     pdf.body_text(
         "Para reportar errores o solicitar ayuda:"
     )

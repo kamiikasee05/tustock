@@ -1,254 +1,277 @@
-# Memoria Compartida TUSTOCK
+# MEMORY — TUSTOCK
 
-Instrucciones: NO borres entradas existentes. Solo agrega nuevas lineas al final.
+> Este archivo es la fuente de verdad compartida entre el **Agente de Ventas** (sales agent) y el **Agente de Desarrollo** (DEV). Lo leo al inicio de cada sesión para saber el estado actual.
+> 
+> **Rol de Ventas (YO):** Conozco el producto, el mercado, los precios. Organizo, coordino y le asigno tareas humanas al usuario para vender.
+> 
+> **Rol de DEV (asistente de código):** Construye exclusivamente lo que está definido aquí. No inventa features. No desarrolla fuera del roadmap.
+> 
+> **Regla especial — Cliente Premium:** La clienta que paga $60K entry + $6K/mes tiene acceso anticipado al Monitor Premium (Fase 4 adelantada). Ningún otro cliente lo recibe hasta que se lance oficialmente. Esta excepción queda registrada acá.
 
-## Features completadas
+---
 
-## Identidad del producto
+## 1. QUÉ ES TUSTOCK — Propuesta de Valor
 
-TUSTOCK es un sistema de gestión de stock y ventas para **polirrubros, mercerías, almacenes y comercios minoristas**. Funciona 100% local (sin Internet para operar). Orientado a dueños de comercios que no saben de tecnología — todo funciona con doble clic.
+Sistema de gestión de stock y ventas para polirrubros argentinos (kioscos, librerías, almacenes, etc.).
 
-## Stack técnico
+**Diferenciación única vs competidores:**
+1. **Pago único** (o suscripción mensual barata) — no hay cuotas infinitas
+2. **Sin internet** — funciona 100% local, no depende de la nube
+3. **App Android incluida** — escáner de códigos con el celular
+4. **Datos en tu PC** — nadie más ve la información del negocio
+5. **Sin técnico** — lo instala el dueño en 15 minutos
 
-- **Backend**: Python 3.10+, FastAPI, SQLAlchemy 2.0, SQLite (WAL mode)
-- **Frontend**: React + Vite + TypeScript, servido estático desde el backend
-- **Autenticación**: Token Bearer fijo (configurable vía env `TUSTOCK_TOKEN`)
-- **Servidor**: uvicorn, corre oculto con `pythonw`, PID file, auto-apertura del navegador
-- **App Android**: APK con WebView + ML Kit para escaneo de códigos de barra (GitHub Releases)
-- **Base de datos**: `tustock.db` en la raíz del proyecto, auto-creada con `init_db()`
+**No competimos en:** features enterprise, contabilidad integrada, e-commerce, facturación electrónica (AFIP). Eso no es nuestro cliente.
 
-## Estructura del proyecto
+---
 
-```
-TUSTOCK/
-├── TUSTOCK.bat                # Entry point único (doble clic aquí)
-├── tustock.db                 # Base de datos SQLite (auto-creada)
-├── web/dist/                  # Frontend compilado (trackeado en git)
-├── server/
-│   ├── main.py                # FastAPI app, rutas públicas, graceful shutdown
-│   ├── config.py              # Host, puerto, token, CORS
-│   ├── auth.py                # verify_token por Bearer header
-│   ├── database.py            # SQLAlchemy engine, get_db, init_db
-│   ├── schemas.py             # Pydantic models (ProductCreate, SaleCreate, etc.)
-│   ├── seed.py                # Datos de prueba (15 productos, 3 clientes, 3 vendedores)
-│   ├── requirements.txt
-│   ├── models/                # SQLAlchemy models
-│   │   ├── product.py         # Product, Category
-│   │   ├── sale.py            # Sale, SaleItem
-│   │   ├── stock.py           # CurrentStock, StockMovement
-│   │   ├── customer.py        # Customer, CustomerTransaction
-│   │   ├── vendor.py          # Vendor
-│   │   ├── audit.py           # StockAudit, AuditItem
-│   │   ├── report.py          # DailyReport
-│   │   ├── pending_order.py   # PendingOrder
-│   │   └── budget.py          # Budget
-│   ├── routes/                # FastAPI routers
-│   │   ├── products.py        # CRUD productos, códigos, categorías, escaneo
-│   │   ├── sales.py           # CRUD ventas, resumen diario
-│   │   ├── stock.py           # Stock actual, movimientos, ajustes
-│   │   ├── customers.py       # CRUD clientes, transacciones, pagos
-│   │   ├── vendors.py         # CRUD vendedores, login por DNI
-│   │   ├── reports.py         # Reportes diarios y mensuales, exportación CSV
-│   │   ├── audits.py          # Auditorías de inventario
-│   │   ├── pending_orders.py  # Pedidos pendientes, aprobar/rechazar
-│   │   └── budgets.py         # Presupuestos, aprobar/rechazar
-│   └── services/
-│       ├── stock_service.py   # get_current_stock, get_low_stock, adjust_stock
-│       ├── audit_service.py   # Lógica de auditorías
-│       └── report_service.py  # Generación de reportes
-├── scripts/
-│   ├── start.bat              # Arranca el servidor oculto con pythonw
-│   ├── stop.bat               # Mata el servidor
-│   ├── setup-cliente.bat      # Instalación única (pip install + seed)
-│   ├── Crear Acceso Directo.bat
-│   ├── install-startup.bat    # Auto-inicio con Windows
-│   ├── uninstall-startup.bat  # Remueve auto-inicio
-│   └── generar_guia.py        # Genera la guía de usuario PDF
-└── Guia de Usuario TUSTOCK.pdf
-```
+## 2. PLANES Y PRECIOS (CONGELADO — NO CAMBIAR SIN REVISIÓN)
 
-## Modelo de datos (esquema resumido)
+### Planes actuales (Junio 2026)
 
-| Tabla | Columnas clave |
-|-------|---------------|
-| `products` | id, code (único), name, category_id, cost_price, selling_price, min_stock, barcode (único), is_active |
-| `categories` | id, name, parent_id |
-| `sales` | id, sale_date, total, discount, payment_method, cashier, vendor_id, customer_id |
-| `sale_items` | id, sale_id, product_id, quantity, unit_price, subtotal |
-| `current_stock` | product_id (PK), quantity |
-| `stock_movements` | id, product_id, quantity, movement_type, reference_type, reference_id |
-| `customers` | id, name, dni, phone, is_active |
-| `customer_transactions` | id, customer_id, type (debt/payment), amount, sale_id |
-| `vendors` | id, dni (único), name, is_active |
-| `pending_orders` | id, vendor_id, total, items_json, status |
-| `budgets` | id, customer_name, total, items_json, status |
-| `stock_audits` | id, audit_date, status, created_by |
-| `audit_items` | id, audit_id, product_id, theoretical_qty, counted_qty, difference |
-| `daily_reports` | id, report_date, total_sales, total_transactions, report_data (JSON) |
+| Plan | Precio | Modelo | Qué incluye |
+|------|--------|--------|-------------|
+| **Trial** | Gratis | 30 días | Máximo 50 productos, sin informes, sin exportación |
+| **Básico** | $60,000 ARS único | Pago único | Todo el sistema, app Android, 1 año de updates |
+| **Suscripción** | $6,000 ARS/mes | Mensual | Todo incluido, updates continuos, soporte prioritario |
+| **Pro** | $120,000 ARS único | Pago único (futuro) | Todo + multi-PC + cloud backup + export Excel |
 
-## API endpoints principales
+### Reglas de negocio
 
-### Productos (`/api/products`)
-- `GET /` — listar (filtros: search, category_id, include_inactive)
-- `POST /` — crear
-- `PUT /{id}` — actualizar
-- `DELETE /{id}` — desactivar
-- `POST /{id}/reactivate` — reactivar
-- `GET /{id}` — detalle
-- `GET /generate-code` — genera código TST + 10 dígitos
-- `GET /barcode/next` — genera código de barra 2 + 11 dígitos
-- `POST /{id}/barcode` — genera y asigna código de barra al producto
-- `GET /{id}/barcode.png` — imagen Code128 con nombre + precio (público, sin auth)
-- `GET /scan/{code}` — busca por code o barcode
-- `GET /categories` — lista categorías
-- `POST /categories` — crear categoría
-- `GET /alerts/low-stock` — alertas stock bajo
+- **Licencia perpetua**: dueño paga una vez y usa para siempre
+- **Updates**: 1 año incluidos en Básico. Renovación: $24,000/año (40% del valor)
+- **Suscripción**: se cancela cuando quiera. Si deja de pagar, el sistema sigue funcionando (pierde updates y soporte)
+- **Trial**: 30 días o 50 productos (lo que ocurra primero). Banner visible de "modo trial"
+- **Licencia por negocio, no por PC**: si cambia de computadora, reinstala y activa con la misma key
+- **Descuentos por volumen**: 3-5 locales → 15%, 6-10 → 25%, +10 → a convenir
 
-### Ventas (`/api/sales`)
-- `GET /` — listar (filtro: sale_date, limit)
-- `POST /` — crear (items, discount, payment_method, customer_id opcional)
-- `GET /{id}` — detalle con items
-- `GET /today/summary` — resumen del día
+### Precios en USD (referencia, no se publica)
 
-### Stock (`/api/stock`)
-- `GET /` — stock actual de todos los productos
-- `GET /low` — solo productos con stock bajo
-- `POST /adjust` — movimiento (entry/exit/adjustment)
-- `GET /{product_id}/movements` — historial de movimientos
+- Básico: ~$50 USD
+- Pro: ~$100 USD
+- Suscripción: ~$5 USD/mes
 
-### Clientes (`/api/customers`)
-- `GET /` — listar con saldo (deudas - pagos)
-- `POST /` — crear
-- `DELETE /{id}` — desactivar
-- `GET /{id}/transactions` — historial de transacciones
-- `POST /payment` — registrar pago
-- `POST /debt` — registrar deuda
+---
 
-### Vendedores (`/api/vendors`)
-- `GET /` — listar
-- `POST /` — crear
-- `DELETE /{id}` — desactivar
-- `POST /login` — login por DNI
+## 3. QUÉ ESTÁ CONSTRUIDO (REAL, NO ASPIRACIONAL)
 
-### Pedidos pendientes (`/api/pending-orders`)
-- `GET /` — listar pendientes
-- `POST /` — crear (vendor_id, items)
-- `POST /{id}/approve` — aprobar (body opcional: payment_method, customer_id)
-- `POST /{id}/reject` — rechazar
-- `POST /clear?vendor_id=X` — limpiar pedidos de un vendedor
+Todo esto FUNCIONA y lo vendemos como parte del sistema:
 
-### Presupuestos (`/api/budgets`)
-- `GET /` — listar
-- `POST /` — crear
-- `POST /{id}/approve` — aprobar (descuenta stock)
-- `POST /{id}/reject` — rechazar
+- Dashboard con resumen diario y alertas de stock bajo
+- Productos: ABM, código, precios, categorías, búsqueda, código de barras
+- Stock: actual, movimientos (entrada/salida/ajuste), alertas
+- Ventas POS: carrito, métodos de pago, descuentos, descuento automático de stock
+- Clientes: registro, saldo "fiado", transacciones
+- Vendedores: alta con DNI, desactivación
+- Auditorías de stock: crear, escanear, completar, corregir stock automático
+- Pedidos pendientes (desde app Android): aprobar→crea venta, rechazar
+- Presupuestos: crear, aprobar→convierte a venta
+- Informes diarios: totales, métodos de pago, top productos
+- Exportación CSV y XLSX: ventas, productos (con margen bruto), vendedores, resumen mensual
+- App Android: POS (tomar pedidos como vendedor) y Stock (escanear y contar)
+- Escáner de código de barras con cámara (ML Kit)
+- Generación de imagen de código de barras con precio
+- Scripts de backup/restauración, setup, dev, start
+- Servidor con SPA fallback para frontend compilado
+- **Monitor Premium (Fase 4 adelantada):** Servicio independiente puerto 8091, login propio, dashboard mobile responsive, API read-only. Expuesto vía Cloudflare Tunnel para acceso remoto desde el celular. Solo esta clienta lo tiene.
 
-### Auditorías (`/api/audits`)
-- `GET /` — listar
-- `POST /` — crear
-- `GET /{id}` — detalle con items
-- `POST /{id}/start` — iniciar
-- `POST /{id}/scan` — escanear producto
-- `POST /{id}/complete` — completar y aplicar correcciones
+---
 
-### Reportes (`/api/reports`)
-- `GET /daily?report_date=YYYY-MM-DD` — reporte diario
-- `POST /daily/generate?report_date=YYYY-MM-DD` — generar reporte
-- `GET /range?start=...&end=...` — reportes por rango
-- `GET /export/sales.csv`, `export/products.csv`, etc. — exportación CSV
-- `GET /export/monthly.csv?year=&month=` — exportación mensual
+## 4. QUÉ NO ESTÁ CONSTRUIDO (NO VENDER, NO PROMETER)
 
-## Planes de negocio (definido en conversación previa)
+| Feature | Está en docs | Realidad | Acción |
+|---------|:-----------:|:--------:|--------|
+| Backup en la nube | Pro (planeado) | ❌ No existe | No prometer |
+| Multi-PC / multi-sucursal | Pro (planeado) | ❌ No existe | No prometer |
+| Múltiples perfiles de cajero | Pro (planeado) | ❌ No existe | No prometer |
+| Panel web cloud para ver informes | Pro (planeado) | ✅ Existe (Fase 4 adelantada) | En producción SOLO para clienta premium. General release cuando se complete Fase 1-3 |
+| Sistema de licencias | Mencionado | ❌ No existe | **Pendiente de construir (Fase 1)** |
+| Trial mode | Mencionado | ❌ No existe | **Pendiente de construir (Fase 1)** |
+| Feature gating (tiers) | Mencionado | ❌ No existe | **Pendiente de construir (Fase 1)** |
+| Integración de pagos | Mencionado | ❌ No existe | **Pendiente de construir (Fase 1)** |
+| Tests automatizados | — | ❌ No existe | Postergado (Fase 4) |
+| Docker / CI/CD | — | ❌ No existe | Postergado (Fase 4) |
+| i18n (inglés) | — | ❌ No existe | No está en roadmap |
 
-### Plan Standard (gratis)
-- POS + control de stock
-- Ventas fiado
-- Códigos de barra (generación e impresión)
-- Reportes diarios y mensuales
-- Auditorías de inventario
-- Presupuestos y pedidos pendientes
-- App Android (escaneo y pedidos móviles)
-- Acceso desde 2 PCs en red local
+---
 
-### Plan Premium (pago — MONITOREO REMOTO)
-- Todo lo del Standard
-- **Monitor remoto** vía Cloudflare Tunnel
-- Dashboard mobile responsive (métricas en el celular)
-- Login de acceso para el cliente
-- Sin exponer el sistema administrativo completo (solo monitoreo read-only)
+## 5. ARQUITECTURA DEL MONITOR PREMIUM
 
-**Pendiente de implementar**: el monitor premium. Idea: carpeta `monitor/` con FastAPI read-only, puerto 8091, tunnel Cloudflare apuntando ahí, login propio, dashboard HTML plano responsive.
+> Solo disponible para la clienta premium ($60K entry + $6K/mes). Fase 4 adelantada.
 
-## Cómo funciona internamente (para ventas)
+### Componentes
 
-### Flujo de autenticación
-1. El frontend guarda el token en `api/client.ts` como variable `TOKEN`
-2. Cada request incluye `Authorization: Bearer tustock-local-token`
-3. El backend valida contra `TUSTOCK_TOKEN` en `config.py`
-4. Los routers se montan con `dependencies=[Depends(verify_token)]`
-5. La excepción: `/api/products/{id}/barcode.png` es público (sin auth) porque las `<img>` no envían headers
+| Componente | Archivo | Rol |
+|------------|---------|-----|
+| API + Auth | `monitor/app.py` | FastAPI en puerto 8091, login por cookie, endpoints read-only |
+| Config | `monitor/config.py` | Puerto (8091), usuario/contraseña, DB URL |
+| Dashboard | `monitor/dashboard.html` | SPA vanilla, responsive mobile-first, auto-refresh 30s |
+| Iniciar | `scripts\start-monitor.bat` | Lanza con pythonw, fondo |
 
-### Flujo de venta fiado
-1. Usuario selecciona "Fiado" como método de pago
-2. Aparece selector de clientes
-3. Al crear la venta, si `payment_method == "fiado"`, se crea `CustomerTransaction` tipo "debt"
-4. El saldo del cliente se calcula como: `SUM(debt) - SUM(payment)`
+### Endpoints
 
-### Flujo de códigos de barra
-1. El sistema genera códigos de 12 dígitos empezando con "2"
-2. Usa `python-barcode` con `ImageWriter` para generar PNG Code128
-3. La imagen incluye: código de barras + número + nombre del producto + precio
-4. El usuario guarda la imagen y la imprime para etiquetas
+| Método | Ruta | Auth | Descripción |
+|--------|------|:----:|-------------|
+| POST | `/api/login` | No | Login con usuario/contraseña, setea cookie |
+| GET | `/api/metrics` | Cookie | Dashboard completo: ventas hoy, método de pago, stock bajo, top productos, deudores |
+| GET | `/api/metrics/summary` | Cookie | Resumen hoy vs mes |
+| GET | `/api/health` | No | Health check para tunnel |
 
-### Flujo de pedidos pendientes
-1. Vendedor crea pedido desde Android (vendor_id + items)
-2. En el panel web aparece el pedido pendiente
-3. Al aprobar, se puede seleccionar método de pago y cliente (para fiado)
-4. Se genera automáticamente una venta con los items del pedido
+### Cloudflare Tunnel (exposición a internet)
 
-### Manejo del servidor
-- `start.bat` usa `pythonw` (sin consola) para no molestar al usuario
-- Escribe PID en `logs/server.pid`
-- `stop.bat` mata por PID o fuerza cierre
-- `main.py` captura SIGTERM/SIGINT para shutdown graceful
-- Errores y shutdown logueados en `logs/server.log`
+1. Descargar cloudflared: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+2. Ejecutar en servidor:
+   ```
+   cloudflared tunnel --url http://localhost:8091
+   ```
+3. Cloudflare genera una URL pública `https://xxx.trycloudflare.com`
+4. La clienta abre esa URL desde el celular e ingresa con sus credenciales
 
-### Cobertura de features sin conexión
-100% local. SQLite no necesita servidor de base de datos. No hay dependencia de Internet para operar. Ideal para clientes con conectividad limitada.
+**Seguridad:**
+- El tunnel apunta SOLO al puerto 8091 (monitor read-only), NUNCA al 8090 (admin)
+- El monitor tiene su propio login (usuario/contraseña) independiente del token del admin
+- Sin endpoints de escritura (POST/PUT/DELETE) expuestos
+- Cloudflare Tunnel no requiere abrir puertos en el router
 
-## Bugs conocidos corregidos en auditoría
+---
 
-| Bug | Archivo | Fix |
-|-----|---------|-----|
-| Stock adjustment perdía signo (abs) | `services/stock_service.py:79` | Cambiado a `quantity - previous` |
-| Bare `except:` tragaba SystemExit | `main.py:52,133` | Cambiado a `except Exception:` |
-| Query param token exponía en logs | `auth.py:12` | Eliminado, solo Bearer header |
-| IntegrityError en update sin manejo | `routes/products.py:122` | Agregado try/except + rollback |
-| N+1 en list_customers | `routes/customers.py:34-43` | Reescrito con subqueries |
-| N+1 en today_summary | `routes/sales.py:135` | Agregado selectinload |
-| top_items KeyError | `services/report_service.py:110` | Cambiado a `.get("top_items", [])` |
-| sale_date sin validar | `routes/sales.py:18` | Agregado `date.fromisoformat()` |
-| Pillow faltaba en requirements | `requirements.txt` | Agregado `Pillow>=10.0.0` |
-| __tablename__ faltante en modelos | `models/*.py` | Restaurados en Product, StockMovement, SaleItem, CustomerTransaction, AuditItem |
+## 6. FASE ACTUAL DEL ROADMAP
 
-## Cómo generar y regenerar la guía PDF
+**Estamos en: Fase 0 — Investigación de Mercado**
 
-```bash
-python scripts/generar_guia.py
-# Genera: Guia de Usuario TUSTOCK.pdf
-```
+### Tareas completadas
 
-## Variables de entorno configurables
+- ✅ Análisis del proyecto y valorización (~$6K USD hoy, hasta $250K potencial)
+- ✅ Definición de planes y precios (Básico $60K, Suscripción $6K/mes, Pro $120K)
+- ✅ Diferenciación y propuesta de valor
+- ✅ Guión de entrevista con clienta de librería (mañana)
+- ✅ Secuencia de WhatsApp para preventa, seguimiento y cierre
+- ✅ **Monitor Premium (Fase 4 adelantada)** implementado para clienta premium ($60K + $6K/mes)
 
-| Variable | Default | Descripción |
-|----------|---------|-------------|
-| `TUSTOCK_TOKEN` | `tustock-local-token` | Token de autenticación |
-| `TUSTOCK_HOST` | `0.0.0.0` | IP donde escucha el servidor |
-| `TUSTOCK_PORT` | `8090` | Puerto |
-| `TUSTOCK_DB` | `sqlite:///tustock.db` | URL de base de datos |
+### En progreso
 
-## Enlaces útiles
+- 🔄 Entrevista con clienta de librería (mañana) — **tarea humana**
 
-- **Repositorio**: https://github.com/kamiikasee05/tustock
-- **APK Android**: https://github.com/kamiikasee05/tustock/releases/tag/apk-35
-- **Guía de usuario**: `Guia de Usuario TUSTOCK.pdf` (en la raíz del proyecto)
+### Pendiente
+
+| Fase | Tareas | Quién |
+|------|--------|:-----:|
+| 0 | Entrevistar 5-10 comerciantes | 🧑 Humano |
+| 0 | Publicar encuesta en grupos de Facebook | 🧑 Humano |
+| 0 | Validar precio $60K con entrevistados | 🧑 Humano |
+| 0 | Mapa competitivo actualizado | 🧑 Humano |
+| 1 | Modelo License en BD + feature gating | 🖥 DEV |
+| 1 | Trial mode (30 días / 50 productos) | 🖥 DEV |
+| 1 | Página /upgrade con planes | 🖥 DEV |
+| 1 | Integración Mercado Pago | 🖥 DEV |
+| 1 | Servidor de licencias MVP (Bot Telegram) | 🖥 DEV |
+| 1 | Crear cuenta de pagos | 🧑 Humano |
+| 2 | Landing page estática | 🖥 DEV |
+| 2 | Guiones de venta (WhatsApp, llamada, demo) | 🖥 DEV |
+| 2 | PDF de planes | 🖥 DEV |
+| 2 | Video de 2 min del sistema | 🧑 Humano |
+| 2 | Publicar en Mercado Libre | 🧑 Humano |
+| 3 | CRM en Google Sheets | 🖥 DEV |
+| 3 | Pipeline de seguimiento automático | 🖥 DEV |
+| 3 | Hacer ventas, demos, instalaciones | 🧑 Humano |
+| 4 | Tests automatizados | 🖥 DEV |
+| 4 | Docker / CI/CD | 🖥 DEV |
+| 4 | Conseguir revendedores | 🧑 Humano |
+
+---
+
+## 7. REGLAS PARA DEV
+
+1. **No desarrollar nada que no esté en este roadmap.** Si surge una idea, documentarla abajo en "Ideas en espera", no codearla.
+2. **No modificar precios, planes ni lógica de negocio** sin consultar con Ventas (YO).
+3. **Prioridad absoluta a Fase 1:** sistema de licencias, trial mode, feature gating, página de planes, integración de pagos. Sin esto no podemos vender.
+4. **El frontend y backend deben seguir funcionando en localhost sin internet.** La validación de licencia debe cachearse mínimo 7 días offline.
+5. **Código limpio, sin comentarios, siguiendo el estilo existente** (Python con type hints, TypeScript sin strict mode, estilos inline en React).
+6. **No agregar dependencias innecesarias.** Si se necesita una nueva, justificarla.
+7. **No tocar la app Android** a menos que se indique explícitamente.
+8. **No internacionalizar.** Solo español.
+
+### Stack que NO se cambia
+
+- Backend: Python 3.9+ / FastAPI / SQLAlchemy / SQLite
+- Frontend: React 18 + Vite + TypeScript (estilos inline, sin Tailwind/CSS modules)
+- Android: Kotlin + CameraX + ML Kit (congelado, no tocar)
+- Base de datos: SQLite con WAL mode
+- Monitor: Vanilla HTML+CSS+JS (sin build step, sin framework)
+
+---
+
+## 8. SPEECH DE VENTAS (VERDAD OFICIAL)
+
+**Frase única:** *"TUSTOCK es el sistema de stock y ventas que funciona sin internet, se paga una sola vez y no necesitás ser técnico para usarlo."*
+
+**Qué decimos que hace:**
+- Registrá ventas al instante con el carrito POS
+- Sabé cuánto stock tenés de cada cosa en tiempo real
+- Escaneá códigos de barras con el celular (app Android incluida)
+- Hacé auditorías de stock contando físico vs sistema
+- Generá informes diarios de ventas, métodos de pago, productos más vendidos
+- Exportá todo a Excel
+- **Plan Premium:** Mirá las ventas desde el celular donde estés (monitor remoto)
+
+**Qué NO decimos (porque no existe):**
+- No decimos "backup automático en la nube"
+- No decimos "sincronización entre sucursales"
+- No decimos "múltiples cajeros con perfiles"
+- No decimos "integración con Mercado Libre / Tiendanube"
+
+**Manejo si preguntan por cloud:**
+> "Todo corre en tu propia PC, así que tus datos no salen de tu negocio. Si querés hacer backup, el sistema te lo permite con un solo clic, y podés guardarlo donde quieras: un pendrive, Google Drive, lo que prefieras."
+
+**Manejo si preguntan por monitor remoto:**
+> "Eso es parte del plan Pro. Conectamos una ventanita segura por Cloudflare Tunnel que solo muestra informes. No se puede modificar nada. Se ve desde el celular."
+
+---
+
+## 9. CANALES DE VENTA AUTORIZADOS
+
+| Canal | Estado | Prioridad |
+|-------|:-----:|:---------:|
+| WhatsApp directo a comerciantes locales | 🟢 Activo | 🔥 Alta |
+| Facebook Groups (kiosqueros, almaceneros) | 🟡 Pendiente | 🔥 Alta |
+| Mercado Libre | 🟡 Pendiente (crear cuenta) | 🔥 Alta |
+| Boca a boca / referidos | 🟢 Activo (cuando tengamos clientes) | 🟡 Media |
+| Proveedores mayoristas (comisión) | 🔴 Futuro | 🟢 Baja |
+| Mercado de apps Tiendanube/Empretienda | 🔴 Futuro | 🟢 Baja |
+
+---
+
+## 10. IDEAS EN ESPERA (NO TOCAR)
+
+> Estas ideas están documentadas pero **no aprobadas para desarrollar**. Solo se considerarán cuando las fases 0-3 estén completas.
+
+- Múltiples idiomas
+- Facturación electrónica AFIP
+- Integración con Mercado Libre (sincronizar stock)
+- App iOS
+- Dashboard en la nube (web app externa)
+- Módulo de proveedores con órdenes de compra
+- Notificaciones push a Android
+- Modo oscuro
+
+---
+
+## 11. HISTORIAL DE DECISIONES
+
+| Fecha | Decisión | Quién |
+|------|----------|:-----:|
+| 2026-06-30 | Precio Básico fijado en $60K ARS único | Ventas |
+| 2026-06-30 | Suscripción fijada en $6K ARS/mes | Ventas |
+| 2026-06-30 | Pro fijado en $120K ARS único (futuro) | Ventas |
+| 2026-06-30 | Trial: 30 días o 50 productos, sin informes | Ventas |
+| 2026-06-30 | Feature gating backend + frontend para licencias | DEV (pendiente) |
+| 2026-06-30 | Prioridad Fase 1 sobre Fase 2-4 | Ventas |
+| 2026-06-30 | Android app congelada (no tocar) | Ventas |
+| 2026-06-30 | No prometer cloud backup ni multi-PC | Ventas |
+| 2026-06-30 | Entrevista clienta librería mañana (validación mercado) | Humano |
+| 2026-06-30 | Fase 4 (Monitor Premium) adelantada SOLO para clienta premium ($60K entry + $6K/mes) | Ventas |
+| 2026-06-30 | Monitor Premium implementado: puerto 8091, login propio, dashboard mobile, Cloudflare Tunnel | DEV |
+
+---
+
+*Última actualización: 30 de Junio de 2026*

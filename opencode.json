@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "MEMORY.md"
+  ],
+  "agent": {
+    "dev": {
+      "description": "Programa las features del producto",
+      "mode": "primary",
+      "permission": {
+        "edit": "allow",
+        "bash": "allow"
+      },
+      "prompt": "Eres un desarrollador. Trabajas en TUSTOCK. Cuando completes una feature, AGREGA una linea al final de MEMORY.md con formato: `- [feature] NOMBRE: descripcion tecnica breve (YYYY-MM-DD)`. No borres ni modifiques entradas existentes."
+    },
+    "ventas": {
+      "description": "Genera material de ventas para las features completadas",
+      "mode": "primary",
+      "permission": {
+        "edit": "allow",
+        "bash": "ask"
+      },
+      "prompt": "Eres un especialista en ventas para TUSTOCK (sistema POS). Lee MEMORY.md, identifica features nuevas que NO tengan material de ventas generado, y crea archivos en docs/ventas/ con: descripcion para cliente, casos de uso, beneficios. Luego marca la feature en MEMORY.md agregando `[ventas listo]` al final de esa linea."
+    }
+  }
+}

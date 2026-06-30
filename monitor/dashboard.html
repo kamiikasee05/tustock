@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TUSTOCK Monitor</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f2f5;color:#1a1a2e;padding-bottom:80px}
+.header{background:#1a1a2e;color:#fff;padding:16px 20px;position:sticky;top:0;z-index:10}
+.header h1{font-size:18px;font-weight:700}
+.header .sub{font-size:12px;color:#94a3b8;margin-top:2px}
+.header .refresh{float:right;font-size:12px;color:#94a3b8}
+.container{padding:12px}
+
+.row{display:flex;gap:10px;margin-bottom:10px}
+.col{flex:1}
+.card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:10px}
+.card-title{font-size:11px;font-weight:600;text-transform:uppercase;color:#6b7280;margin-bottom:6px;letter-spacing:.5px}
+.card .big{font-size:28px;font-weight:800;line-height:1.2}
+.card .big.green{color:#059669}
+.card .big.blue{color:#2563eb}
+.card .big.orange{color:#d97706}
+.card .big.red{color:#dc2626}
+.card .label{font-size:12px;color:#6b7280;margin-top:2px}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:6px 4px;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;border-bottom:1px solid #e5e7eb}
+td{padding:8px 4px;border-bottom:1px solid #f3f4f6}
+tr:last-child td{border-bottom:none}
+.text-right{text-align:right}
+.text-center{text-align:center}
+.text-muted{color:#6b7280}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.tag.green{background:#d1fae5;color:#065f46}
+.tag.yellow{background:#fef3c7;color:#92400e}
+.tag.red{background:#fee2e2;color:#991b1b}
+.tag.blue{background:#dbeafe;color:#1e40af}
+.tag.gray{background:#f3f4f6;color:#374151}
+
+.empty{text-align:center;padding:24px;color:#9ca3af;font-size:13px}
+
+@media(max-width:480px){
+.header{padding:12px 14px}
+.container{padding:8px}
+.row{flex-direction:column;gap:6px}
+.card{padding:12px;border-radius:10px}
+.card .big{font-size:24px}
+}
+</style>
+</head>
+<body>
+<div class="header">
+<div class="refresh" id="timer">actualizando en 30s</div>
+<h1>TUSTOCK</h1>
+<div class="sub" id="subtitle">Monitor — Cargando...</div>
+</div>
+
+<div class="container" id="app">
+<div style="text-align:center;padding:40px;color:#9ca3af;font-size:14px">Cargando...</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const API = '/api';
+
+function fmt(n){return n.toLocaleString('es-AR',{minimumFractionDigits:0})}
+function fmtMoney(n){return '$'+Number(n).toLocaleString('es-AR',{minimumFractionDigits:0})}
+
+async function load(){
+try{
+const r=await fetch(API+'/metrics');if(!r.ok){if(r.status===401)window.location.reload();return}
+const d=await r.json();
+render(d);
+$('subtitle').textContent='Monitor — '+d.date;
+}catch(e){$('app').innerHTML='<div class="empty" style="padding:60px">Error de conexión. Reintentando...</div>'}
+}
+
+function render(d){
+const s=d.sales_today;
+let html='';
+
+// Cards superiores
+html+=`<div class="row">`;
+html+=`<div class="col"><div class="card"><div class="card-title">Ventas Hoy</div><div class="big green">${fmtMoney(s.total)}</div><div class="label">${s.count} transacciones · ${s.items_sold} items</div></div></div>`;
+html+=`<div class="col"><div class="card"><div class="card-title">Ticket Prom.</div><div class="big blue">${fmtMoney(s.count>0?s.total/s.count:0)}</div><div class="label">por venta</div></div></div>`;
+html+=`</div>`;
+
+// Métodos de pago
+if(d.by_method.length){
+html+=`<div class="card"><div class="card-title">Métodos de Pago Hoy</div><table><tr><th>Método</th><th class="text-center">Ventas</th><th class="text-right">Total</th></tr>`;
+for(const m of d.by_method){
+const tag=m.method==='efectivo'?'green':m.method==='tarjeta'?'blue':m.method==='transferencia'?'yellow':m.method==='fiado'?'red':'gray';
+html+=`<tr><td><span class="tag ${tag}">${m.method}</span></td><td class="text-center">${m.count}</td><td class="text-right">${fmtMoney(m.total)}</td></tr>`;
+}
+html+=`</table></div>`;
+}
+
+// Stock bajo
+if(d.low_stock.length){
+html+=`<div class="card"><div class="card-title">⚠️ Stock Bajo</div><table><tr><th>Producto</th><th class="text-center">Actual</th><th class="text-center">Mín</th></tr>`;
+for(const l of d.low_stock){
+const cls=l.current===0?'red':l.current<=l.min_stock?'orange':'';
+html+=`<tr><td>${l.name}</td><td class="text-center"><strong class="${cls}">${l.current}</strong></td><td class="text-center text-muted">${l.min_stock}</td></tr>`;
+}
+html+=`</table></div>`;
+}
+
+// Top productos
+if(d.top_products.length){
+html+=`<div class="card"><div class="card-title">🏆 Más Vendidos (7 días)</div><table><tr><th>Producto</th><th class="text-center">Cant.</th><th class="text-right">Total</th></tr>`;
+for(const t of d.top_products){
+html+=`<tr><td>${t.name}</td><td class="text-center">${t.quantity}</td><td class="text-right">${fmtMoney(t.total)}</td></tr>`;
+}
+html+=`</table></div>`;
+}
+
+// Deudores
+if(d.debtors.length){
+html+=`<div class="card"><div class="card-title">💰 Clientes con Deuda</div><table><tr><th>Cliente</th><th class="text-right">Saldo</th></tr>`;
+for(const c of d.debtors){
+html+=`<tr><td>${c.name}</td><td class="text-right" style="color:#dc2626;font-weight:600">${fmtMoney(c.balance)}</td></tr>`;
+}
+html+=`</table></div>`;
+}
+
+if(!d.low_stock.length&&!d.top_products.length&&!d.debtors.length){
+html+=`<div class="empty">Sin novedades para mostrar</div>`;
+}
+
+$('app').innerHTML=html;
+}
+
+// Auto-refresh cada 30 segundos
+let countdown=30;
+setInterval(()=>{
+countdown--;
+$('timer').textContent='actualizando en '+countdown+'s';
+if(countdown<=0){countdown=30;load()}
+},1000);
+
+load();
+</script>
+</body>
+</html>
