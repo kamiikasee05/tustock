@@ -28,7 +28,7 @@ Sistema de gestión de stock y ventas para polirrubros argentinos (kioscos, libr
 
 ## 2. PLANES Y PRECIOS (CONGELADO — NO CAMBIAR SIN REVISIÓN)
 
-### Planes actuales (Junio 2026)
+### Planes vigentes (Junio 2026)
 
 | Plan | Precio | Modelo | Qué incluye |
 |------|--------|--------|-------------|
@@ -37,20 +37,23 @@ Sistema de gestión de stock y ventas para polirrubros argentinos (kioscos, libr
 | **Suscripción** | $8,000 ARS/mes | Mensual | Todo incluido, updates continuos, soporte prioritario, monitor remoto |
 | **Pro** | $160,000 ARS único | Pago único | Todo + Monitor Remoto + cloud backup + export Excel |
 
-### Reglas de negocio
+### Propuesta de reforma (en revisión por Ventas 🔄)
 
-- **Licencia perpetua**: dueño paga una vez y usa para siempre
-- **Updates**: 1 año incluidos en Básico. Renovación: $32,000/año (40% del valor)
-- **Suscripción**: se cancela cuando quiera. Si deja de pagar, el sistema sigue funcionando (pierde updates y soporte)
-- **Trial**: 30 días o 50 productos (lo que ocurra primero). Banner visible de "modo trial"
-- **Licencia por negocio, no por PC**: si cambia de computadora, reinstala y activa con la misma key
-- **Descuentos por volumen**: 3-5 locales → 15%, 6-10 → 25%, +10 → a convenir
-- **Monitor Remoto**: incluido en Pro. Por ahora solo disponible para clienta premium.
+> Los tiers actuales tienen overlapeo entre Básico ($80K), Suscripción ($8K/mes) y Pro ($160K). Se propone refrashear alrededor de una sola decisión: **"¿Pago único o mensual?"**
 
-### Precios en USD (referencia, no se publica)
+**Matriz propuesta:**
 
-- Básico: ~$67 USD
-- Pro: ~$133 USD
+| Feature | Trial | Básico | Suscripción | Pro |
+|---------|:-----:|:------:|:-----------:|:---:|
+| Productos | 100 | ∞ | ∞ | ∞ |
+| Informes | ❌ | ✅ | ✅ | ✅ |
+| Export Excel | ❌ | ✅ | ✅ | ✅ |
+| Monitor Cloud | ❌ | ❌ | ✅ | ✅ |
+| Soporte prioritario | ❌ | ❌ | ✅ | ✅ |
+| Updates | 30d | 1 año | Continuos | 1 año |
+| **Precio** | Gratis | $80K único | $8K/mes | $160K único |
+
+> **Decisión pendiente:** Ventas debe aprobar esta matriz antes de implementar el gating final y el panel de administración. Sin esta definición, el gating y el dashboard admin no tienen sentido.
 - Suscripción: ~$7 USD/mes
 
 ---
@@ -350,6 +353,7 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-06-30 | Transición a Fase 1: prioridad licencias + trial + feature gating | Ventas |
 | 2026-06-30 | **Monitor Cloud aprobado**: Arquitectura híbrida — agente local pushea datos a API cloud con URL fija. Reemplaza Cloudflare Tunnel. Login multiusuario. Desarrollo en Fase 5. | Ventas + Humano |
 | 2026-06-30 | **Monitor Cloud desplegado en Railway**: `tustock.up.railway.app`. API push-based, agente local funcionando con datos reales, dashboard multiusuario. Clienta premium configurada (`libreria@tustock.com`). | DEV + Humano |
+| 2026-06-30 | **Propuesta de reforma de tiers**: refrashear alrededor de "pago único vs mensual". Matriz de gating simplificada (Trial/Básico/Suscripción/Pro) pendiente de aprobación por Ventas. Sin aprobación no se construye el dashboard admin. | DEV + Ventas |
 
 ---
 
