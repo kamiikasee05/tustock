@@ -114,6 +114,17 @@ def activate_license(license_key: str, request: Request, db: Session = Depends(g
     return {"ok": True, "message": f"Licencia {license_key} activada"}
 
 
+@router.delete("/delete/{license_key:path}")
+def delete_license(license_key: str, request: Request, db: Session = Depends(get_db)):
+    verify_admin(request)
+    lic = db.query(License).filter(License.key == license_key).first()
+    if not lic:
+        raise HTTPException(404, "Licencia no encontrada")
+    db.delete(lic)
+    db.commit()
+    return {"ok": True, "message": f"Licencia {license_key} eliminada"}
+
+
 @router.get("/stats")
 def stats(request: Request, db: Session = Depends(get_db)):
     verify_admin(request)

@@ -73,6 +73,14 @@ export default function Admin() {
     } catch { }
   }
 
+  async function deleteLicense(key: string) {
+    if (!confirm(`Eliminar licencia ${key}?`)) return
+    try {
+      await fetch(`/api/admin/delete/${key}`, { method: 'DELETE', headers: headers() })
+      fetchData()
+    } catch { }
+  }
+
   if (!auth) {
     return (
       <div style={{ maxWidth: 400, margin: '60px auto', padding: 20 }}>
@@ -214,8 +222,22 @@ export default function Admin() {
                       background: l.active ? 'var(--danger)' : 'var(--success)',
                       color: '#fff',
                       border: 'none',
+                      marginRight: 4,
                     }}>
                     {l.active ? 'Revocar' : 'Activar'}
+                  </button>
+                  <button
+                    onClick={() => deleteLicense(l.key)}
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: 12,
+                      borderRadius: 4,
+                      cursor: 'pointer',
+                      background: '#6b7280',
+                      color: '#fff',
+                      border: 'none',
+                    }}>
+                    Borrar
                   </button>
                 </td>
               </tr>
