@@ -75,7 +75,7 @@ export default function Admin() {
 
   if (!auth) {
     return (
-      <div style={{ maxWidth: 400, margin: '40px auto' }}>
+      <div style={{ maxWidth: 400, margin: '60px auto', padding: 20 }}>
         <h2 style={{ marginBottom: 8 }}>Admin TUSTOCK</h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: 16, fontSize: 14 }}>Ingresá el token de administrador</p>
         <input
@@ -96,7 +96,7 @@ export default function Admin() {
   }
 
   return (
-    <div>
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: 32, width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ margin: 0 }}>Admin — Licencias</h2>
         <button onClick={() => { sessionStorage.removeItem(TOKEN_KEY); setAuth(false) }}
