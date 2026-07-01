@@ -1,6 +1,7 @@
 """Rutas de administración de licencias — solo accesible con token admin."""
 
 import uuid
+import secrets
 from datetime import date, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
@@ -13,7 +14,7 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 def verify_admin(request: Request):
     auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer ") or auth[7:] != TUSTOCK_ADMIN_TOKEN:
+    if not auth.startswith("Bearer ") or not secrets.compare_digest(auth[7:], TUSTOCK_ADMIN_TOKEN):
         raise HTTPException(401, "Admin token invalido")
 
 
@@ -54,6 +55,9 @@ def generate_license(data: dict, request: Request, db: Session = Depends(get_db)
     if plan not in ("basico", "suscripcion", "pro", "trial"):
         raise HTTPException(400, "Plan invalido. Opciones: basico, suscripcion, pro, trial")
 
+    if customer_name and len(customer_name) > 200:
+        raise HTTPException(400, "Nombre de cliente muy largo (max 200 caracteres)")
+
     from services.license_service import PLAN_FEATURES
     features = PLAN_FEATURES.get(plan, PLAN_FEATURES["trial"])
 
@@ -92,7 +96,7 @@ def generate_license(data: dict, request: Request, db: Session = Depends(get_db)
     }
 
 
-@router.post("/revoke/{license_key:path}")
+@router.post("/revoke/{license_key}")
 def revoke_license(license_key: str, request: Request, db: Session = Depends(get_db)):
     verify_admin(request)
     lic = db.query(License).filter(License.key == license_key).first()
@@ -103,7 +107,7 @@ def revoke_license(license_key: str, request: Request, db: Session = Depends(get
     return {"ok": True, "message": f"Licencia {license_key} revocada"}
 
 
-@router.post("/activate/{license_key:path}")
+@router.post("/activate/{license_key}")
 def activate_license(license_key: str, request: Request, db: Session = Depends(get_db)):
     verify_admin(request)
     lic = db.query(License).filter(License.key == license_key).first()
@@ -114,7 +118,7 @@ def activate_license(license_key: str, request: Request, db: Session = Depends(g
     return {"ok": True, "message": f"Licencia {license_key} activada"}
 
 
-@router.delete("/delete/{license_key:path}")
+@router.delete("/delete/{license_key}")
 def delete_license(license_key: str, request: Request, db: Session = Depends(get_db)):
     verify_admin(request)
     lic = db.query(License).filter(License.key == license_key).first()
@@ -146,6 +150,19 @@ def stats(request: Request, db: Session = Depends(get_db)):
 
     customers_with_names = sum(1 for l in active_licenses if l.customer_name)
 
+    today = date.today()
+    soon = today + timedelta(days=7)
+    trials_expiring = [
+        {
+            "key": l.key,
+            "customer_name": l.customer_name or "Sin nombre",
+            "expires_at": str(l.expires_at) if l.expires_at else None,
+            "days_left": (l.expires_at - today).days if l.expires_at else 0,
+        }
+        for l in active_licenses
+        if l.plan == "trial" and l.expires_at and today <= l.expires_at <= soon
+    ]
+
     return {
         "total": len(all_licenses),
         "active": len(active_licenses),
@@ -157,4 +174,5 @@ def stats(request: Request, db: Session = Depends(get_db)):
             "customers": customers_with_names,
         },
         "active_by_plan": active_by_plan,
+        "trials_expiring": trials_expiring,
     }

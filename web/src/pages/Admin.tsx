@@ -15,37 +15,51 @@ interface License {
 
 export default function Admin() {
   const [token, setToken] = useState(() => sessionStorage.getItem(TOKEN_KEY) || '')
-  const [auth, setAuth] = useState(!!token)
+  const auth = !!token
   const [licenses, setLicenses] = useState<License[]>([])
   const [stats, setStats] = useState<any>(null)
   const [form, setForm] = useState({ plan: 'basico', customer_name: '', expires_at: '' })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [loginToken, setLoginToken] = useState('')
+  const [copied, setCopied] = useState<{key: string, plan: string} | null>(null)
+  const [loginError, setLoginError] = useState('')
+  const [fetchError, setFetchError] = useState('')
+  const [actionError, setActionError] = useState('')
 
   const headers = () => ({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' })
 
   const fetchData = useCallback(async () => {
     if (!token) return
+    setFetchError('')
     try {
       const [lic, st] = await Promise.all([
         fetch('/api/admin/licenses', { headers: headers() }),
         fetch('/api/admin/stats', { headers: headers() }),
       ])
-      if (lic.status === 401) { sessionStorage.removeItem(TOKEN_KEY); setAuth(false); return }
+      if (lic.status === 401 || st.status === 401) { sessionStorage.removeItem(TOKEN_KEY); setToken(''); return }
+      if (!lic.ok || !st.ok) throw new Error('')
       setLicenses((await lic.json()).licenses)
       setStats(await st.json())
-    } catch { }
+    } catch {
+      setFetchError('No se pudo conectar al servidor. Verificá que TUSTOCK esté corriendo.')
+    }
   }, [token])
 
   useEffect(() => { if (auth) fetchData() }, [auth, fetchData])
 
-  function doLogin() {
+  async function doLogin() {
     if (loginToken.length < 4) return
-    sessionStorage.setItem(TOKEN_KEY, loginToken)
-    setToken(loginToken)
-    setAuth(true)
-    setLoginToken('')
+    setLoginError('')
+    try {
+      const r = await fetch('/api/admin/stats', { headers: { Authorization: `Bearer ${loginToken}` } })
+      if (!r.ok) { setLoginError('Token inválido'); return }
+      sessionStorage.setItem(TOKEN_KEY, loginToken)
+      setToken(loginToken)
+      setLoginToken('')
+    } catch {
+      setLoginError('No se pudo conectar al servidor')
+    }
   }
 
   async function generate() {
@@ -55,30 +69,39 @@ export default function Admin() {
       const r = await fetch('/api/admin/generate', { method: 'POST', headers: headers(), body: JSON.stringify(form) })
       const d = await r.json()
       if (d.ok) {
-        setMessage(`Licencia generada: ${d.key} (${d.plan})`)
+        setMessage(d.key)
+        setCopied({ key: d.key, plan: d.plan })
         setForm({ plan: 'basico', customer_name: '', expires_at: '' })
         fetchData()
       } else {
-        setMessage(d.detail || 'Error')
+        setMessage(`Error: ${d.detail || ''}`)
       }
     } catch { setMessage('Error de conexión') }
     setLoading(false)
   }
 
   async function toggleActive(key: string, activate: boolean) {
+    setActionError('')
     const endpoint = activate ? 'activate' : 'revoke'
     try {
-      await fetch(`/api/admin/${endpoint}/${key}`, { method: 'POST', headers: headers() })
+      const r = await fetch(`/api/admin/${endpoint}/${key}`, { method: 'POST', headers: headers() })
+      if (!r.ok) { setActionError('Error al cambiar estado'); return }
       fetchData()
-    } catch { }
+    } catch {
+      setActionError('Error de conexión')
+    }
   }
 
   async function deleteLicense(key: string) {
     if (!confirm(`Eliminar licencia ${key}?`)) return
+    setActionError('')
     try {
-      await fetch(`/api/admin/delete/${key}`, { method: 'DELETE', headers: headers() })
+      const r = await fetch(`/api/admin/delete/${key}`, { method: 'DELETE', headers: headers() })
+      if (!r.ok) { setActionError('Error al eliminar'); return }
       fetchData()
-    } catch { }
+    } catch {
+      setActionError('Error de conexión')
+    }
   }
 
   if (!auth) {
@@ -95,6 +118,7 @@ export default function Admin() {
           style={{ width: '100%', padding: 10, border: '1px solid var(--border)', borderRadius: 8, fontSize: 14, marginBottom: 8 }}
           autoFocus
         />
+        {loginError && <div style={{ color: 'var(--danger)', fontSize: 13, marginBottom: 8 }}>{loginError}</div>}
         <button
           onClick={doLogin}
           style={{ width: '100%', padding: 10, background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
@@ -107,10 +131,23 @@ export default function Admin() {
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: 32, width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ margin: 0 }}>Admin — Licencias</h2>
-        <button onClick={() => { sessionStorage.removeItem(TOKEN_KEY); setAuth(false) }}
+        <button onClick={() => { sessionStorage.removeItem(TOKEN_KEY); setToken('') }}
           style={{ padding: '6px 14px', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
         >Salir</button>
       </div>
+
+      {fetchError && (
+        <div style={{ background: 'var(--danger)', color: '#fff', padding: '10px 16px', borderRadius: 8, marginBottom: 20, fontSize: 13 }}>
+          {fetchError}
+        </div>
+      )}
+
+      {actionError && (
+        <div style={{ background: 'var(--danger)', color: '#fff', padding: '8px 14px', borderRadius: 8, marginBottom: 12, fontSize: 13 }}>
+          {actionError}
+          <button onClick={() => setActionError('')} style={{ background: 'none', border: 'none', color: '#fff', marginLeft: 12, cursor: 'pointer', fontSize: 14 }}>&times;</button>
+        </div>
+      )}
 
       {stats && (
         <div style={{ marginBottom: 20 }}>
@@ -154,6 +191,24 @@ export default function Admin() {
               </div>
             </div>
           )}
+
+          {stats.trials_expiring && stats.trials_expiring.length > 0 && (
+            <div style={{ marginTop: 12, background: 'var(--surface)', borderRadius: 10, padding: 16, borderLeft: '4px solid var(--warning)' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--warning)', marginBottom: 8 }}>
+                {stats.trials_expiring.length} trial{stats.trials_expiring.length > 1 ? 's' : ''} por vencer
+              </div>
+              {stats.trials_expiring.map((t: any) => (
+                <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 13 }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: 11 }}>{t.key}</span>
+                  <span style={{ flex: 1 }}>{t.customer_name}</span>
+                  <span style={{ color: t.days_left <= 2 ? 'var(--danger)' : 'var(--warning)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                    {t.days_left} día{t.days_left !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              ))}
+              <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-muted)' }}>Contactalos antes de que se venza el trial.</div>
+            </div>
+          )}
         </div>
       )}
 
@@ -187,15 +242,26 @@ export default function Admin() {
           </button>
         </div>
         {message && (
-          <div style={{ marginTop: 12, padding: '8px 12px', background: message.includes('Error') ? 'var(--danger)' : 'var(--success)', color: '#fff', borderRadius: 6, fontSize: 13 }}>
-            {message}
+          <div style={{ marginTop: 12, padding: '10px 14px', background: message.startsWith('Error') ? 'var(--danger)' : 'var(--success)', color: '#fff', borderRadius: 6, fontSize: 13, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ flex: 1, fontFamily: message.startsWith('Error') ? 'inherit' : 'monospace', fontSize: 13 }}>
+              {message.startsWith('Error') ? message : `Generada: ${message} (${copied?.plan || ''})`}
+            </span>
+            {copied && copied.key === message && (
+              <button onClick={() => { navigator.clipboard.writeText(message); setCopied(null); }}
+                style={{ padding: '4px 14px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.3)', background: 'transparent', color: '#fff', fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                Copiar
+              </button>
+            )}
+            <button onClick={() => { setMessage(''); setCopied(null); }}
+              style={{ background: 'none', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', lineHeight: 1 }}>&times;</button>
           </div>
         )}
       </div>
 
       <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 20 }}>
         <h3 style={{ fontSize: 16, marginBottom: 12 }}>Licencias ({licenses.length})</h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 700 }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border)' }}>
               <th style={{ textAlign: 'left', padding: '8px 6px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Key</th>
@@ -275,6 +341,7 @@ export default function Admin() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div style={{ marginTop: 20, padding: 12, background: 'var(--surface)', borderRadius: 8, fontSize: 11, color: 'var(--text-muted)' }}>
