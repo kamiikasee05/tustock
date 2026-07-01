@@ -113,21 +113,47 @@ export default function Admin() {
       </div>
 
       {stats && (
-        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-          <div style={{ background: 'var(--surface)', borderRadius: 10, padding: 16, minWidth: 140 }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total</div>
-            <div style={{ fontSize: 28, fontWeight: 800 }}>{stats.total}</div>
-          </div>
-          <div style={{ background: 'var(--surface)', borderRadius: 10, padding: 16, minWidth: 140 }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Activas</div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--success)' }}>{stats.active}</div>
-          </div>
-          {Object.entries(stats.by_plan || {}).map(([plan, count]: [string, any]) => (
-            <div key={plan} style={{ background: 'var(--surface)', borderRadius: 10, padding: 16, minWidth: 100 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>{plan}</div>
-              <div style={{ fontSize: 24, fontWeight: 700 }}>{count}</div>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+            <div style={{ background: 'var(--surface)', borderRadius: 10, padding: 16, minWidth: 140 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Total licencias</div>
+              <div style={{ fontSize: 28, fontWeight: 800 }}>{stats.total}</div>
             </div>
-          ))}
+            <div style={{ background: 'var(--surface)', borderRadius: 10, padding: 16, minWidth: 140 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Activas</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--success)' }}>{stats.active}</div>
+            </div>
+            <div style={{ background: 'var(--surface)', borderRadius: 10, padding: 16, minWidth: 140 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Clientes</div>
+              <div style={{ fontSize: 28, fontWeight: 800 }}>{stats.revenue?.customers ?? 0}</div>
+            </div>
+            {Object.entries(stats.active_by_plan || {}).map(([plan, count]: [string, any]) => (
+              <div key={plan} style={{ background: 'var(--surface)', borderRadius: 10, padding: 16, minWidth: 100 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>{plan}</div>
+                <div style={{ fontSize: 24, fontWeight: 700 }}>{count}</div>
+              </div>
+            ))}
+          </div>
+
+          {stats.revenue && (
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)', borderRadius: 10, padding: 16, minWidth: 180, flex: 1 }}>
+                <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Ingreso estimado total</div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>${(stats.revenue.estimated_total ?? 0).toLocaleString('es-AR')}</div>
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>En base a licencias activas</div>
+              </div>
+              <div style={{ background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)', borderRadius: 10, padding: 16, minWidth: 180, flex: 1 }}>
+                <div style={{ fontSize: 11, color: '#6ee7b7', textTransform: 'uppercase', fontWeight: 600 }}>MRR (Suscripciones)</div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>${(stats.revenue.mrr ?? 0).toLocaleString('es-AR')}/mes</div>
+                <div style={{ fontSize: 11, color: '#6ee7b7', marginTop: 4 }}>{stats.active_by_plan?.suscripcion ?? 0} clientes suscriptos</div>
+              </div>
+              <div style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #334155 100%)', borderRadius: 10, padding: 16, minWidth: 180, flex: 1 }}>
+                <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Pago único</div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: '#fff' }}>${(stats.revenue.one_time ?? 0).toLocaleString('es-AR')}</div>
+                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Básico + Pro</div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

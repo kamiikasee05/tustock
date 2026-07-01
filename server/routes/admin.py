@@ -129,13 +129,32 @@ def delete_license(license_key: str, request: Request, db: Session = Depends(get
 def stats(request: Request, db: Session = Depends(get_db)):
     verify_admin(request)
     all_licenses = db.query(License).all()
-    active = sum(1 for l in all_licenses if l.active)
+    active_licenses = [l for l in all_licenses if l.active]
     by_plan = {}
     for l in all_licenses:
         by_plan[l.plan] = by_plan.get(l.plan, 0) + 1
 
+    PRICE = {"basico": 80000, "suscripcion": 8000, "pro": 160000, "trial": 0, "premium": 0}
+
+    estimated_revenue = sum(PRICE.get(l.plan, 0) for l in active_licenses)
+    mrr = sum(PRICE.get(l.plan, 0) for l in active_licenses if l.plan == "suscripcion")
+    one_time = sum(PRICE.get(l.plan, 0) for l in active_licenses if l.plan != "suscripcion")
+
+    active_by_plan = {}
+    for l in active_licenses:
+        active_by_plan[l.plan] = active_by_plan.get(l.plan, 0) + 1
+
+    customers_with_names = sum(1 for l in active_licenses if l.customer_name)
+
     return {
         "total": len(all_licenses),
-        "active": active,
+        "active": len(active_licenses),
         "by_plan": by_plan,
+        "revenue": {
+            "estimated_total": estimated_revenue,
+            "mrr": mrr,
+            "one_time": one_time,
+            "customers": customers_with_names,
+        },
+        "active_by_plan": active_by_plan,
     }
