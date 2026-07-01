@@ -7,7 +7,7 @@ from models.product import Product
 
 PLAN_FEATURES = {
     "trial": {
-        "max_products": 50,
+        "max_products": 100,
         "reports_enabled": False,
         "export_enabled": False,
         "monitor_enabled": False,
@@ -16,7 +16,7 @@ PLAN_FEATURES = {
     "basico": {
         "max_products": 999999,
         "reports_enabled": True,
-        "export_enabled": False,
+        "export_enabled": True,
         "monitor_enabled": False,
         "backup_enabled": False,
     },

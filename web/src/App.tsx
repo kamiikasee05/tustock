@@ -12,24 +12,30 @@ import Presupuestos from './pages/Presupuestos'
 import Vendors from './pages/Vendors'
 import Upgrade from './pages/Upgrade'
 import Settings from './pages/Settings'
+import Admin from './pages/Admin'
 
 export default function App() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/pedidos" element={<Pedidos />} />
-        <Route path="/presupuestos" element={<Presupuestos />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/sales" element={<Sales />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/vendors" element={<Vendors />} />
-        <Route path="/audits" element={<Audits />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/scanner" element={<ScannerConnect />} />
-        <Route path="/upgrade" element={<Upgrade />} />
-        <Route path="/settings" element={<Settings />} />
-      </Routes>
-    </Layout>
+    <Routes>
+      <Route path="/admin" element={<Admin />} />
+      <Route path="*" element={
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/pedidos" element={<Pedidos />} />
+            <Route path="/presupuestos" element={<Presupuestos />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/sales" element={<Sales />} />
+            <Route path="/customers" element={<Customers />} />
+            <Route path="/vendors" element={<Vendors />} />
+            <Route path="/audits" element={<Audits />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/scanner" element={<ScannerConnect />} />
+            <Route path="/upgrade" element={<Upgrade />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
+        </Layout>
+      } />
+    </Routes>
   )
 }

@@ -6,7 +6,9 @@
 >
 > **Rol de DEV (asistente de código):** Construye exclusivamente lo que está definido aquí. No inventa features. No desarrolla fuera del roadmap.
 >
-> **Regla especial — Cliente Premium:** La clienta que paga $60K entry + $6K/mes tiene acceso anticipado al Monitor Premium (Fase 4 adelantada). Ningún otro cliente lo recibe hasta que se lance oficialmente. Esta excepción queda registrada acá.
+> **Regla especial — Cliente Premium:** La clienta que paga $60K entry + $6K/mes tiene un plan híbrido legacy (pago único + suscripción). Tiene acceso al Monitor Cloud, updates continuos y soporte prioritario. Su tier en código es `premium`. Ningún cliente nuevo accede a este precio ni a este tier. Es la primera clienta y cierra antes del lanzamiento oficial.
+
+**Regla de legacy pricing:** Si un referido pregunta cuánto pagó ella, la respuesta es: *"Fue la primera cliente y compró antes del lanzamiento oficial. Esos precios ya no están disponibles."*
 
 ---
 
@@ -32,16 +34,14 @@ Sistema de gestión de stock y ventas para polirrubros argentinos (kioscos, libr
 
 | Plan | Precio | Modelo | Qué incluye |
 |------|--------|--------|-------------|
-| **Trial** | Gratis | 30 días | Máximo 50 productos, sin informes, sin exportación |
-| **Básico** | $80,000 ARS único | Pago único | Todo el sistema, app Android, 1 año de updates |
+| **Trial** | Gratis | 30 días | Máximo 100 productos, sin informes, sin exportación |
+| **Básico** | $80,000 ARS único | Pago único | Todo el sistema, app Android, informes, export Excel, 1 año de updates |
 | **Suscripción** | $8,000 ARS/mes | Mensual | Todo incluido, updates continuos, soporte prioritario, monitor remoto |
 | **Pro** | $160,000 ARS único | Pago único | Todo + Monitor Remoto + cloud backup + export Excel |
 
-### Propuesta de reforma (en revisión por Ventas 🔄)
+### Matriz de gating aprobada (Junio 2026) ✅
 
-> Los tiers actuales tienen overlapeo entre Básico ($80K), Suscripción ($8K/mes) y Pro ($160K). Se propone refrashear alrededor de una sola decisión: **"¿Pago único o mensual?"**
-
-**Matriz propuesta:**
+> El cliente decide una sola cosa: **"¿Pago único o mensual?"** El único diferenciador real entre tiers es Monitor Cloud + soporte prioritario. Export Excel va en todos los planes pagos (quitarlo se siente injusto, y no es lo que motiva el upgrade).
 
 | Feature | Trial | Básico | Suscripción | Pro |
 |---------|:-----:|:------:|:-----------:|:---:|
@@ -53,8 +53,7 @@ Sistema de gestión de stock y ventas para polirrubros argentinos (kioscos, libr
 | Updates | 30d | 1 año | Continuos | 1 año |
 | **Precio** | Gratis | $80K único | $8K/mes | $160K único |
 
-> **Decisión pendiente:** Ventas debe aprobar esta matriz antes de implementar el gating final y el panel de administración. Sin esta definición, el gating y el dashboard admin no tienen sentido.
-- Suscripción: ~$7 USD/mes
+> **Nota:** La matriz puede reestructurarse cuando el proyecto madure y tengamos datos reales de uso. Hoy es una foto. Mañana, con 50 clientes, la revisamos.
 
 ---
 
@@ -82,6 +81,7 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 - **Monitor Premium (Fase 4 adelantada):** Servicio independiente puerto 8091, login propio, dashboard mobile responsive, API read-only. Expuesto vía Cloudflare Tunnel para acceso remoto desde el celular. Solo esta clienta lo tiene.
 - **Monitor Cloud (Fase 5):** Desplegado en Railway (`tustock.up.railway.app`). API push-based, dashboard mobile responsive, login multiusuario JWT. Agente local (`cloud/agent.py`) pushea métricas cada 30s desde la PC del cliente. URL fija, sin tunnel.
 - **Launcher unificado:** `scripts/launcher.py` — inicia servidor, monitor, tunnel y cloud agent desde un solo punto. `TUSTOCK.bat` con menú interactivo de 8 opciones.
+- **Dashboard admin de licencias:** Panel `/admin` con token separado. Generar keys, ver licencias, revocar/activar, stats por plan.
 - **Guía de Usuario PDF** generada automáticamente
 
 ---
@@ -209,10 +209,10 @@ PC del cliente                          Cloud (Railway/VPS)
 
 | Prioridad | Tarea | Quién | Por qué es crítica |
 |:---------:|-------|:-----:|-------------------|
-| 🔥 1 | **Modelo License en BD + feature gating** | 🖥 DEV | Sin esto no podemos escalar. Próximo cliente necesita licencia. |
-| 🔥 2 | **Trial mode (30 días / 50 productos)** | 🖥 DEV | Para que nuevos clientes prueben antes de comprar |
-| 🔥 3 | **Página /upgrade con planes** | 🖥 DEV | Para que los clientes vean los planes y compren desde el sistema |
-| 🔥 4 | **Integración Mercado Pago** | 🖥 DEV | Para cobrar automáticamente sin intervención humana |
+| 🔥 1 | **Corregir gating para Básico** (`export_enabled: true`) | 🖥 DEV | ✅ Hecho. Matriz aprobada. Export Excel va en todos los planes pagos. |
+| 🔥 2 | **Alinear Upgrade.tsx con la matriz aprobada** | 🖥 DEV | ✅ Hecho. Quitar "Exportación Excel" de la lista de "no incluye" en la card de Básico. |
+| 🔥 3 | **Dashboard admin de licencias** | 🖥 DEV | ✅ Hecho. Panel `/admin`, token separado, generar keys, ver/revocar/activar, stats. |
+| 🔥 4 | **Integración Mercado Pago** | 🖥 DEV | Para cobrar automáticamente sin intervención humana. |
 | 🟡 5 | **Landing page estática** | 🖥 DEV | Para tener presencia web y recibir leads |
 | 🟡 6 | **CRM en Google Sheets** | 🖥 DEV | Para no perder oportunidades de venta |
 | 🟡 5 | **Monitor Cloud (push-based, URL fija)** | 🖥 DEV | **COMPLETO.** Reemplaza Cloudflare Tunnel. Arquitectura híbrida: agente local pushea a API cloud. Login multiusuario. Dominio fijo. Desplegado en Railway. |
@@ -329,6 +329,7 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] TIMESTAMPS: Todos los modelos SQLAlchemy now tienen created_at/updated_at. (2026-06-30)
 - [feature] LAUNCHER UNIFICADO: scripts/launcher.py reemplaza todos los .bat. Inicia servidor, monitor, tunnel, cloud agent. TUSTOCK.bat con menu de 8 opciones. (2026-06-30)
 - [feature] MONITOR CLOUD: API cloud con push del agente local, login multiusuario JWT, dashboard mobile responsive. Desplegado en Railway (`tustock.up.railway.app`). (2026-06-30)
+- [feature] DASHBOARD ADMIN: Panel de administración de licencias en `/admin`, token separado. Generar keys, ver/revocar/activar licencias, stats por plan. (2026-06-30)
 
 ---
 
@@ -353,7 +354,8 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-06-30 | Transición a Fase 1: prioridad licencias + trial + feature gating | Ventas |
 | 2026-06-30 | **Monitor Cloud aprobado**: Arquitectura híbrida — agente local pushea datos a API cloud con URL fija. Reemplaza Cloudflare Tunnel. Login multiusuario. Desarrollo en Fase 5. | Ventas + Humano |
 | 2026-06-30 | **Monitor Cloud desplegado en Railway**: `tustock.up.railway.app`. API push-based, agente local funcionando con datos reales, dashboard multiusuario. Clienta premium configurada (`libreria@tustock.com`). | DEV + Humano |
-| 2026-06-30 | **Propuesta de reforma de tiers**: refrashear alrededor de "pago único vs mensual". Matriz de gating simplificada (Trial/Básico/Suscripción/Pro) pendiente de aprobación por Ventas. Sin aprobación no se construye el dashboard admin. | DEV + Ventas |
+| 2026-06-30 | **Propuesta de reforma de tiers**: refrashear alrededor de "pago único vs mensual". Matriz de gating simplificada (Trial/Básico/Suscripción/Pro) propuesta por DEV, pendiente de aprobación por Ventas. | DEV + Ventas |
+| 2026-06-30 | **Matriz de gating APROBADA** por Ventas. Export Excel va en todos los planes pagos. Diferencial: Monitor Cloud + soporte prioritario. Ajuste pendiente en código: `export_enabled: true` para Básico. | Ventas |
 
 ---
 

@@ -1,0 +1,130 @@
+"""Rutas de administración de licencias — solo accesible con token admin."""
+
+import uuid
+from datetime import date, timedelta
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy.orm import Session
+from database import get_db
+from config import TUSTOCK_ADMIN_TOKEN
+from models.license import License
+
+router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+def verify_admin(request: Request):
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer ") or auth[7:] != TUSTOCK_ADMIN_TOKEN:
+        raise HTTPException(401, "Admin token invalido")
+
+
+def _generate_key() -> str:
+    raw = uuid.uuid4().hex[:16].upper()
+    return f"TST-{raw[:4]}-{raw[4:8]}-{raw[8:12]}-{raw[12:16]}"
+
+
+@router.get("/licenses")
+def list_licenses(request: Request, db: Session = Depends(get_db)):
+    verify_admin(request)
+    licenses = db.query(License).order_by(License.created_at.desc()).all()
+    return {
+        "licenses": [
+            {
+                "id": lic.id,
+                "key": lic.key,
+                "plan": lic.plan,
+                "customer_name": lic.customer_name or "",
+                "active": lic.active,
+                "expires_at": str(lic.expires_at) if lic.expires_at else None,
+                "created_at": lic.created_at.isoformat() if lic.created_at else None,
+                "last_validated_at": lic.last_validated_at.isoformat() if lic.last_validated_at else None,
+            }
+            for lic in licenses
+        ]
+    }
+
+
+@router.post("/generate")
+def generate_license(data: dict, request: Request, db: Session = Depends(get_db)):
+    verify_admin(request)
+
+    plan = data.get("plan", "basico")
+    customer_name = data.get("customer_name", "").strip()
+    expires_str = data.get("expires_at")
+
+    if plan not in ("basico", "suscripcion", "pro", "trial"):
+        raise HTTPException(400, "Plan invalido. Opciones: basico, suscripcion, pro, trial")
+
+    from services.license_service import PLAN_FEATURES
+    features = PLAN_FEATURES.get(plan, PLAN_FEATURES["trial"])
+
+    expires_at = None
+    if expires_str:
+        try:
+            expires_at = date.fromisoformat(expires_str)
+        except ValueError:
+            raise HTTPException(400, "Formato de fecha invalido (YYYY-MM-DD)")
+
+    if plan == "trial" and not expires_at:
+        expires_at = date.today() + timedelta(days=30)
+
+    key = _generate_key()
+    lic = License(
+        key=key,
+        plan=plan,
+        customer_name=customer_name,
+        max_products=features["max_products"],
+        reports_enabled=features["reports_enabled"],
+        export_enabled=features["export_enabled"],
+        monitor_enabled=features["monitor_enabled"],
+        backup_enabled=features["backup_enabled"],
+        expires_at=expires_at,
+    )
+    db.add(lic)
+    db.commit()
+    db.refresh(lic)
+
+    return {
+        "ok": True,
+        "key": lic.key,
+        "plan": lic.plan,
+        "customer_name": lic.customer_name,
+        "expires_at": str(lic.expires_at) if lic.expires_at else None,
+    }
+
+
+@router.post("/revoke/{license_key:path}")
+def revoke_license(license_key: str, request: Request, db: Session = Depends(get_db)):
+    verify_admin(request)
+    lic = db.query(License).filter(License.key == license_key).first()
+    if not lic:
+        raise HTTPException(404, "Licencia no encontrada")
+    lic.active = False
+    db.commit()
+    return {"ok": True, "message": f"Licencia {license_key} revocada"}
+
+
+@router.post("/activate/{license_key:path}")
+def activate_license(license_key: str, request: Request, db: Session = Depends(get_db)):
+    verify_admin(request)
+    lic = db.query(License).filter(License.key == license_key).first()
+    if not lic:
+        raise HTTPException(404, "Licencia no encontrada")
+    lic.active = True
+    db.commit()
+    return {"ok": True, "message": f"Licencia {license_key} activada"}
+
+
+@router.get("/stats")
+def stats(request: Request, db: Session = Depends(get_db)):
+    verify_admin(request)
+    all_licenses = db.query(License).all()
+    active = sum(1 for l in all_licenses if l.active)
+    by_plan = {}
+    for l in all_licenses:
+        by_plan[l.plan] = by_plan.get(l.plan, 0) + 1
+
+    return {
+        "total": len(all_licenses),
+        "active": active,
+        "by_plan": by_plan,
+    }

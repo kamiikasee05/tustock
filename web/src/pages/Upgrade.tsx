@@ -8,10 +8,12 @@ const plans = [
     features: [
       'Sistema completo de stock y ventas',
       'App Android incluida',
+      'Exportación a Excel',
+      'Informes diarios',
       '1 año de actualizaciones',
       'Licencia perpetua',
     ],
-    notIncluded: ['Monitor remoto', 'Backup en la nube', 'Exportación Excel'],
+    notIncluded: ['Monitor remoto', 'Soporte prioritario'],
   },
   {
     name: 'Suscripción',
@@ -46,7 +48,7 @@ const plans = [
 export default function Upgrade() {
   const { status } = useLicense()
 
-  if (status.plan === 'pro' || status.plan === 'suscripcion' || status.plan === 'premium') {
+  if (status.plan === 'pro' || status.plan === 'suscripcion' || status.plan === 'premium' || status.plan === 'basico') {
     return (
       <div>
         <h2 style={{ marginBottom: 8 }}>Licencia activa</h2>

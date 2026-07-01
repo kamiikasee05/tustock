@@ -13,6 +13,7 @@ API_PORT = int(os.getenv("TUSTOCK_PORT", "8090"))
 WEB_DIR = BASE_DIR / "web" / "dist"
 
 TUSTOCK_TOKEN = os.getenv("TUSTOCK_TOKEN", "tustock-local-token")
+TUSTOCK_ADMIN_TOKEN = os.getenv("TUSTOCK_ADMIN_TOKEN", "tustock-admin-2026")
 
 CORS_ORIGINS = [
     "http://localhost:8090",
