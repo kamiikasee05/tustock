@@ -5,7 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY config.py models.py api.py dashboard.html ./
+COPY config.py models.py api.py dashboard.html payments.py ./
 
 EXPOSE 8000
 
