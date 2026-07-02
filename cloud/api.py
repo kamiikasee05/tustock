@@ -17,8 +17,8 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR
-from models import init_db, get_db, Business, MetricsPush
+from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR, MP_ACCESS_TOKEN
+from models import init_db, get_db, Business, MetricsPush, Payment
 
 init_db()
 
@@ -173,6 +173,102 @@ def regenerate_key(business: Business = Depends(_get_current_business), db: Sess
     business.api_key = secrets.token_hex(32)
     db.commit()
     return {"ok": True, "api_key": business.api_key}
+
+
+@app.post("/api/payments/create")
+def create_payment(data: dict, db: Session = Depends(get_db)):
+    if not MP_ACCESS_TOKEN:
+        raise HTTPException(400, "Mercado Pago no configurado en el servidor")
+
+    plan = data.get("plan", "basico")
+    price = data.get("price", 0)
+    license_key = data.get("license_key", "")
+    email = data.get("email", "")
+
+    from payments import create_preference
+    result = create_preference(MP_ACCESS_TOKEN, plan, price, license_key, email)
+    if not result.get("ok"):
+        raise HTTPException(400, result.get("error", "Error al crear preferencia"))
+
+    payment = Payment(
+        license_key=license_key,
+        plan=plan,
+        price=price,
+        preference_id=result["preference_id"],
+        init_point=result["init_point"],
+        customer_email=email,
+    )
+    db.add(payment)
+    db.commit()
+
+    return {
+        "ok": True,
+        "preference_id": result["preference_id"],
+        "init_point": result["init_point"],
+    }
+
+
+@app.post("/api/payments/webhook")
+async def payment_webhook(request: Request, db: Session = Depends(get_db)):
+    try:
+        body = await request.json()
+    except Exception:
+        return {"ok": False, "error": "Invalid JSON"}
+
+    data_id = body.get("data", {}).get("id") if isinstance(body.get("data"), dict) else body.get("data", {}).get("id", "")
+
+    if not data_id and "id" in body:
+        data_id = body["id"]
+
+    if not data_id:
+        return {"ok": False, "error": "No data.id"}
+
+    if not MP_ACCESS_TOKEN:
+        return {"ok": False, "error": "MP no configurado"}
+
+    from payments import verify_webhook
+    result = verify_webhook(MP_ACCESS_TOKEN, str(data_id))
+    if not result.get("ok"):
+        return {"ok": False, "error": result.get("error")}
+
+    lic_key = result.get("external_reference", "")
+    payment = db.query(Payment).filter(Payment.preference_id == result.get("preference_id")).first()
+    if not payment and lic_key:
+        payment = db.query(Payment).filter(Payment.license_key == lic_key).order_by(Payment.created_at.desc()).first()
+
+    if payment:
+        payment.status = result["status"]
+        payment.payment_id = str(result.get("payment_id", ""))
+        if result["status"] == "approved":
+            payment.paid_at = datetime.now(timezone.utc)
+        db.commit()
+
+    return {"ok": True, "status": result["status"], "license_key": lic_key}
+
+
+@app.get("/api/payments/status/{license_key}")
+def payment_status(license_key: str, db: Session = Depends(get_db)):
+    payments = db.query(Payment).filter(
+        Payment.license_key == license_key
+    ).order_by(Payment.created_at.desc()).all()
+
+    latest = payments[0] if payments else None
+    return {
+        "license_key": license_key,
+        "payments": [
+            {
+                "preference_id": p.preference_id,
+                "status": p.status,
+                "plan": p.plan,
+                "price": p.price,
+                "init_point": p.init_point,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+                "paid_at": p.paid_at.isoformat() if p.paid_at else None,
+            }
+            for p in payments
+        ],
+        "status": latest.status if latest else "none",
+    }
 
 
 @app.get("/")

@@ -33,6 +33,22 @@ class MetricsPush(Base):
     pushed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class Payment(Base):
+    __tablename__ = "payments"
+
+    id = Column(Integer, primary_key=True)
+    license_key = Column(String(50), nullable=False, index=True)
+    plan = Column(String(30), nullable=False)
+    price = Column(Float, nullable=False)
+    preference_id = Column(String(50))
+    init_point = Column(String(500))
+    payment_id = Column(String(50))
+    status = Column(String(30), default="pending")
+    customer_email = Column(String(200), default="")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    paid_at = Column(DateTime)
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

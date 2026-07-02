@@ -12,3 +12,5 @@ DATABASE_URL = os.getenv("TUSTOCK_CLOUD_DB", f"sqlite:///{BASE_DIR / 'cloud.db'}
 JWT_SECRET = os.getenv("TUSTOCK_JWT_SECRET", "cambiar-en-produccion")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_DAYS = 30
+
+MP_ACCESS_TOKEN = os.getenv("TUSTOCK_MP_TOKEN", "")

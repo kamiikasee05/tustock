@@ -26,6 +26,11 @@ export default function Admin() {
   const [loginError, setLoginError] = useState('')
   const [fetchError, setFetchError] = useState('')
   const [actionError, setActionError] = useState('')
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [paymentUrl, setPaymentUrl] = useState('')
+  const [paymentStatuses, setPaymentStatuses] = useState<Record<string, string>>({})
+
+  const CLOUD_API = 'https://tustock.up.railway.app'
 
   const headers = () => ({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' })
 
@@ -103,6 +108,48 @@ export default function Admin() {
       setActionError('Error de conexión')
     }
   }
+
+  async function createPayment(key: string, plan: string) {
+    setPaymentLoading(true)
+    setPaymentUrl('')
+    setActionError('')
+
+    const prices: Record<string, number> = { basico: 80000, suscripcion: 8000, pro: 160000, trial: 0 }
+
+    try {
+      const r = await fetch(`${CLOUD_API}/api/payments/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan, price: prices[plan] || 0, license_key: key })
+      })
+      const d = await r.json()
+      if (d.ok) {
+        setPaymentUrl(d.init_point)
+        setCopied({ key, plan })
+      } else {
+        setActionError(d.detail || 'Error al crear pago')
+      }
+    } catch {
+      setActionError('No se pudo conectar al servidor cloud')
+    }
+    setPaymentLoading(false)
+  }
+
+  async function checkPaymentStatus(key: string) {
+    try {
+      const r = await fetch(`${CLOUD_API}/api/payments/status/${key}`)
+      const d = await r.json()
+      setPaymentStatuses(prev => ({ ...prev, [key]: d.status }))
+    } catch { }
+  }
+
+  useEffect(() => {
+    if (auth && licenses.length > 0) {
+      licenses.slice(0, 20).forEach(l => {
+        if (!paymentStatuses[l.key]) checkPaymentStatus(l.key)
+      })
+    }
+  }, [licenses.length, auth])
 
   if (!auth) {
     return (
@@ -256,6 +303,23 @@ export default function Admin() {
               style={{ background: 'none', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', lineHeight: 1 }}>&times;</button>
           </div>
         )}
+
+        {paymentUrl && (
+          <div style={{ marginTop: 12, padding: '12px 16px', background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--primary)', fontSize: 13 }}>
+            <div style={{ fontWeight: 600, marginBottom: 6, color: 'var(--primary)' }}>Link de pago Mercado Pago</div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <code style={{ flex: 1, fontSize: 11, background: 'var(--bg)', padding: '6px 10px', borderRadius: 4, wordBreak: 'break-all' }}>{paymentUrl}</code>
+              <button onClick={() => { navigator.clipboard.writeText(paymentUrl); }}
+                style={{ padding: '6px 14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                Copiar
+              </button>
+              <button onClick={() => { window.open(paymentUrl, '_blank'); setPaymentUrl(''); }}
+                style={{ padding: '6px 14px', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                Abrir
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 20 }}>
@@ -270,6 +334,7 @@ export default function Admin() {
               <th style={{ textAlign: 'center', padding: '8px 6px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Estado</th>
               <th style={{ textAlign: 'left', padding: '8px 6px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Creada</th>
               <th style={{ textAlign: 'center', padding: '8px 6px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Acción</th>
+              <th style={{ textAlign: 'center', padding: '8px 6px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Pago</th>
             </tr>
           </thead>
           <tbody>
@@ -328,15 +393,37 @@ export default function Admin() {
                       background: '#6b7280',
                       color: '#fff',
                       border: 'none',
+                      marginRight: 4,
                     }}>
                     Borrar
                   </button>
+                </td>
+                <td style={{ padding: '8px 6px', textAlign: 'center' }}>
+                  {paymentStatuses[l.key] && paymentStatuses[l.key] !== 'none' ? (
+                    <span style={{
+                      padding: '3px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
+                      background: paymentStatuses[l.key] === 'approved' ? 'var(--success)' : 'var(--warning)',
+                      color: paymentStatuses[l.key] === 'approved' ? '#fff' : '#000',
+                    }}>
+                      {paymentStatuses[l.key] === 'approved' ? 'Pagado' : paymentStatuses[l.key] === 'pending' ? 'Pendiente' : paymentStatuses[l.key]}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => createPayment(l.key, l.plan)}
+                      disabled={paymentLoading || l.plan === 'trial'}
+                      style={{
+                        padding: '4px 12px', fontSize: 12, borderRadius: 4, cursor: l.plan === 'trial' ? 'not-allowed' : 'pointer',
+                        background: 'var(--primary)', color: '#fff', border: 'none', opacity: l.plan === 'trial' ? 0.5 : 1,
+                      }}>
+                      {l.plan === 'trial' ? 'Gratis' : 'Cobrar MP'}
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
             {licenses.length === 0 && (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>No hay licencias</td>
+                <td colSpan={7} style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>No hay licencias</td>
               </tr>
             )}
           </tbody>
