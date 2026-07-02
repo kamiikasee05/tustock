@@ -90,7 +90,7 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 
 | Feature | Está en docs | Realidad | Acción |
 |---------|:-----------:|:--------:|--------|
-| Backup en la nube | Pro (planeado) | ❌ No existe | No prometer |
+| Backup en la nube | Pro (planeado) | ❌ No existe | El flag `backup_enabled: True` está en el modelo pero el feature no se construyó. No prometer. |
 | Multi-PC / multi-sucursal | Pro (planeado) | ❌ No existe | No prometer |
 | Múltiples perfiles de cajero | Pro (planeado) | ❌ No existe | No prometer |
 | Monitor Cloud (push-based, URL fija) | Pro (planeado) | ✅ Construido y desplegado | `tustock.up.railway.app`. API cloud push-based, agente local, dashboard responsive, login multiusuario JWT. URL fija. |
@@ -188,12 +188,12 @@ PC del cliente                          Cloud (Railway/VPS)
 
 ## 6. FASE ACTUAL DEL ROADMAP
 
-**Estamos en: Fase 1 y Fase 5 completas. Fase 1 (licencias + trial + feature gating) ✅. Monitor Cloud desplegado. Próximo: integración de pagos (Mercado Pago).**
+**Estamos en: Fase 1 y Fase 5 completas. Fase 1 (licencias + trial + feature gating) ✅. Monitor Cloud desplegado. Admin dashboard completo. Próximo: integración de pagos (Mercado Pago).**
 
 ### Hitos alcanzados
 
 - ✅ Análisis del proyecto y valorización (~$6K USD hoy, hasta $250K potencial)
-- ✅ Definición de planes y precios (Básico $60K, Suscripción $6K/mes, Pro $120K)
+- ✅ Definición de planes y precios (Básico $80K, Suscripción $8K/mes, Pro $160K)
 - ✅ Diferenciación y propuesta de valor
 - ✅ Guión de entrevista con clienta de librería
 - ✅ Secuencia de WhatsApp para preventa, seguimiento y cierre
@@ -204,6 +204,10 @@ PC del cliente                          Cloud (Railway/VPS)
 - ✅ Esquemas Pydantic para validación de datos
 - ✅ Guía de Usuario PDF generada automáticamente
 - ✅ Flujo de venta completo: entrevista → demo → cierre → pago → activación
+- ✅ **Sistema de licencias** (Fase 1): modelo License, service, routes, feature gating backend+frontend
+- ✅ **Trial mode**: 30 días / 100 productos, banner, upgrade prompts
+- ✅ **Dashboard admin**: panel `/admin`, generación de keys, stats, ingresos estimados, trials por vencer
+- ✅ **Launcher unificado**: TUSTOCK.bat 8 opciones, auto-start con --quick, cloud agent auto-start
 
 ### Prioridades actuales (reordenadas post-venta)
 
@@ -356,6 +360,7 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-06-30 | **Monitor Cloud desplegado en Railway**: `tustock.up.railway.app`. API push-based, agente local funcionando con datos reales, dashboard multiusuario. Clienta premium configurada (`libreria@tustock.com`). | DEV + Humano |
 | 2026-06-30 | **Propuesta de reforma de tiers**: refrashear alrededor de "pago único vs mensual". Matriz de gating simplificada (Trial/Básico/Suscripción/Pro) propuesta por DEV, pendiente de aprobación por Ventas. | DEV + Ventas |
 | 2026-06-30 | **Matriz de gating APROBADA** por Ventas. Export Excel va en todos los planes pagos. Diferencial: Monitor Cloud + soporte prioritario. Ajuste pendiente en código: `export_enabled: true` para Básico. | Ventas |
+| 2026-06-30 | **Auditoría completa**: revisión de admin routes, frontend, launcher, TUSTOCK.bat. Fixes aplicados: timing-safe token compare, stop.bat PID, autostart quick mode, favicon guard, duplicate query eliminado. | DEV |
 
 ---
 
