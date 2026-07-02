@@ -75,15 +75,16 @@ def setup_desktop_shortcut():
     if not ask("Crear acceso directo en el escritorio?"):
         return
     target = str(BASE / "TUSTOCK.bat")
-    icon = str(SERVER / "favicon.ico")
+    icon = str(SERVER / "favicon.ico") if (SERVER / "favicon.ico").exists() else ""
     shortcut = os.path.expanduser("~/Desktop/TUSTOCK.lnk")
+    icon_clause = f'$s.IconLocation = "{icon}"; ' if icon else ""
     ps = (
         f'$ws = New-Object -ComObject WScript.Shell; '
         f'$s = $ws.CreateShortcut("{shortcut}"); '
         f'$s.TargetPath = "{target}"; '
         f'$s.WorkingDirectory = "{BASE}"; '
         f'$s.Description = "TUSTOCK - Sistema de Gestion"; '
-        f'$s.IconLocation = "{icon}"; '
+        f'{icon_clause}'
         f'$s.Save()'
     )
     r = run(f'powershell -Command "{ps}"')
@@ -100,10 +101,11 @@ def setup_autostart():
     if not ask("Iniciar TUSTOCK automaticamente al encender la PC?"):
         return
     bat_path = str(BASE / "TUSTOCK.bat")
+    launcher_args = 'python scripts\\launcher.py --quick'
     ps = (
         f'Start-Process powershell -Verb RunAs -ArgumentList '
         f'\'-Command "schtasks /CREATE /SC ONLOGON /TN \\"{task_name}\\" '
-        f'/TR \\"\'{bat_path}\'\\" /F /RL HIGHEST"\''
+        f'/TR \\"cmd /c cd /d {BASE} && {launcher_args}\\" /F /RL HIGHEST"\''
     )
     r = run(f'powershell -Command "{ps}"')
     if r.returncode == 0:

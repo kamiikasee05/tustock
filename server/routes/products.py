@@ -158,7 +158,6 @@ def deactivate_product(product_id: int, db: Session = Depends(get_db)):
 def reactivate_product(product_id: int, db: Session = Depends(get_db)):
     """Reactivar un producto previamente desactivado."""
     p = db.query(Product).filter(Product.id == product_id).first()
-    p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
         raise HTTPException(404, "Producto no encontrado")
     p.is_active = True
