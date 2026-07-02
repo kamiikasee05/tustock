@@ -97,7 +97,7 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 | Sistema de licencias | Mencionado | ✅ Construido | `server/models/license.py`, `server/services/license_service.py`, `server/routes/license.py`. Frontend: `useLicense.ts`, `Settings.tsx`, `TrialBanner.tsx`, `Upgrade.tsx` |
 | Trial mode | Mencionado | ✅ Construido | 30 días o 50 productos. Banner visible. Se auto-crea en primer arranque. |
 | Feature gating (tiers) | Mencionado | ✅ Construido | Backend: límite de productos en create, informes y export gateados con 403. Frontend: `UpgradeBlock` en Reports, `TrialBanner` global. |
-| Integración de pagos | Mencionado | ❌ No existe | **Pendiente de construir (Fase 1)** |
+| Integración de pagos | Mencionado | ✅ Construido | Mercado Pago vía REST API en `cloud/payments.py`. Crear preferencias, webhook, verificar status. Admin muestra botón "Cobrar MP" y estado de pago. Requiere `TUSTOCK_MP_TOKEN` en Railway. |
 | Tests automatizados | — | ❌ No existe | Postergado (Fase 4) |
 | Docker / CI/CD | — | ❌ No existe | Postergado (Fase 4) |
 | i18n (inglés) | — | ❌ No existe | No está en roadmap |
@@ -216,7 +216,7 @@ PC del cliente                          Cloud (Railway/VPS)
 | 🔥 1 | **Corregir gating para Básico** (`export_enabled: true`) | 🖥 DEV | ✅ Hecho. Matriz aprobada. Export Excel va en todos los planes pagos. |
 | 🔥 2 | **Alinear Upgrade.tsx con la matriz aprobada** | 🖥 DEV | ✅ Hecho. Quitar "Exportación Excel" de la lista de "no incluye" en la card de Básico. |
 | 🔥 3 | **Dashboard admin de licencias** | 🖥 DEV | ✅ Hecho. Panel `/admin`, token separado, generar keys, ver/revocar/activar, stats. |
-| 🔥 4 | **Integración Mercado Pago** | 🖥 DEV | Para cobrar automáticamente sin intervención humana. |
+| 🔥 4 | **Integración Mercado Pago** | 🖥 DEV | ✅ Hecho. REST API en cloud, crear preferencia, webhook, verificar pago. Botón "Cobrar MP" en admin. |
 | 🟡 5 | **Landing page estática** | 🖥 DEV | Para tener presencia web y recibir leads |
 | 🟡 6 | **CRM en Google Sheets** | 🖥 DEV | Para no perder oportunidades de venta |
 | 🟡 5 | **Monitor Cloud (push-based, URL fija)** | 🖥 DEV | **COMPLETO.** Reemplaza Cloudflare Tunnel. Arquitectura híbrida: agente local pushea a API cloud. Login multiusuario. Dominio fijo. Desplegado en Railway. |
@@ -334,6 +334,7 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] LAUNCHER UNIFICADO: scripts/launcher.py reemplaza todos los .bat. Inicia servidor, monitor, tunnel, cloud agent. TUSTOCK.bat con menu de 8 opciones. (2026-06-30)
 - [feature] MONITOR CLOUD: API cloud con push del agente local, login multiusuario JWT, dashboard mobile responsive. Desplegado en Railway (`tustock.up.railway.app`). (2026-06-30)
 - [feature] DASHBOARD ADMIN: Panel de administración de licencias en `/admin`, token separado. Generar keys, ver/revocar/activar licencias, stats por plan, ingresos estimados, trials por vencer. (2026-06-30)
+- [feature] MERCADO PAGO: Integración REST en `cloud/payments.py`. Crear preferencias de pago, webhook notification, verificar status. Admin tiene botón "Cobrar MP" y columna de estado de pago. (2026-06-30)
 
 ---
 
