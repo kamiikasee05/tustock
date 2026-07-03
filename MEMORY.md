@@ -23,6 +23,7 @@ Sistema de gestión de stock y ventas para polirrubros argentinos (kioscos, libr
 4. **Datos en tu PC** — nadie más ve la información del negocio
 5. **Sin técnico** — lo instala el dueño en 15 minutos
 6. **Monitor remoto** — mirá las ventas desde el celular estés donde estés (URL fija, push-based)
+7. **Licencias validadas en la nube** — cada 7 días verifica que la key sea legítima, sin internet sigue funcionando
 
 **No competimos en:** features enterprise, contabilidad integrada, e-commerce, facturación electrónica (AFIP). Eso no es nuestro cliente.
 
@@ -81,7 +82,11 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 - **Monitor Premium (Fase 4 adelantada):** Servicio independiente puerto 8091, login propio, dashboard mobile responsive, API read-only. Expuesto vía Cloudflare Tunnel para acceso remoto desde el celular. Solo esta clienta lo tiene.
 - **Monitor Cloud (Fase 5):** Desplegado en Railway (`tustock.up.railway.app`). API push-based, dashboard mobile responsive, login multiusuario JWT. Agente local (`cloud/agent.py`) pushea métricas cada 30s desde la PC del cliente. URL fija, sin tunnel.
 - **Launcher unificado:** `scripts/launcher.py` — inicia servidor, monitor, tunnel y cloud agent desde un solo punto. `TUSTOCK.bat` con menú interactivo de 8 opciones.
-- **Dashboard admin de licencias:** Panel `/admin` con token separado. Generar keys, ver licencias, revocar/activar, stats por plan.
+- **Dashboard admin de licencias:** Panel `/admin` con token separado. Generar keys, ver licencias, revocar/activar, stats por plan, ingresos estimados, trials por vencer.
+- **Validación cloud de licencias:** Cada 7 días el sistema local valida la key contra la API cloud. Si no hay internet, sigue funcionando con cache de hasta 14 días. Trial no requiere validación cloud. Admin sync-keys al generar.
+- **Bloqueo por licencia:** Middleware que bloquea todas las APIs cuando el trial vence o no hay licencia activa. Solo deja pasar health, license/status y license/activate.
+- **Landing page:** `docs/index.html` — página estática dark theme responsive servida via GitHub Pages (`kamiikasee05.github.io/tustock`). Incluye hero, features, planes, caso real, FAQ, WhatsApp CTA.
+- **Mercado Pago:** Integración REST en `cloud/payments.py`. Crear preferencias, webhook, verificar status. Admin tiene botón "Cobrar MP" y columna estado de pago. Requiere `TUSTOCK_MP_TOKEN` configurado.
 - **Guía de Usuario PDF** generada automáticamente
 
 ---
@@ -95,9 +100,10 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 | Múltiples perfiles de cajero | Pro (planeado) | ❌ No existe | No prometer |
 | Monitor Cloud (push-based, URL fija) | Pro (planeado) | ✅ Construido y desplegado | `tustock.up.railway.app`. API cloud push-based, agente local, dashboard responsive, login multiusuario JWT. URL fija. |
 | Sistema de licencias | Mencionado | ✅ Construido | `server/models/license.py`, `server/services/license_service.py`, `server/routes/license.py`. Frontend: `useLicense.ts`, `Settings.tsx`, `TrialBanner.tsx`, `Upgrade.tsx` |
-| Trial mode | Mencionado | ✅ Construido | 30 días o 50 productos. Banner visible. Se auto-crea en primer arranque. |
+| Trial mode | Mencionado | ✅ Construido | 30 días o 100 productos. Banner visible. Se auto-crea en primer arranque. |
 | Feature gating (tiers) | Mencionado | ✅ Construido | Backend: límite de productos en create, informes y export gateados con 403. Frontend: `UpgradeBlock` en Reports, `TrialBanner` global. |
 | Integración de pagos | Mencionado | ✅ Construido | Mercado Pago vía REST API en `cloud/payments.py`. Crear preferencias, webhook, verificar status. Admin muestra botón "Cobrar MP" y estado de pago. Requiere `TUSTOCK_MP_TOKEN` en Railway. |
+| Validación cloud de licencias | — | ✅ Construido | Cada 7d valida key contra cloud. Offline fallback 14d. Admin sync keys al generar. Trial no requiere validación. |
 | Tests automatizados | — | ❌ No existe | Postergado (Fase 4) |
 | Docker / CI/CD | — | ❌ No existe | Postergado (Fase 4) |
 | i18n (inglés) | — | ❌ No existe | No está en roadmap |
@@ -167,6 +173,11 @@ PC del cliente                          Cloud (Railway/VPS)
 | POST | `/api/login` | No | Login con email+contraseña, devuelve token JWT |
 | GET | `/api/metrics` | JWT | Dashboard del negocio autenticado |
 | GET | `/api/health` | No | Health check |
+| POST | `/api/licenses/sync` | No | Admin sync de key generada al cloud |
+| POST | `/api/licenses/validate` | No | Valida key contra DB cloud, registra activación |
+| POST | `/api/payments/create` | No | Crea preferencia de pago en Mercado Pago |
+| POST | `/api/payments/webhook` | No | Recibe notificaciones de pago de MP |
+| GET | `/api/payments/status/{key}` | No | Consulta estado de pago de una licencia |
 
 ### Cloudflare Tunnel (actual — a reemplazar)
 
@@ -188,7 +199,7 @@ PC del cliente                          Cloud (Railway/VPS)
 
 ## 6. FASE ACTUAL DEL ROADMAP
 
-**Estamos en: Fase 1 y Fase 5 completas. Fase 1 (licencias + trial + feature gating) ✅. Monitor Cloud desplegado. Admin dashboard completo. Próximo: integración de pagos (Mercado Pago).**
+**Estamos en: Fase 1 y Fase 5 completas. Fase 1 (licencias + trial + feature gating) ✅. Monitor Cloud desplegado. Admin dashboard completo. Validación cloud de licencias implementada. Próximo: configurar Mercado Pago en Railway.**
 
 ### Hitos alcanzados
 
@@ -208,6 +219,9 @@ PC del cliente                          Cloud (Railway/VPS)
 - ✅ **Trial mode**: 30 días / 100 productos, banner, upgrade prompts
 - ✅ **Dashboard admin**: panel `/admin`, generación de keys, stats, ingresos estimados, trials por vencer
 - ✅ **Launcher unificado**: TUSTOCK.bat 8 opciones, auto-start con --quick, cloud agent auto-start
+- ✅ **Validación cloud**: sync de keys al cloud, validate contra API cloud, cache 7d offline, bloqueo por licencia
+- ✅ **Landing page**: `docs/index.html` servida via GitHub Pages
+- ✅ **Mercado Pago**: integración REST lista, pendiente configurar token en Railway
 
 ### Prioridades actuales (reordenadas post-venta)
 
@@ -216,8 +230,8 @@ PC del cliente                          Cloud (Railway/VPS)
 | 🔥 1 | **Corregir gating para Básico** (`export_enabled: true`) | 🖥 DEV | ✅ Hecho. Matriz aprobada. Export Excel va en todos los planes pagos. |
 | 🔥 2 | **Alinear Upgrade.tsx con la matriz aprobada** | 🖥 DEV | ✅ Hecho. Quitar "Exportación Excel" de la lista de "no incluye" en la card de Básico. |
 | 🔥 3 | **Dashboard admin de licencias** | 🖥 DEV | ✅ Hecho. Panel `/admin`, token separado, generar keys, ver/revocar/activar, stats. |
-| 🔥 4 | **Integración Mercado Pago** | 🖥 DEV | ✅ Hecho. REST API en cloud, crear preferencia, webhook, verificar pago. Botón "Cobrar MP" en admin. |
-| 🟡 5 | **Landing page estática** | 🖥 DEV | Para tener presencia web y recibir leads |
+| 🔥 4 | **Integración Mercado Pago** | 🖥 DEV | ✅ Hecho. REST API en cloud, crear preferencia, webhook, verificar pago. Botón "Cobrar MP" en admin. Pendiente configurar `TUSTOCK_MP_TOKEN` en Railway. |
+| 🟡 5 | **Landing page estática** | 🖥 DEV | ✅ Hecho. `docs/index.html`, dark theme responsive, GitHub Pages activo (`kamiikasee05.github.io/tustock`). |
 | 🟡 6 | **CRM en Google Sheets** | 🖥 DEV | Para no perder oportunidades de venta |
 | 🟡 5 | **Monitor Cloud (push-based, URL fija)** | 🖥 DEV | **COMPLETO.** Reemplaza Cloudflare Tunnel. Arquitectura híbrida: agente local pushea a API cloud. Login multiusuario. Dominio fijo. Desplegado en Railway. |
 | 🟡 6 | **Landing page estática** | 🖥 DEV | Para tener presencia web y recibir leads |
@@ -334,7 +348,10 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] LAUNCHER UNIFICADO: scripts/launcher.py reemplaza todos los .bat. Inicia servidor, monitor, tunnel, cloud agent. TUSTOCK.bat con menu de 8 opciones. (2026-06-30)
 - [feature] MONITOR CLOUD: API cloud con push del agente local, login multiusuario JWT, dashboard mobile responsive. Desplegado en Railway (`tustock.up.railway.app`). (2026-06-30)
 - [feature] DASHBOARD ADMIN: Panel de administración de licencias en `/admin`, token separado. Generar keys, ver/revocar/activar licencias, stats por plan, ingresos estimados, trials por vencer. (2026-06-30)
-- [feature] MERCADO PAGO: Integración REST en `cloud/payments.py`. Crear preferencias de pago, webhook notification, verificar status. Admin tiene botón "Cobrar MP" y columna de estado de pago. (2026-06-30)
+- [feature] MERCADO PAGO: Integración REST en `cloud/payments.py`. Crear preferencias de pago, webhook notification, verificar status. Admin tiene botón "Cobrar MP" y columna de estado de pago. (2026-07-02)
+- [feature] VALIDACION CLOUD: Sync de keys al cloud, validate contra API cloud, cache 7d con fallback offline 14d. Middleware bloquea APIs si licencia expirada o inválida. Trial no requiere validación. (2026-07-02)
+- [feature] LANDING PAGE: `docs/index.html` — página estática dark theme responsive, GitHub Pages (`kamiikasee05.github.io/tustock`). Hero, features, planes, caso real, FAQ, WhatsApp CTA. (2026-07-02)
+- [feature] BLOQUEO TRIAL: Middleware bloquea todas las APIs cuando trial vence o no hay licencia. Solo health + license/status + license/activate pasan. (2026-07-02)
 
 ---
 
@@ -362,6 +379,11 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-06-30 | **Propuesta de reforma de tiers**: refrashear alrededor de "pago único vs mensual". Matriz de gating simplificada (Trial/Básico/Suscripción/Pro) propuesta por DEV, pendiente de aprobación por Ventas. | DEV + Ventas |
 | 2026-06-30 | **Matriz de gating APROBADA** por Ventas. Export Excel va en todos los planes pagos. Diferencial: Monitor Cloud + soporte prioritario. Ajuste pendiente en código: `export_enabled: true` para Básico. | Ventas |
 | 2026-06-30 | **Auditoría completa**: revisión de admin routes, frontend, launcher, TUSTOCK.bat. Fixes aplicados: timing-safe token compare, stop.bat PID, autostart quick mode, favicon guard, duplicate query eliminado. | DEV |
+| 2026-07-02 | **Mercado Pago**: integración REST construida. Crear preferencias, webhook, verificar status. Botón "Cobrar MP" en admin. Pendiente configurar `TUSTOCK_MP_TOKEN` en Railway. | DEV |
+| 2026-07-02 | **Validación cloud**: licencias se validan cada 7 días contra cloud. Cache offline de 14 días. Trial no requiere validación. Admin sync keys al generar. | DEV |
+| 2026-07-02 | **Landing page**: `docs/index.html` desplegada via GitHub Pages. Dark theme responsive con planes, caso real, FAQ y WhatsApp CTA. | DEV |
+| 2026-07-02 | **Bloqueo por licencia**: middleware bloquea APIs cuando trial vence o licencia revocada. init_license no recrea trial en reinicio. | DEV |
+| 2026-07-02 | **Railway plan hobby**: decisión de pagar $5/mes para 24/7. La validación cloud depende de uptime. | Humano |
 
 ---
 
