@@ -149,6 +149,26 @@ app.include_router(admin_router)  # admin usa su propio token
 
 if WEB_DIR.exists():
     @app.middleware("http")
+    async def trial_check(request: Request, call_next):
+        path = request.url.path
+        exempt = path in ("/api/health", "/api/license/status") or path.startswith("/api/admin") or path.startswith("/assets")
+        if not exempt and path.startswith("/api"):
+            from database import SessionLocal
+            from services.license_service import get_license_status
+            db = SessionLocal()
+            try:
+                status = get_license_status(db)
+                if status.get("trial") and status.get("expired"):
+                    return Response(
+                        content='{"error":"trial_expired","message":"Período de prueba expirado. Activá una licencia en Ajustes > Licencia."}',
+                        status_code=403,
+                        media_type="application/json",
+                    )
+            finally:
+                db.close()
+        return await call_next(request)
+
+    @app.middleware("http")
     async def spa_fallback(request: Request, call_next):
         response = await call_next(request)
         if response.status_code == 404 and not request.url.path.startswith("/api"):
