@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TUSTOCK — Sistema de gestión para tu negocio</title>
+<meta name="description" content="Sistema de stock y ventas para comercios argentinos. Sin internet, pago único, app Android incluida.">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f172a;--surface:#1e293b;--surface2:#334155;--border:#334155;--text:#e2e8f0;--muted:#94a3b8;--primary:#3b82f6;--success:#22c55e;--warning:#f59e0b;--danger:#ef4444}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+.container{max-width:1100px;margin:0 auto;padding:0 24px}
+.btn{display:inline-block;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:#2563eb;transform:translateY(-1px)}
+.btn-outline{background:transparent;border:2px solid var(--primary);color:var(--primary)}.btn-outline:hover{background:var(--primary);color:#fff}
+.tag{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700}
+.tag-active{background:var(--success);color:#fff}.tag-soon{background:var(--warning);color:#000}
+
+/* Hero */
+.hero{padding:80px 0 60px;text-align:center;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f172a 100%)}
+.hero h1{font-size:clamp(28px,5vw,48px);font-weight:900;line-height:1.2;margin-bottom:16px}
+.hero h1 span{color:var(--primary)}
+.hero p{font-size:clamp(15px,2.5vw,18px);color:var(--muted);max-width:650px;margin:0 auto 32px}
+.hero .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* Features */
+.features{padding:80px 0}
+.features h2,.plans h2,.case h2,.contact h2{text-align:center;font-size:clamp(22px,3.5vw,30px);font-weight:800;margin-bottom:48px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.f-card{background:var(--surface);border-radius:16px;padding:28px;border:1px solid var(--border);transition:transform .2s}
+.f-card:hover{transform:translateY(-4px)}
+.f-card .icon{font-size:32px;margin-bottom:12px}
+.f-card h3{font-size:17px;font-weight:700;margin-bottom:8px}
+.f-card p{font-size:14px;color:var(--muted)}
+
+/* Plans */
+.plans{padding:80px 0}
+.plan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;align-items:start}
+.plan-card{background:var(--surface);border-radius:20px;padding:32px 24px;border:1px solid var(--border);display:flex;flex-direction:column;position:relative}
+.plan-card.featured{border:2px solid var(--primary);background:#131f3a}
+.plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;padding:4px 16px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap}
+.plan-card h3{font-size:20px;font-weight:700;margin-bottom:4px}
+.plan-card .price{font-size:32px;font-weight:900;margin:8px 0 2px}.plan-card .price small{font-size:14px;color:var(--muted);font-weight:400}
+.plan-card .mode{font-size:13px;color:var(--muted);margin-bottom:20px}
+.plan-card ul{list-style:none;flex:1}.plan-card li{padding:8px 0;font-size:14px;display:flex;align-items:center;gap:10px}.plan-card li .check{color:var(--success)}.plan-card li .cross{color:var(--danger)}
+.plan-card .cta{display:block;text-align:center;margin-top:20px}
+
+/* Case */
+.case{padding:80px 0}
+.case-card{background:var(--surface);border-radius:20px;padding:40px;max-width:750px;margin:0 auto;border:1px solid var(--border);text-align:center}
+.case-card blockquote{font-size:18px;font-style:italic;color:var(--muted);margin-bottom:16px}
+.case-card .author{font-size:14px;font-weight:600}
+
+/* Contact */
+.contact{padding:80px 0 100px;text-align:center}
+.contact p{color:var(--muted);margin-bottom:24px;max-width:500px;margin-left:auto;margin-right:auto}
+.whatsapp-btn{display:inline-flex;align-items:center;gap:10px;background:#25D366;color:#fff;padding:16px 32px;border-radius:50px;font-size:17px;font-weight:700;text-decoration:none;transition:transform .2s}
+.whatsapp-btn:hover{transform:scale(1.05)}
+
+/* Footer */
+footer{padding:32px 0;border-top:1px solid var(--border);text-align:center;font-size:13px;color:var(--muted)}
+
+/* FAQ */
+.faq{padding:0 0 80px}
+.faq details{background:var(--surface);border-radius:12px;padding:18px 24px;margin-bottom:10px;border:1px solid var(--border)}
+.faq summary{font-weight:600;font-size:15px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.faq summary::after{content:'+';font-size:20px;color:var(--primary);transition:transform .2s}
+.faq details[open] summary::after{content:'−'}
+.faq p{margin-top:12px;font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="container">
+    <h1>El sistema de gestión que <span>tu negocio</span> necesita</h1>
+    <p>Stock, ventas, clientes y monitor remoto. Sin internet, sin cuotas mensuales, sin técnico. Lo instalás en 15 minutos.</p>
+    <div class="btns">
+      <a href="#planes" class="btn btn-primary">Ver planes</a>
+      <a href="https://wa.me/5493826403110?text=Hola!%20Quiero%20probar%20TUSTOCK" class="btn btn-outline" target="_blank">Hablar por WhatsApp</a>
+    </div>
+  </div>
+</header>
+
+<section class="features" id="features">
+  <div class="container">
+    <h2>Por qué TUSTOCK</h2>
+    <div class="grid">
+      <div class="f-card">
+        <div class="icon">🏪</div>
+        <h3>Funciona sin internet</h3>
+        <p>Todo corre en tu PC. No dependés de la nube, no se cae, no hay excusas.</p>
+      </div>
+      <div class="f-card">
+        <div class="icon">💰</div>
+        <h3>Pago único o mensual</h3>
+        <p>Vos elegís. Sin cuotas escondidas, sin letra chica. Es tu sistema para siempre.</p>
+      </div>
+      <div class="f-card">
+        <div class="icon">📱</div>
+        <h3>App Android incluida</h3>
+        <p>Escaneá códigos de barras con el celu. Los vendedores toman pedidos desde la app.</p>
+      </div>
+      <div class="f-card">
+        <div class="icon">🔒</div>
+        <h3>Tus datos son tuyos</h3>
+        <p>Nadie más ve la información de tu negocio. Todo queda en tu computadora.</p>
+      </div>
+      <div class="f-card">
+        <div class="icon">📊</div>
+        <h3>Mirá tu negocio desde el celu</h3>
+        <p>Monitor Cloud: dashboard en tiempo real con ventas, stock bajo y deudores desde cualquier lado.</p>
+      </div>
+      <div class="f-card">
+        <div class="icon">⚡</div>
+        <h3>Sin técnico</h3>
+        <p>Instalás y arrancás en 15 minutos. Sin configuraciones complicadas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="case" id="caso">
+  <div class="container">
+    <h2>Clientes reales</h2>
+    <div class="case-card">
+      <blockquote>"Desde casa veo las ventas del día, qué productos están bajando de stock y quién me debe plata. Sin tener que estar en el negocio. Era justo lo que necesitaba."</blockquote>
+      <div class="author">— Dueña de librería, CABA</div>
+    </div>
+  </div>
+</section>
+
+<section class="plans" id="planes">
+  <div class="container">
+    <h2>Planes</h2>
+    <div class="plan-grid">
+      <div class="plan-card">
+        <h3>Trial</h3>
+        <div class="price">Gratis</div>
+        <div class="mode">30 días</div>
+        <ul>
+          <li><span class="check">✓</span> Hasta 100 productos</li>
+          <li><span class="check">✓</span> App Android</li>
+          <li><span class="check">✓</span> Ventas POS</li>
+          <li><span class="check">✓</span> Escáner código de barras</li>
+          <li><span class="cross">✗</span> Informes</li>
+          <li><span class="cross">✗</span> Export Excel</li>
+          <li><span class="cross">✗</span> Monitor Cloud</li>
+        </ul>
+        <a href="https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20Trial%20de%20TUSTOCK" class="btn btn-outline cta" target="_blank">Empezar gratis</a>
+      </div>
+
+      <div class="plan-card">
+        <h3>Básico</h3>
+        <div class="price">$80.000</div>
+        <div class="mode">Pago único</div>
+        <ul>
+          <li><span class="check">✓</span> Productos ilimitados</li>
+          <li><span class="check">✓</span> App Android</li>
+          <li><span class="check">✓</span> Informes diarios</li>
+          <li><span class="check">✓</span> Export Excel</li>
+          <li><span class="check">✓</span> 1 año de updates</li>
+          <li><span class="cross">✗</span> Monitor Cloud</li>
+          <li><span class="cross">✗</span> Soporte prioritario</li>
+        </ul>
+        <a href="https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20plan%20Basico%20de%20TUSTOCK" class="btn btn-outline cta" target="_blank">Comprar</a>
+      </div>
+
+      <div class="plan-card featured">
+        <span class="plan-badge">RECOMENDADO</span>
+        <h3>Suscripción</h3>
+        <div class="price">$8.000<small>/mes</small></div>
+        <div class="mode">Mensual</div>
+        <ul>
+          <li><span class="check">✓</span> <strong>Todo incluido</strong></li>
+          <li><span class="check">✓</span> Productos ilimitados</li>
+          <li><span class="check">✓</span> Informes + Export</li>
+          <li><span class="check">✓</span> Monitor Cloud</li>
+          <li><span class="check">✓</span> Soporte prioritario</li>
+          <li><span class="check">✓</span> Updates continuos</li>
+        </ul>
+        <a href="https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20plan%20Suscripcion%20de%20TUSTOCK" class="btn btn-primary cta" target="_blank">Suscribirme</a>
+      </div>
+
+      <div class="plan-card">
+        <h3>Pro</h3>
+        <div class="price">$160.000</div>
+        <div class="mode">Pago único</div>
+        <ul>
+          <li><span class="check">✓</span> <strong>Todo incluido</strong></li>
+          <li><span class="check">✓</span> Productos ilimitados</li>
+          <li><span class="check">✓</span> Informes + Export</li>
+          <li><span class="check">✓</span> Monitor Cloud</li>
+          <li><span class="check">✓</span> Soporte prioritario</li>
+          <li><span class="check">✓</span> 1 año de updates</li>
+        </ul>
+        <a href="https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20plan%20Pro%20de%20TUSTOCK" class="btn btn-outline cta" target="_blank">Comprar</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq" id="faq">
+  <div class="container">
+    <h2 style="text-align:center;font-size:clamp(22px,3.5vw,30px);font-weight:800;margin-bottom:48px">Preguntas frecuentes</h2>
+    <details>
+      <summary>¿Necesito internet para usar TUSTOCK?</summary>
+      <p>No. El sistema funciona 100% local en tu PC. Solo necesitás internet si querés usar el Monitor Cloud para ver tus datos desde el celular.</p>
+    </details>
+    <details>
+      <summary>¿Puedo probarlo antes de comprar?</summary>
+      <p>Sí. El plan Trial es gratis por 30 días. Podés cargar hasta 100 productos y usar todas las funciones básicas.</p>
+    </details>
+    <details>
+      <summary>¿Qué pasa si cambio de computadora?</summary>
+      <p>Reinstalás TUSTOCK, ponés tu misma clave de licencia y listo. Tus datos los podés respaldar y restaurar con un clic.</p>
+    </details>
+    <details>
+      <summary>¿Cómo funciona el Monitor Cloud?</summary>
+      <p>Es una página web con URL fija. Entrás desde el celular, ponés tu usuario y ves las ventas del día, stock bajo, deudores. Los datos se actualizan cada 30 segundos.</p>
+    </details>
+    <details>
+      <summary>¿Dan factura?</summary>
+      <p>Sí. Emitimos factura C. Si necesitás otra cosa, consultanos.</p>
+    </details>
+  </div>
+</section>
+
+<section class="contact" id="contacto">
+  <div class="container">
+    <h2>¿Listo para empezar?</h2>
+    <p>Escribinos por WhatsApp y te ayudamos a instalar TUSTOCK en tu negocio. Sin compromiso.</p>
+    <a href="https://wa.me/5493826403110?text=Hola!%20Quiero%20info%20de%20TUSTOCK" class="whatsapp-btn" target="_blank">
+      💬 Escribinos por WhatsApp
+    </a>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    TUSTOCK &copy; 2026 — Sistema de gestión para comercios argentinos · Hecho en Argentina 🇦🇷
+  </div>
+</footer>
+
+</body>
+</html>
