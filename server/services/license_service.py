@@ -53,11 +53,14 @@ def init_license(db: Session) -> License:
     lic = db.query(License).filter(License.active == True).first()
     if lic:
         return lic
+    any_lic = db.query(License).first()
+    if any_lic:
+        return any_lic
     key = _generate_key()
     lic = License(
         key=key,
         plan="trial",
-        max_products=50,
+        max_products=100,
         expires_at=date.today() + timedelta(days=30),
     )
     db.add(lic)
