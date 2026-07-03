@@ -289,18 +289,23 @@ export default function Admin() {
           </button>
         </div>
         {message && (
-          <div style={{ marginTop: 12, padding: '10px 14px', background: message.startsWith('Error') ? 'var(--danger)' : 'var(--success)', color: '#fff', borderRadius: 6, fontSize: 13, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ flex: 1, fontFamily: message.startsWith('Error') ? 'inherit' : 'monospace', fontSize: 13 }}>
+          <div style={{
+            marginTop: 12,
+            padding: '14px 18px',
+            background: message.startsWith('Error') ? 'var(--danger)' : '#1a2e1a',
+            border: message.startsWith('Error') ? '1px solid var(--danger)' : '1px solid var(--success)',
+            borderRadius: 8, fontSize: 13, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ flex: 1, fontFamily: message.startsWith('Error') ? 'inherit' : 'monospace', fontSize: 14, fontWeight: 600, color: message.startsWith('Error') ? '#fff' : '#4ade80' }}>
               {message.startsWith('Error') ? message : `Generada: ${message} (${copied?.plan || ''})`}
             </span>
             {copied && copied.key === message && (
               <button onClick={() => { navigator.clipboard.writeText(message); setCopied(null); }}
-                style={{ padding: '4px 14px', borderRadius: 4, border: '1px solid rgba(255,255,255,0.3)', background: 'transparent', color: '#fff', fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                Copiar
+                style={{ padding: '5px 16px', borderRadius: 4, border: '1px solid var(--success)', background: 'rgba(34,197,94,0.15)', color: '#4ade80', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                Copiar clave
               </button>
             )}
             <button onClick={() => { setMessage(''); setCopied(null); }}
-              style={{ background: 'none', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+              style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}>&times;</button>
           </div>
         )}
 
