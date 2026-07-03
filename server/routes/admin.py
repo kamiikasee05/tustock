@@ -87,6 +87,12 @@ def generate_license(data: dict, request: Request, db: Session = Depends(get_db)
     db.commit()
     db.refresh(lic)
 
+    try:
+        from services.license_service import sync_key_to_cloud
+        sync_key_to_cloud(lic.key, lic.plan, lic.customer_name)
+    except Exception:
+        pass
+
     return {
         "ok": True,
         "key": lic.key,

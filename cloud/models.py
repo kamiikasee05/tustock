@@ -49,6 +49,27 @@ class Payment(Base):
     paid_at = Column(DateTime)
 
 
+class AuthorizedKey(Base):
+    __tablename__ = "authorized_keys"
+
+    id = Column(Integer, primary_key=True)
+    license_key = Column(String(50), unique=True, nullable=False, index=True)
+    plan = Column(String(30), nullable=False)
+    customer_name = Column(String(200), default="")
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class KeyActivation(Base):
+    __tablename__ = "key_activations"
+
+    id = Column(Integer, primary_key=True)
+    license_key = Column(String(50), nullable=False, index=True)
+    machine_id = Column(String(100), nullable=False)
+    hostname = Column(String(200), default="")
+    activated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

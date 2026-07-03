@@ -1,8 +1,13 @@
 import uuid
+import json
+import urllib.request
+import urllib.error
+import socket
 from datetime import date, timedelta, datetime
 from sqlalchemy.orm import Session
 from models.license import License
 from models.product import Product
+from config import TUSTOCK_CLOUD_URL, TUSTOCK_CLOUD_CACHE_DAYS
 
 
 PLAN_FEATURES = {
@@ -160,6 +165,75 @@ def can_add_product(db: Session) -> tuple[bool, str]:
             return False, f"Límite de {lic.max_products} productos alcanzado en el plan Trial. Adquirí una licencia para agregar más."
         return False, "Límite de productos alcanzado"
     return True, ""
+
+
+def get_machine_id() -> str:
+    try:
+        import uuid
+        node = uuid.getnode()
+        return format(node, 'x')[:24]
+    except:
+        return "unknown"
+
+
+def validate_against_cloud(key: str) -> dict:
+    try:
+        machine_id = get_machine_id()
+        hostname = socket.gethostname()
+        body = json.dumps({"license_key": key, "machine_id": machine_id, "hostname": hostname}).encode()
+        req = urllib.request.Request(
+            f"{TUSTOCK_CLOUD_URL}/api/licenses/validate",
+            data=body,
+            headers={"Content-Type": "application/json"},
+        )
+        resp = urllib.request.urlopen(req, timeout=10)
+        return json.loads(resp.read())
+    except Exception as e:
+        return {"ok": False, "error": "cloud_unreachable", "message": str(e)[:100]}
+
+
+def check_cloud_validation(db: Session) -> dict:
+    lic = get_license(db)
+    if not lic:
+        return {"valid": False, "reason": "no_license"}
+
+    if lic.plan == "trial":
+        return {"valid": True, "reason": "trial"}
+
+    cache_age = None
+    if lic.last_validated_at:
+        cache_age = (datetime.utcnow() - lic.last_validated_at).days
+
+    if cache_age is not None and cache_age < TUSTOCK_CLOUD_CACHE_DAYS:
+        return {"valid": True, "reason": "cached", "cache_age": cache_age}
+
+    result = validate_against_cloud(lic.key)
+
+    if result.get("ok"):
+        lic.last_validated_at = datetime.utcnow()
+        db.commit()
+        return {"valid": True, "reason": "cloud_ok", "cloud_plan": result.get("plan")}
+
+    if cache_age is None:
+        return {"valid": False, "reason": "no_cache_no_cloud"}
+    if cache_age >= TUSTOCK_CLOUD_CACHE_DAYS + 7:
+        return {"valid": False, "reason": "cache_expired_cloud_down"}
+
+    return {"valid": True, "reason": "cached_but_cloud_down", "cache_age": cache_age}
+
+
+def sync_key_to_cloud(key: str, plan: str, customer_name: str = "") -> bool:
+    try:
+        body = json.dumps({"license_key": key, "plan": plan, "customer_name": customer_name}).encode()
+        req = urllib.request.Request(
+            f"{TUSTOCK_CLOUD_URL}/api/licenses/sync",
+            data=body,
+            headers={"Content-Type": "application/json"},
+        )
+        urllib.request.urlopen(req, timeout=10)
+        return True
+    except Exception:
+        return False
 
 
 def get_upgrade_url() -> str:

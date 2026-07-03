@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR, MP_ACCESS_TOKEN
-from models import init_db, get_db, Business, MetricsPush, Payment
+from models import init_db, get_db, Business, MetricsPush, Payment, AuthorizedKey, KeyActivation
 
 init_db()
 
@@ -268,6 +268,77 @@ def payment_status(license_key: str, db: Session = Depends(get_db)):
             for p in payments
         ],
         "status": latest.status if latest else "none",
+    }
+
+
+@app.post("/api/licenses/sync")
+def sync_license(data: dict, db: Session = Depends(get_db)):
+    key = data.get("license_key", "").strip()
+    plan = data.get("plan", "basico")
+    customer_name = data.get("customer_name", "")
+
+    if not key:
+        raise HTTPException(400, "license_key requerido")
+
+    existing = db.query(AuthorizedKey).filter(AuthorizedKey.license_key == key).first()
+    if existing:
+        existing.plan = plan
+        existing.customer_name = customer_name or existing.customer_name
+    else:
+        ak = AuthorizedKey(license_key=key, plan=plan, customer_name=customer_name)
+        db.add(ak)
+    db.commit()
+    return {"ok": True, "key": key}
+
+
+@app.post("/api/licenses/validate")
+def validate_license(data: dict, db: Session = Depends(get_db)):
+    key = data.get("license_key", "").strip()
+    machine_id = data.get("machine_id", "")
+    hostname = data.get("hostname", "")
+
+    if not key:
+        raise HTTPException(400, "license_key requerido")
+
+    ak = db.query(AuthorizedKey).filter(AuthorizedKey.license_key == key).first()
+    if not ak:
+        return {"ok": False, "error": "invalid_key", "message": "Clave de licencia inválida"}
+    if not ak.is_active:
+        return {"ok": False, "error": "revoked", "message": "La licencia fue revocada"}
+
+    if machine_id:
+        activation = db.query(KeyActivation).filter(
+            KeyActivation.license_key == key,
+            KeyActivation.machine_id == machine_id,
+        ).first()
+        if not activation:
+            activation = KeyActivation(
+                license_key=key,
+                machine_id=machine_id,
+                hostname=hostname,
+            )
+            db.add(activation)
+            db.commit()
+
+    features = {
+        "trial": {"max_products": 100, "monitor_enabled": False, "reports_enabled": False, "export_enabled": False, "backup_enabled": False},
+        "basico": {"max_products": 999999, "monitor_enabled": False, "reports_enabled": True, "export_enabled": True, "backup_enabled": False},
+        "suscripcion": {"max_products": 999999, "monitor_enabled": True, "reports_enabled": True, "export_enabled": True, "backup_enabled": False},
+        "pro": {"max_products": 999999, "monitor_enabled": True, "reports_enabled": True, "export_enabled": True, "backup_enabled": True},
+        "premium": {"max_products": 999999, "monitor_enabled": True, "reports_enabled": True, "export_enabled": True, "backup_enabled": False},
+    }
+    feat = features.get(ak.plan, features["trial"])
+
+    return {
+        "ok": True,
+        "plan": ak.plan,
+        "plan_name": {"basico": "Basico", "pro": "Pro", "suscripcion": "Suscripcion", "trial": "Trial"}.get(ak.plan, ak.plan),
+        "customer_name": ak.customer_name,
+        "monitor_enabled": feat.get("monitor_enabled", False),
+        "reports_enabled": feat.get("reports_enabled", True),
+        "export_enabled": feat.get("export_enabled", False),
+        "backup_enabled": feat.get("backup_enabled", False),
+        "max_products": feat.get("max_products", 999999),
     }
 
 
