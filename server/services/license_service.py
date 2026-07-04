@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from models.license import License
 from models.product import Product
 from config import TUSTOCK_CLOUD_URL, TUSTOCK_CLOUD_CACHE_DAYS
+from pathlib import Path
 
 
 PLAN_FEATURES = {
@@ -96,6 +97,9 @@ def get_license_status(db: Session) -> dict:
             "key": "",
             "customer_name": "",
             "upgrade_message": "Ingresá una licencia para activar el sistema",
+            "subscription_grace_days_left": None,
+            "subscription_suspended": False,
+            "eula_accepted": False,
         }
 
     product_count = db.query(Product).filter(Product.is_active == True).count()
@@ -138,6 +142,10 @@ def get_license_status(db: Session) -> dict:
         "customer_name": lic.customer_name,
         "expires_at": str(lic.expires_at) if lic.expires_at else None,
         "upgrade_message": upgrade_message,
+        "subscription_grace_days_left": lic.subscription_grace_days_left,
+        "subscription_suspended": lic.subscription_suspended,
+        "eula_accepted": lic.eula_accepted,
+        "eula_accepted_at": lic.eula_accepted_at.isoformat() if lic.eula_accepted_at else None,
     }
 
 
@@ -151,6 +159,16 @@ def activate_license(db: Session, key: str, customer_name: str = "") -> dict:
     lic.last_validated_at = datetime.utcnow()
     db.commit()
     return {"ok": True, "plan": lic.plan}
+
+
+def accept_eula(db: Session) -> bool:
+    lic = get_license(db)
+    if not lic or lic.eula_accepted:
+        return False
+    lic.eula_accepted = True
+    lic.eula_accepted_at = datetime.utcnow()
+    db.commit()
+    return True
 
 
 def can_add_product(db: Session) -> tuple[bool, str]:
@@ -211,6 +229,8 @@ def check_cloud_validation(db: Session) -> dict:
 
     if result.get("ok"):
         lic.last_validated_at = datetime.utcnow()
+        lic.subscription_grace_days_left = result.get("subscription_grace_days_left")
+        lic.subscription_suspended = result.get("subscription_suspended", False)
         db.commit()
         return {"valid": True, "reason": "cloud_ok", "cloud_plan": result.get("plan")}
 

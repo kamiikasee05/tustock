@@ -1,10 +1,12 @@
 # MEMORY — TUSTOCK
 
-> Este archivo es la fuente de verdad compartida entre el **Agente de Ventas** (sales agent) y el **Agente de Desarrollo** (DEV). Lo leo al inicio de cada sesión para saber el estado actual.
+> Este archivo es la fuente de verdad compartida entre el **Agente de Ventas**, el **Agente de Desarrollo (DEV)** y el **Agente Legal**. Lo leo al inicio de cada sesión para saber el estado actual.
 >
 > **Rol de Ventas (YO):** Conozco el producto, el mercado, los precios. Organizo, coordino y le asigno tareas humanas al usuario para vender.
 >
 > **Rol de DEV (asistente de código):** Construye exclusivamente lo que está definido aquí. No inventa features. No desarrolla fuera del roadmap.
+>
+> **Rol de Legal (abogado especialista en servicios digitales):** Asesora en cumplimiento normativo, redacta términos legales, protege al proyecto de riesgos jurídicos. Sus directivas en materia legal son vinculantes para DEV y Ventas.
 >
 > **Regla especial — Cliente Premium:** La clienta que paga $60K entry + $6K/mes tiene un plan híbrido legacy (pago único + suscripción). Tiene acceso al Monitor Cloud, updates continuos y soporte prioritario. Su tier en código es `premium`. Ningún cliente nuevo accede a este precio ni a este tier. Es la primera clienta y cierra antes del lanzamiento oficial.
 
@@ -88,6 +90,10 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 - **Landing page:** `docs/index.html` — página estática dark theme responsive servida via GitHub Pages (`kamiikasee05.github.io/tustock`). Incluye hero, features, planes, caso real, FAQ, WhatsApp CTA.
 - **Mercado Pago:** Integración REST en `cloud/payments.py`. Crear preferencias, webhook, verificar status. Admin tiene botón "Cobrar MP" y columna estado de pago. Requiere `TUSTOCK_MP_TOKEN` configurado.
 - **Guía de Usuario PDF** generada automáticamente
+- **Documentación legal:** Términos y Condiciones de Uso + EULA, Política de Privacidad, Política de Reembolso y Cancelación (`legal/`). Links en footer de landing page y referenciados desde el registro cloud.
+- **EULA clickwrap:** Modal en primera ejecución que obliga a aceptar términos. Endpoints para servir documentos legales (`/api/license/terms`, `/api/license/privacy`, `/api/license/refund`).
+- **Consentimiento explícito:** Checkbox obligatorio de aceptación de Términos + Política de Privacidad en formulario de registro del Monitor Cloud.
+- **Baja de cuenta cloud:** Endpoint `POST /api/business/delete-account` con confirmación por email. Soft-delete del Business + eliminación de MetricsPush. UI en dashboard con botón "Eliminar mi cuenta".
 
 ---
 
@@ -107,6 +113,10 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 | Tests automatizados | — | ❌ No existe | Postergado (Fase 4) |
 | Docker / CI/CD | — | ❌ No existe | Postergado (Fase 4) |
 | i18n (inglés) | — | ❌ No existe | No está en roadmap |
+| Consentimiento explícito en registro cloud | — | ✅ Construido | Checkbox de aceptación de Términos + Política de Privacidad en formulario de registro del Monitor Cloud. Backend rechaza registro sin `accepts_terms: true`. |
+| Baja de cuenta cloud (endpoint + UI) | — | ✅ Construido | Endpoint `POST /api/business/delete-account` con confirmación por email. Soft-delete del Business + eliminación de MetricsPush. UI en dashboard con botón "Eliminar mi cuenta". |
+| EULA clickwrap en primera ejecución | — | ✅ Construido | Modal de aceptación de Términos y Condiciones en primera ejecución. Backend: `POST /api/license/accept-eula`. Frontend: EulaModal en Layout bloquea toda interacción hasta aceptar. |
+| Registro de bases de datos AAIP | — | ❌ No existe | No se registró la base de datos de usuarios cloud ante la Agencia de Acceso a la Información Pública. Postergado (Legal — Semana 2). |
 
 ---
 
@@ -227,27 +237,30 @@ PC del cliente                          Cloud (Railway/VPS)
 
 | Prioridad | Tarea | Quién | Por qué es crítica |
 |:---------:|-------|:-----:|-------------------|
-| 🔥 1 | **MP — Subscription webhook + banner** | 🖥 DEV | ✅ COMPLETADO: Suscripciones recurrentes MP implementadas. Pendiente configurar `TUSTOCK_MP_TOKEN` en Railway. |
+| 🔥 1 | **Completar datos en docs legales** (CUIT, email, domicilio) | 🧑 HUMANO | Los documentos legales están redactados pero requieren CUIT, razón social y datos de contacto reales. Sin esto no tienen validez. |
 | 🔥 2 | **Configurar MP token en Railway** | 🖥 DEV | Sin token no funcionan pagos. Necesita cuenta MP con Suscripciones y Checkout Pro habilitados. |
 | 🟡 3 | **Configurar Railway hobby ($5/mes)** | 🧑 HUMANO | Para 24/7 de validación cloud y monitor. |
-| 🟢 4 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
-| 🟢 5 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
-| 🟢 6 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
+| 🟢 4 | **Registrar bases de datos en AAIP** | 🧑 HUMANO | Obligación legal si hay datos personales en cloud (Ley 25.326 art. 21). |
+| 🟢 5 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
+| 🟢 6 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
+| 🟢 7 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
 
 ### Tareas HUMANAS pendientes
 
 | Prioridad | Tarea | Tiempo estimado |
 |:---------:|-------|:---------------:|
-| 🔥 1 | **[VENTAS] Definir días de gracia y banner copy para suscripción fallida** | 15 min |
-| 🔥 2 | **Instalar Monitor Premium en PC de la clienta** (Cloudflare Tunnel) | 1 hora |
-| 🔥 3 | **Cobrar $6K suscripción mes siguiente** (recordatorio) | 5 min |
-| 🔥 4 | **Pedir testimonio/caso de éxito a la clienta** (con foto del negocio si acepta) | 30 min |
-| 🔥 5 | **Pedir referidos** a la clienta ("¿conocés otro comerciante que necesite esto?") | 10 min |
-| 🟡 6 | **Publicar en grupos de Facebook** el caso de éxito (anonimizado si prefiere) | 30 min |
-| 🟡 7 | **Crear cuenta de Mercado Libre** para publicar TUSTOCK | 1 hora |
-| 🟡 8 | **Crear cuenta de Mercado Pago** (si no tenés) para cobrar | 30 min |
-| 🟢 9 | **Publicar en Mercado Libre** con el texto que prepare | 30 min |
-| 🟢 10 | **Ir a 3-5 polirrubros del barrio** a ofrecer el sistema personalmente | 2 horas |
+| 🔥 1 | **[LEGAL] Completar CUIT, email y domicilio en `legal/terminos-y-condiciones.html` y `legal/politica-de-privacidad.html`** | 15 min |
+| 🔥 2 | **[VENTAS] Definir postura sobre derecho de arrepentimiento** (reembolso total vs proporcional en 10 días hábiles) | 15 min |
+| 🔥 3 | **Instalar Monitor Premium en PC de la clienta** (Cloudflare Tunnel) | 1 hora |
+| 🔥 4 | **Cobrar $6K suscripción mes siguiente** (recordatorio) | 5 min |
+| 🔥 5 | **Pedir testimonio/caso de éxito a la clienta** (con foto del negocio si acepta) | 30 min |
+| 🔥 6 | **Pedir referidos** a la clienta ("¿conocés otro comerciante que necesite esto?") | 10 min |
+| 🟡 7 | **Registrar bases de datos en AAIP** | 2 horas |
+| 🟡 8 | **Publicar en grupos de Facebook** el caso de éxito (anonimizado si prefiere) | 30 min |
+| 🟡 9 | **Crear cuenta de Mercado Libre** para publicar TUSTOCK | 1 hora |
+| 🟡 10 | **Crear cuenta de Mercado Pago** (si no tenés) para cobrar | 30 min |
+| 🟢 11 | **Publicar en Mercado Libre** con el texto que prepare | 30 min |
+| 🟢 12 | **Ir a 3-5 polirrubros del barrio** a ofrecer el sistema personalmente | 2 horas |
 
 ---
 
@@ -262,6 +275,10 @@ PC del cliente                          Cloud (Railway/VPS)
 7. **No tocar la app Android** a menos que se indique explícitamente.
 8. **No internacionalizar.** Solo español.
 9. **Cuando completes una feature, agregá una línea al final de este archivo** con formato: `- [feature] NOMBRE: descripcion tecnica breve (YYYY-MM-DD)`. No borres ni modifiques entradas existentes.
+10. **Prioridades LEGALES vinculantes:** Las directivas del agente Legal en materia de cumplimiento normativo (Ley 24.240, Ley 25.326, Ley 11.723) tienen prioridad sobre cualquier desarrollo técnico. Si Legal dice "esto viola la ley", se detiene y se corrige.
+11. **No prometer features que no existen:** Si un frontend o landing page menciona una feature que no está construida (ej: "backup en la nube"), es un riesgo legal por publicidad engañosa (Ley 24.240 arts. 8-9). Reportarlo a Ventas + Legal para corregir.
+12. **Consentimiento del usuario:** Toda recolección de datos personales (registro cloud, agente, formularios) debe incluir un checkbox explícito de aceptación de la Política de Privacidad y Términos. No asumir consentimiento tácito.
+13. **El EULA clickwrap es obligatorio en primera ejecución:** El sistema debe mostrar los Términos y Condiciones al usuario la primera vez que se ejecuta, requiriendo un clic de "Aceptar" antes de continuar. Sin esto, no hay contrato válido de licencia.
 
 ### Stack que NO se cambia
 
@@ -349,6 +366,10 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] LANDING PAGE: `docs/index.html` — página estática dark theme responsive, GitHub Pages (`kamiikasee05.github.io/tustock`). Hero, features, planes, caso real, FAQ, WhatsApp CTA. (2026-07-02)
 - [feature] BLOQUEO TRIAL: Middleware bloquea todas las APIs cuando trial vence o no hay licencia. Solo health + license/status + license/activate pasan. (2026-07-02)
 - [feature] SUSCRIPCION MP RECURRENTE: `cloud/payments.py` con `create_subscription()` (preapproval), `get_subscription()`, `cancel_subscription()`. Modelo `Subscription` en cloud. Endpoint `POST /api/payments/subscribe` para Suscripcion $8K/mes con cobro recurrente automático. Webhook maneja `topic=preapproval` y `topic=payment`. Admin muestra botón "Suscribir MP" (púrpura) y estado de suscripción (Activa/Cancelada/Pendiente). (2026-07-04)
+- [feature] GRACE PERIOD SUSCRIPCION: 7 días de gracia ante pago rechazado de suscripción MP. Webhook `topic=authorized_payment` actualiza `grace_period_end` en cloud. Validate devuelve `subscription_grace_days_left` y `subscription_suspended`. Banner progresivo en frontend (día 0/3/7+). Sistema nunca se bloquea, solo pierde updates + soporte. (2026-07-04)
+- [feature] EULA CLICKWRAP: Modal de aceptación de Términos y Condiciones en primera ejecución. Backend: modelo License con `eula_accepted`, endpoint `POST /api/license/accept-eula`. Frontend: componente EulaModal en Layout que bloquea toda interacción hasta aceptar. Endpoints para servir documentos legales: `/api/license/terms`, `/api/license/privacy`, `/api/license/refund`. (2026-07-04)
+- [feature] CONSENTIMIENTO REGISTRO CLOUD: Checkbox obligatorio de aceptación de Términos y Política de Privacidad en el formulario de registro del Monitor Cloud. Modelo Business con `terms_accepted`. Backend rechaza registro sin `accepts_terms: true`. (2026-07-04)
+- [feature] BAJA DE CUENTA CLOUD: Endpoint `POST /api/business/delete-account` con confirmación por email. Elimina MetricsPush y anonimiza datos del Business (soft-delete con is_active=False). UI en dashboard con botón "Eliminar mi cuenta" y confirmación. Endpoints cloud para docs legales: `/api/licenses/terms`, `/api/licenses/privacy`, `/api/licenses/refund`. (2026-07-04)
 
 ---
 
@@ -382,6 +403,39 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-02 | **Bloqueo por licencia**: middleware bloquea APIs cuando trial vence o licencia revocada. init_license no recrea trial en reinicio. | DEV |
 | 2026-07-02 | **Railway plan hobby**: decisión de pagar $5/mes para 24/7. La validación cloud depende de uptime. | Humano |
 | 2026-07-02 | **Días de gracia definidos**: 7 días tras pago rechazado. Sistema nunca se bloquea (pierde updates + soporte). Banner progresivo día 0/3/7. | Ventas |
+| 2026-07-04 | **Suscripciones MP vía Preapproval API**: `POST /preapproval` con `auto_recurring` (1 mes, $8K). Pendiente: manejar `topic=authorized_payment` para trackear cada cobro mensual, mapear status `paused` (suspendida), y crear `preapproval_plan` reusable como template centralizado de precio/frecuencia. Bloqueante real: token MP no configurado en Railway. | DEV |
+| 2026-07-04 | **Suscripción MP — Grace period + banner**: Webhook `topic=authorized_payment` implementado. Si pago rechazado → `grace_period_end = now+7d`. Validate endpoint retorna `subscription_grace_days_left` y `subscription_suspended`. Banner progresivo en frontend (día 0/3/7+). Modelos actualizados en cloud y local. | DEV |
+| 2026-07-04 | **Documentación legal completa**: Términos y Condiciones + EULA, Política de Privacidad, Política de Reembolso en `legal/`. Footer de landing page actualizado con links legales. Fix: "Backup en la nube" removido de `Upgrade.tsx`. Checkbox de consentimiento y baja de cuenta cloud pendientes de implementar. | Legal |
+| 2026-07-04 | **EULA Clickwrap**: Modal en primera ejecución. Modelo License con `eula_accepted`. Endpoint `POST /api/license/accept-eula`. Componente EulaModal en Layout. Endpoints para servir docs legales: `/api/license/terms`, `/api/license/privacy`, `/api/license/refund`. | DEV |
+| 2026-07-04 | **Consentimiento registro cloud**: Checkbox obligatorio en formulario de registro del Monitor Cloud. Modelo Business con `terms_accepted`. Backend rechaza registro sin `accepts_terms: true`. | DEV |
+| 2026-07-04 | **Baja de cuenta cloud**: Endpoint `POST /api/business/delete-account` con confirmación por email. Soft-delete del Business + eliminación de MetricsPush. UI en dashboard con botón "Eliminar mi cuenta". | DEV |
+
+---
+
+## 13. EQUIPO LEGAL
+
+> **Agente Legal:** Abogado especialista en servicios digitales (IA). Asesora en cumplimiento normativo, redacta términos legales, protege al proyecto de riesgos jurídicos. Sus directivas en materia legal son vinculantes para DEV y Ventas.
+
+### Documentos redactados (Julio 2026)
+
+| Documento | Archivo | Contenido |
+|-----------|---------|-----------|
+| Términos y Condiciones + EULA | `legal/terminos-y-condiciones.html` | Licencia de uso, planes, garantía, limitación de responsabilidad, derecho de arrepentimiento, propiedad intelectual, jurisdicción CABA |
+| Política de Privacidad | `legal/politica-de-privacidad.html` | Datos recolectados (local vs cloud), finalidad, transferencia internacional (Railway/USA), derechos ARCO, seguridad, registro AAIP pendiente |
+| Política de Reembolso | `legal/politica-de-reembolso.html` | Derecho de arrepentimiento 10 días hábiles, reembolso proporcional, cancelación de suscripción, grace period, defectos del software |
+
+**⚠️ Pendiente humano:** Completar CUIT, razón social, email y domicilio en todos los documentos legales.
+
+### Checklist legal
+
+| Prioridad | Item | Estado | Quién |
+|:---------:|------|:------:|:-----:|
+| 🔥 1 | Completar datos del proveedor en docs legales | 📝 Pendiente | 🧑 HUMANO |
+| 🔥 2 | Configurar MP token en Railway | ❌ Pendiente | 🖥 DEV |
+| 🟢 3 | Checkbox de aceptación en registro cloud | ✅ Completado | 🖥 DEV |
+| 🟢 4 | Endpoint de baja de cuenta cloud | ✅ Completado | 🖥 DEV |
+| 🟢 5 | EULA clickwrap en primera ejecución | ✅ Completado | 🖥 DEV |
+| 🟢 6 | Registro de bases de datos AAIP | ❌ Pendiente | 🧑 HUMANO |
 
 ---
 

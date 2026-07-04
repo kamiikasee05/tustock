@@ -18,9 +18,20 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR, MP_ACCESS_TOKEN
+from fastapi.responses import HTMLResponse
 from models import init_db, get_db, Business, MetricsPush, Payment, AuthorizedKey, KeyActivation, Subscription
 
 init_db()
+
+_LEGAL_DIR = BASE_DIR.parent / "legal"
+if not _LEGAL_DIR.exists():
+    _LEGAL_DIR = BASE_DIR / "legal"
+
+def _serve_legal(filename: str):
+    path = _LEGAL_DIR / filename
+    if path.exists():
+        return HTMLResponse(path.read_text("utf-8"))
+    return HTMLResponse("<h1>Documento no disponible</h1>", status_code=404)
 
 app = FastAPI(title="TUSTOCK Cloud Monitor", version="1.0.0")
 
@@ -71,11 +82,27 @@ def health():
     return {"status": "ok", "service": "tustock-cloud-monitor", "version": "1.0.0"}
 
 
+@app.get("/api/licenses/terms")
+def legal_terms():
+    return _serve_legal("terminos-y-condiciones.html")
+
+
+@app.get("/api/licenses/privacy")
+def legal_privacy():
+    return _serve_legal("politica-de-privacidad.html")
+
+
+@app.get("/api/licenses/refund")
+def legal_refund():
+    return _serve_legal("politica-de-reembolso.html")
+
+
 @app.post("/api/register")
 def register(data: dict, db: Session = Depends(get_db)):
     name = data.get("name", "").strip()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
+    accepts_terms = data.get("accepts_terms", False)
 
     if not name or not email or not password:
         raise HTTPException(400, "Faltan campos: name, email, password")
@@ -83,12 +110,16 @@ def register(data: dict, db: Session = Depends(get_db)):
         raise HTTPException(400, "La contraseña debe tener al menos 6 caracteres")
     if db.query(Business).filter(Business.email == email).first():
         raise HTTPException(409, "El email ya está registrado")
+    if not accepts_terms:
+        raise HTTPException(400, "Debés aceptar los Términos y Condiciones y la Política de Privacidad")
 
     biz = Business(
         name=name,
         email=email,
         password_hash=_hash_password(password),
         api_key=secrets.token_hex(32),
+        terms_accepted=True,
+        terms_accepted_at=datetime.now(timezone.utc),
     )
     db.add(biz)
     db.commit()
@@ -175,6 +206,27 @@ def regenerate_key(business: Business = Depends(_get_current_business), db: Sess
     return {"ok": True, "api_key": business.api_key}
 
 
+@app.post("/api/business/delete-account")
+def delete_account(data: dict, business: Business = Depends(_get_current_business), db: Session = Depends(get_db)):
+    confirm = data.get("confirm", False)
+    if not confirm:
+        raise HTTPException(400, "Debés confirmar la eliminación de la cuenta")
+
+    email = data.get("email", "").strip().lower()
+    if email != business.email:
+        raise HTTPException(400, "El email no coincide con la cuenta actual")
+
+    db.query(MetricsPush).filter(MetricsPush.business_id == business.id).delete()
+    business.name = "[CUENTA ELIMINADA]"
+    business.email = f"deleted-{business.id}@tustock.com"
+    business.password_hash = ""
+    business.api_key = ""
+    business.is_active = False
+    db.commit()
+
+    return {"ok": True, "message": "Cuenta eliminada correctamente"}
+
+
 @app.post("/api/payments/create")
 def create_payment(data: dict, db: Session = Depends(get_db)):
     if not MP_ACCESS_TOKEN:
@@ -248,6 +300,7 @@ def subscription_status(license_key: str, db: Session = Depends(get_db)):
     ).order_by(Subscription.created_at.desc()).all()
 
     latest = subs[0] if subs else None
+    now = datetime.now(timezone.utc)
     return {
         "license_key": license_key,
         "subscriptions": [
@@ -258,6 +311,9 @@ def subscription_status(license_key: str, db: Session = Depends(get_db)):
                 "init_point": s.init_point,
                 "created_at": s.created_at.isoformat() if s.created_at else None,
                 "paid_at": s.paid_at.isoformat() if s.paid_at else None,
+                "last_payment_status": s.last_payment_status,
+                "grace_period_end": s.grace_period_end.isoformat() if s.grace_period_end else None,
+                "grace_days_left": max((s.grace_period_end - now).days, 0) if s.grace_period_end and s.grace_period_end > now else 0,
             }
             for s in subs
         ],
@@ -288,8 +344,9 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
     if not MP_ACCESS_TOKEN:
         return {"ok": False, "error": "MP no configurado"}
 
+    from payments import get_subscription, get_payment
+
     if topic == "preapproval" or body.get("type") == "subscription_preapproval":
-        from payments import get_subscription
         sub_data = get_subscription(MP_ACCESS_TOKEN, str(data_id))
         if "error" in sub_data:
             return {"ok": False, "error": sub_data["error"]}
@@ -308,6 +365,32 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
             db.commit()
 
         return {"ok": True, "type": "preapproval", "status": sub_status, "license_key": lic_key}
+
+    if topic == "authorized_payment":
+        pay_data = get_payment(MP_ACCESS_TOKEN, str(data_id))
+        if "error" in pay_data:
+            return {"ok": False, "error": pay_data["error"]}
+
+        lic_key = pay_data.get("external_reference", "")
+        pay_status = pay_data.get("status", "")
+        date_approved = pay_data.get("date_approved")
+
+        sub = db.query(Subscription).filter(
+            Subscription.license_key == lic_key,
+            Subscription.status == "authorized"
+        ).first()
+
+        if sub:
+            sub.last_payment_id = str(data_id)
+            sub.last_payment_status = pay_status
+            if pay_status == "approved":
+                sub.paid_at = datetime.now(timezone.utc)
+                sub.grace_period_end = None
+            elif pay_status in ("rejected", "cancelled", "refunded", "charged_back"):
+                sub.grace_period_end = datetime.now(timezone.utc) + timedelta(days=7)
+            db.commit()
+
+        return {"ok": True, "type": "authorized_payment", "status": pay_status, "license_key": lic_key}
 
     from payments import verify_webhook
     result = verify_webhook(MP_ACCESS_TOKEN, str(data_id))
@@ -422,6 +505,22 @@ def validate_license(data: dict, db: Session = Depends(get_db)):
     }
     feat = features.get(ak.plan, features["trial"])
 
+    subscription_grace_days_left = None
+    subscription_suspended = False
+
+    if ak.plan == "suscripcion":
+        sub = db.query(Subscription).filter(
+            Subscription.license_key == key,
+            Subscription.status == "authorized"
+        ).order_by(Subscription.created_at.desc()).first()
+
+        if sub and sub.grace_period_end:
+            now = datetime.now(timezone.utc)
+            if sub.grace_period_end > now:
+                subscription_grace_days_left = (sub.grace_period_end - now).days
+            else:
+                subscription_suspended = True
+
     return {
         "ok": True,
         "plan": ak.plan,
@@ -432,6 +531,8 @@ def validate_license(data: dict, db: Session = Depends(get_db)):
         "export_enabled": feat.get("export_enabled", False),
         "backup_enabled": feat.get("backup_enabled", False),
         "max_products": feat.get("max_products", 999999),
+        "subscription_grace_days_left": subscription_grace_days_left,
+        "subscription_suspended": subscription_suspended,
     }
 
 

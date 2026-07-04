@@ -26,7 +26,7 @@ const plans = [
       'Soporte prioritario',
       'Monitor remoto desde el celular',
     ],
-    notIncluded: ['Backup en la nube'],
+    notIncluded: [],
     highlight: true,
   },
   {
@@ -38,10 +38,9 @@ const plans = [
       'App Android incluida',
       '1 año de actualizaciones',
       'Monitor remoto desde el celular',
-      'Backup en la nube',
       'Exportación a Excel',
     ],
-    notIncluded: [],
+    notIncluded: ['Backup en la nube'],
   },
 ]
 

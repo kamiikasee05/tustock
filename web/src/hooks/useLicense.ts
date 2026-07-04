@@ -18,6 +18,9 @@ export interface LicenseStatus {
   customer_name: string
   expires_at: string | null
   upgrade_message: string
+  subscription_grace_days_left: number | null
+  subscription_suspended: boolean
+  eula_accepted: boolean
 }
 
 const defaultStatus: LicenseStatus = {
@@ -37,6 +40,9 @@ const defaultStatus: LicenseStatus = {
   customer_name: '',
   expires_at: null,
   upgrade_message: '',
+  subscription_grace_days_left: null,
+  subscription_suspended: false,
+  eula_accepted: false,
 }
 
 export function useLicense() {

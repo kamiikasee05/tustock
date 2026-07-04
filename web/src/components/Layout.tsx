@@ -2,6 +2,8 @@ import { ReactNode, useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { api, LowStockItem } from '../api/client'
 import TrialBanner from './TrialBanner'
+import SubscriptionBanner from './SubscriptionBanner'
+import EulaModal from './EulaModal'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: '📊' },
@@ -43,7 +45,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   }, [serverStatus])
 
   return (
-    <div style={{ display: 'flex', width: '100%' }}>
+    <>
+      <EulaModal />
+      <div style={{ display: 'flex', width: '100%' }}>
       <aside style={{
         width: 220,
         background: 'var(--surface)',
@@ -132,10 +136,12 @@ export default function Layout({ children }: { children: ReactNode }) {
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
         <TrialBanner />
+        <SubscriptionBanner />
         <main style={{ flex: 1, padding: 24 }}>
           {children}
         </main>
       </div>
     </div>
+    </>
   )
 }

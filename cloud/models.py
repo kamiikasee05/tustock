@@ -21,6 +21,8 @@ class Business(Base):
     password_hash = Column(String(200), nullable=False)
     api_key = Column(String(64), unique=True, nullable=False, default=lambda: uuid.uuid4().hex)
     is_active = Column(Boolean, default=True)
+    terms_accepted = Column(Boolean, default=False)
+    terms_accepted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
@@ -84,6 +86,8 @@ class Subscription(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     paid_at = Column(DateTime)
     last_payment_id = Column(String(50))
+    last_payment_status = Column(String(30), default="")
+    grace_period_end = Column(DateTime, nullable=True)
 
 
 def init_db():
