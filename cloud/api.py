@@ -268,7 +268,10 @@ def create_subscription(data: dict, db: Session = Depends(get_db)):
     plan = data.get("plan", "suscripcion")
     price = data.get("price", 0)
     license_key = data.get("license_key", "")
-    email = data.get("email", "")
+    email = data.get("email", "").strip()
+
+    if not email:
+        raise HTTPException(400, "Email del cliente requerido para crear suscripcion")
 
     from payments import create_subscription as mp_create_sub
     result = mp_create_sub(MP_ACCESS_TOKEN, plan, price, license_key, email)

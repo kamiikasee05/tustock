@@ -142,13 +142,20 @@ export default function Admin() {
     setPaymentUrl('')
     setActionError('')
 
+    const email = prompt('Email del cliente para la suscripcion (obligatorio):')
+    if (!email || !email.includes('@')) {
+      setActionError('Email invalido')
+      setPaymentLoading(false)
+      return
+    }
+
     const prices: Record<string, number> = { basico: 80000, suscripcion: 8000, pro: 160000, trial: 0 }
 
     try {
       const r = await fetch(`${CLOUD_API}/api/payments/subscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, price: prices[plan] || 0, license_key: key })
+        body: JSON.stringify({ plan, price: prices[plan] || 0, license_key: key, email })
       })
       const d = await r.json()
       if (d.ok) {

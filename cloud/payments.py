@@ -106,10 +106,14 @@ def verify_webhook(access_token: str, data_id: str) -> dict:
 
 
 def create_subscription(access_token: str, plan: str, price: float, license_key: str,
-                         customer_email: str = "") -> dict:
+                         customer_email: str) -> dict:
+    if not customer_email:
+        return {"ok": False, "error": "Email del cliente requerido para suscripcion"}
+
     body = {
         "reason": f"TUSTOCK {plan.capitalize()} - Key: {license_key}",
         "external_reference": license_key,
+        "payer_email": customer_email,
         "auto_recurring": {
             "frequency": 1,
             "frequency_type": "months",
@@ -120,9 +124,6 @@ def create_subscription(access_token: str, plan: str, price: float, license_key:
         "notification_url": "https://tustock.up.railway.app/api/payments/webhook",
         "status": "pending",
     }
-
-    if customer_email:
-        body["payer_email"] = customer_email
 
     data = json.dumps(body).encode("utf-8")
     req = urllib.request.Request(
