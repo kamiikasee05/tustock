@@ -23,15 +23,23 @@ from models import init_db, get_db, Business, MetricsPush, Payment, AuthorizedKe
 
 init_db()
 
-_LEGAL_DIR = BASE_DIR.parent / "legal"
-if not _LEGAL_DIR.exists():
-    _LEGAL_DIR = BASE_DIR / "legal"
-
-def _serve_legal(filename: str):
-    path = _LEGAL_DIR / filename
-    if path.exists():
-        return HTMLResponse(path.read_text("utf-8"))
-    return HTMLResponse("<h1>Documento no disponible</h1>", status_code=404)
+def _legal_page(title: str, content: str) -> HTMLResponse:
+    return HTMLResponse(f"""<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{title} - TUSTOCK</title>
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:Inter,system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;line-height:1.7;padding:40px 24px}}
+.container{{max-width:800px;margin:0 auto}}
+h1{{font-size:28px;font-weight:900;margin-bottom:16px}}
+p,li{{font-size:14px;color:#94a3b8;margin-bottom:8px}}
+a{{color:#3b82f6}}
+footer{{margin-top:48px;padding-top:24px;border-top:1px solid #334155;font-size:13px;color:#94a3b8}}
+</style></head><body><div class="container">
+<h1>{title}</h1>
+{content}
+<footer>TUSTOCK &copy; 2026 &mdash; <a href="https://kamiikasee05.github.io/tustock">Volver al inicio</a></footer>
+</div></body></html>""")
 
 app = FastAPI(title="TUSTOCK Cloud Monitor", version="1.0.0")
 
@@ -84,17 +92,59 @@ def health():
 
 @app.get("/api/licenses/terms")
 def legal_terms():
-    return _serve_legal("terminos-y-condiciones.html")
+    return _legal_page("Términos y Condiciones de Uso + EULA", """
+<p>TUSTOCK es un sistema de gestión de stock y ventas para comercios argentinos, desarrollado por <strong>Kamiikaze Desarrollos</strong>.</p>
+<h2>Licencia de Uso</h2>
+<p>El software se concede en licencia, no se vende. El usuario acepta no modificar, descompilar, distribuir ni realizar ingeniería inversa del producto.</p>
+<h2>Planes</h2>
+<p>Los planes vigentes son: Trial (gratuito 30 días), Básico (pago único), Suscripción (mensual) y Pro (pago único). Las características de cada plan se detallan en el sitio oficial.</p>
+<h2>Limitación de Responsabilidad</h2>
+<p>El software se proporciona "tal cual". El proveedor no se responsabiliza por daños directos, indirectos o consecuentes derivados del uso del sistema, incluyendo pérdida de datos. El usuario es responsable de realizar backups periódicos.</p>
+<h2>Derecho de Arrepentimiento</h2>
+<p>Conforme al art. 34 de la Ley 24.240, el usuario dispone de 10 días hábiles desde la activación para solicitar el reembolso total. Transcurrido ese plazo, no se realizan reembolsos.</p>
+<h2>Propiedad Intelectual</h2>
+<p>Todos los derechos de propiedad intelectual pertenecen a Kamiikaze Desarrollos. El uso no autorizado constituye infracción a la Ley 11.723.</p>
+<h2>Jurisdicción</h2>
+<p>Las partes se someten a los Tribunales de la Ciudad Autónoma de Buenos Aires (CABA).</p>
+<p><a href="https://kamiikasee05.github.io/tustock/legal/terminos-y-condiciones.html">Ver documento completo →</a></p>
+""")
 
 
 @app.get("/api/licenses/privacy")
 def legal_privacy():
-    return _serve_legal("politica-de-privacidad.html")
+    return _legal_page("Política de Privacidad", """
+<p>En TUSTOCK respetamos tu privacidad. Esta política describe qué datos recolectamos y cómo los tratamos.</p>
+<h2>Datos Recolectados (Local)</h2>
+<p>El sistema local no envía datos del negocio (productos, ventas, clientes) a ningún servidor externo. Toda la información permanece en la PC del usuario.</p>
+<h2>Datos Recolectados (Cloud)</h2>
+<p>Solo si el usuario se registra en el Monitor Cloud, recolectamos: nombre, email, contraseña cifrada, y métricas de ventas agregadas (totales diarios, no datos individuales de clientes).</p>
+<h2>Finalidad</h2>
+<p>Autenticación, visualización remota de métricas, validación de licencias, y mejora del servicio.</p>
+<h2>Transferencia Internacional</h2>
+<p>Los datos del Monitor Cloud se almacenan en servidores de Railway (Estados Unidos). Al registrarse, el usuario consiente esta transferencia.</p>
+<h2>Derechos ARCO</h2>
+<p>El usuario puede solicitar acceso, rectificación, cancelación u oposición escribiendo a <a href="mailto:kamiikasee05@gmail.com">kamiikasee05@gmail.com</a>.</p>
+<h2>Registro AAIP</h2>
+<p>Pendiente de inscripción en la Agencia de Acceso a la Información Pública conforme al art. 21 de la Ley 25.326.</p>
+<p><a href="https://kamiikasee05.github.io/tustock/legal/politica-de-privacidad.html">Ver documento completo →</a></p>
+""")
 
 
 @app.get("/api/licenses/refund")
 def legal_refund():
-    return _serve_legal("politica-de-reembolso.html")
+    return _legal_page("Política de Reembolso y Cancelación", """
+<h2>Derecho de Arrepentimiento</h2>
+<p>De acuerdo con el art. 34 de la Ley 24.240, el usuario dispone de un plazo de <strong>10 días hábiles</strong> desde la activación de la licencia para solicitar el reembolso total del importe abonado.</p>
+<h2>Reembolso Proporcional</h2>
+<p>Transcurridos los 10 días hábiles, no se realizarán reembolsos. En caso de defectos del software, se procederá a la corrección sin costo adicional o, si la corrección no es posible, al reembolso proporcional.</p>
+<h2>Cancelación de Suscripción</h2>
+<p>El usuario puede cancelar su suscripción mensual en cualquier momento. La cancelación no da derecho a reembolso del período ya facturado. El servicio continúa hasta el final del período pagado.</p>
+<h2>Grace Period</h2>
+<p>Ante un pago rechazado de suscripción, el usuario dispone de 7 días de gracia durante los cuales el sistema sigue funcionando, perdiendo únicamente updates y soporte prioritario.</p>
+<h2>Cómo Solicitar</h2>
+<p>Escribir a <a href="mailto:kamiikasee05@gmail.com">kamiikasee05@gmail.com</a> con el asunto "Reembolso" y el número de licencia. Se responderá en un máximo de 72 horas hábiles.</p>
+<p><a href="https://kamiikasee05.github.io/tustock/legal/politica-de-reembolso.html">Ver documento completo →</a></p>
+""")
 
 
 @app.post("/api/register")

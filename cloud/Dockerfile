@@ -6,7 +6,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY config.py models.py api.py dashboard.html payments.py ./
-COPY ../legal ./legal
 
 EXPOSE 8000
 
