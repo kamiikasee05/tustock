@@ -70,6 +70,22 @@ class KeyActivation(Base):
     activated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+
+    id = Column(Integer, primary_key=True)
+    license_key = Column(String(50), nullable=False, index=True)
+    preapproval_id = Column(String(50), unique=True)
+    plan = Column(String(30), nullable=False)
+    price = Column(Float, nullable=False)
+    status = Column(String(30), default="pending")
+    init_point = Column(String(500))
+    customer_email = Column(String(200), default="")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    paid_at = Column(DateTime)
+    last_payment_id = Column(String(50))
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

@@ -29,6 +29,8 @@ export default function Admin() {
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentUrl, setPaymentUrl] = useState('')
   const [paymentStatuses, setPaymentStatuses] = useState<Record<string, string>>({})
+  const [subStatuses, setSubStatuses] = useState<Record<string, string>>({})
+  const [subUrls, setSubUrls] = useState<Record<string, string>>({})
 
   const CLOUD_API = 'https://tustock.up.railway.app'
 
@@ -135,6 +137,33 @@ export default function Admin() {
     setPaymentLoading(false)
   }
 
+  async function createSubscription(key: string, plan: string) {
+    setPaymentLoading(true)
+    setPaymentUrl('')
+    setActionError('')
+
+    const prices: Record<string, number> = { basico: 80000, suscripcion: 8000, pro: 160000, trial: 0 }
+
+    try {
+      const r = await fetch(`${CLOUD_API}/api/payments/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan, price: prices[plan] || 0, license_key: key })
+      })
+      const d = await r.json()
+      if (d.ok) {
+        setPaymentUrl(d.init_point)
+        setCopied({ key, plan })
+        setSubUrls(prev => ({ ...prev, [key]: d.init_point }))
+      } else {
+        setActionError(d.detail || 'Error al crear suscripcion')
+      }
+    } catch {
+      setActionError('No se pudo conectar al servidor cloud')
+    }
+    setPaymentLoading(false)
+  }
+
   async function checkPaymentStatus(key: string) {
     try {
       const r = await fetch(`${CLOUD_API}/api/payments/status/${key}`)
@@ -143,10 +172,23 @@ export default function Admin() {
     } catch { }
   }
 
+  async function checkSubStatus(key: string) {
+    try {
+      const r = await fetch(`${CLOUD_API}/api/payments/subscription-status/${key}`)
+      const d = await r.json()
+      setSubStatuses(prev => ({ ...prev, [key]: d.status }))
+      if (d.init_point) setSubUrls(prev => ({ ...prev, [key]: d.init_point }))
+    } catch { }
+  }
+
   useEffect(() => {
     if (auth && licenses.length > 0) {
       licenses.slice(0, 20).forEach(l => {
-        if (!paymentStatuses[l.key]) checkPaymentStatus(l.key)
+        if (l.plan === 'suscripcion') {
+          if (!subStatuses[l.key]) checkSubStatus(l.key)
+        } else {
+          if (!paymentStatuses[l.key]) checkPaymentStatus(l.key)
+        }
       })
     }
   }, [licenses.length, auth])
@@ -404,24 +446,46 @@ export default function Admin() {
                   </button>
                 </td>
                 <td style={{ padding: '8px 6px', textAlign: 'center' }}>
-                  {paymentStatuses[l.key] && paymentStatuses[l.key] !== 'none' ? (
-                    <span style={{
-                      padding: '3px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
-                      background: paymentStatuses[l.key] === 'approved' ? 'var(--success)' : 'var(--warning)',
-                      color: paymentStatuses[l.key] === 'approved' ? '#fff' : '#000',
-                    }}>
-                      {paymentStatuses[l.key] === 'approved' ? 'Pagado' : paymentStatuses[l.key] === 'pending' ? 'Pendiente' : paymentStatuses[l.key]}
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => createPayment(l.key, l.plan)}
-                      disabled={paymentLoading || l.plan === 'trial'}
-                      style={{
-                        padding: '4px 12px', fontSize: 12, borderRadius: 4, cursor: l.plan === 'trial' ? 'not-allowed' : 'pointer',
-                        background: 'var(--primary)', color: '#fff', border: 'none', opacity: l.plan === 'trial' ? 0.5 : 1,
+                  {l.plan === 'suscripcion' ? (
+                    subStatuses[l.key] && subStatuses[l.key] !== 'none' ? (
+                      <span style={{
+                        padding: '3px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
+                        background: subStatuses[l.key] === 'authorized' ? 'var(--success)' : subStatuses[l.key] === 'cancelled' ? 'var(--danger)' : 'var(--warning)',
+                        color: '#fff',
                       }}>
-                      {l.plan === 'trial' ? 'Gratis' : 'Cobrar MP'}
-                    </button>
+                        {subStatuses[l.key] === 'authorized' ? 'Activa' : subStatuses[l.key] === 'cancelled' ? 'Cancelada' : subStatuses[l.key] === 'pending' ? 'Pendiente' : subStatuses[l.key]}
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => createSubscription(l.key, l.plan)}
+                        disabled={paymentLoading || l.plan === 'trial'}
+                        style={{
+                          padding: '4px 12px', fontSize: 12, borderRadius: 4, cursor: l.plan === 'trial' ? 'not-allowed' : 'pointer',
+                          background: '#7c3aed', color: '#fff', border: 'none', opacity: l.plan === 'trial' ? 0.5 : 1,
+                        }}>
+                        Suscribir MP
+                      </button>
+                    )
+                  ) : (
+                    paymentStatuses[l.key] && paymentStatuses[l.key] !== 'none' ? (
+                      <span style={{
+                        padding: '3px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
+                        background: paymentStatuses[l.key] === 'approved' ? 'var(--success)' : 'var(--warning)',
+                        color: paymentStatuses[l.key] === 'approved' ? '#fff' : '#000',
+                      }}>
+                        {paymentStatuses[l.key] === 'approved' ? 'Pagado' : paymentStatuses[l.key] === 'pending' ? 'Pendiente' : paymentStatuses[l.key]}
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => createPayment(l.key, l.plan)}
+                        disabled={paymentLoading || l.plan === 'trial'}
+                        style={{
+                          padding: '4px 12px', fontSize: 12, borderRadius: 4, cursor: l.plan === 'trial' ? 'not-allowed' : 'pointer',
+                          background: 'var(--primary)', color: '#fff', border: 'none', opacity: l.plan === 'trial' ? 0.5 : 1,
+                        }}>
+                        {l.plan === 'trial' ? 'Gratis' : 'Cobrar MP'}
+                      </button>
+                    )
                   )}
                 </td>
               </tr>

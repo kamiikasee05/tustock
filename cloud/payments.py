@@ -103,3 +103,82 @@ def verify_webhook(access_token: str, data_id: str) -> dict:
         "date_approved": payment.get("date_approved"),
         "transaction_amount": payment.get("transaction_amount"),
     }
+
+
+def create_subscription(access_token: str, plan: str, price: float, license_key: str,
+                         customer_email: str = "") -> dict:
+    body = {
+        "reason": f"TUSTOCK {plan.capitalize()} - Key: {license_key}",
+        "external_reference": license_key,
+        "auto_recurring": {
+            "frequency": 1,
+            "frequency_type": "months",
+            "transaction_amount": price,
+            "currency_id": "ARS",
+        },
+        "back_url": "https://tustock.up.railway.app",
+        "notification_url": "https://tustock.up.railway.app/api/payments/webhook",
+        "status": "pending",
+    }
+
+    if customer_email:
+        body["payer_email"] = customer_email
+
+    data = json.dumps(body).encode("utf-8")
+    req = urllib.request.Request(
+        f"{MP_API}/preapproval",
+        data=data,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}",
+        },
+    )
+    try:
+        resp = urllib.request.urlopen(req, timeout=15)
+        result = json.loads(resp.read())
+        return {
+            "ok": True,
+            "preapproval_id": result.get("id"),
+            "init_point": result.get("init_point"),
+        }
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode() if e.fp else str(e)
+        return {"ok": False, "error": f"MP error {e.code}: {error_body[:200]}"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def get_subscription(access_token: str, preapproval_id: str) -> dict:
+    req = urllib.request.Request(
+        f"{MP_API}/preapproval/{preapproval_id}",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    try:
+        resp = urllib.request.urlopen(req, timeout=10)
+        return json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode() if e.fp else str(e)
+        return {"error": f"MP error {e.code}: {error_body[:200]}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def cancel_subscription(access_token: str, preapproval_id: str) -> dict:
+    body = json.dumps({"status": "cancelled"}).encode("utf-8")
+    req = urllib.request.Request(
+        f"{MP_API}/preapproval/{preapproval_id}",
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}",
+        },
+        method="PUT",
+    )
+    try:
+        resp = urllib.request.urlopen(req, timeout=10)
+        return {"ok": True}
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode() if e.fp else str(e)
+        return {"ok": False, "error": f"MP error {e.code}: {error_body[:200]}"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}

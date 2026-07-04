@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR, MP_ACCESS_TOKEN
-from models import init_db, get_db, Business, MetricsPush, Payment, AuthorizedKey, KeyActivation
+from models import init_db, get_db, Business, MetricsPush, Payment, AuthorizedKey, KeyActivation, Subscription
 
 init_db()
 
@@ -208,23 +208,106 @@ def create_payment(data: dict, db: Session = Depends(get_db)):
     }
 
 
+@app.post("/api/payments/subscribe")
+def create_subscription(data: dict, db: Session = Depends(get_db)):
+    if not MP_ACCESS_TOKEN:
+        raise HTTPException(400, "Mercado Pago no configurado en el servidor")
+
+    plan = data.get("plan", "suscripcion")
+    price = data.get("price", 0)
+    license_key = data.get("license_key", "")
+    email = data.get("email", "")
+
+    from payments import create_subscription as mp_create_sub
+    result = mp_create_sub(MP_ACCESS_TOKEN, plan, price, license_key, email)
+    if not result.get("ok"):
+        raise HTTPException(400, result.get("error", "Error al crear suscripción"))
+
+    sub = Subscription(
+        license_key=license_key,
+        preapproval_id=result.get("preapproval_id"),
+        plan=plan,
+        price=price,
+        init_point=result.get("init_point"),
+        customer_email=email,
+    )
+    db.add(sub)
+    db.commit()
+
+    return {
+        "ok": True,
+        "preapproval_id": result.get("preapproval_id"),
+        "init_point": result.get("init_point"),
+    }
+
+
+@app.get("/api/payments/subscription-status/{license_key}")
+def subscription_status(license_key: str, db: Session = Depends(get_db)):
+    subs = db.query(Subscription).filter(
+        Subscription.license_key == license_key
+    ).order_by(Subscription.created_at.desc()).all()
+
+    latest = subs[0] if subs else None
+    return {
+        "license_key": license_key,
+        "subscriptions": [
+            {
+                "preapproval_id": s.preapproval_id,
+                "status": s.status,
+                "price": s.price,
+                "init_point": s.init_point,
+                "created_at": s.created_at.isoformat() if s.created_at else None,
+                "paid_at": s.paid_at.isoformat() if s.paid_at else None,
+            }
+            for s in subs
+        ],
+        "status": latest.status if latest else "none",
+    }
+
+
 @app.post("/api/payments/webhook")
 async def payment_webhook(request: Request, db: Session = Depends(get_db)):
+    topic = request.query_params.get("topic", "")
+
+    data_id = ""
+    body = {}
     try:
         body = await request.json()
     except Exception:
-        return {"ok": False, "error": "Invalid JSON"}
+        pass
 
     data_id = body.get("data", {}).get("id") if isinstance(body.get("data"), dict) else body.get("data", {}).get("id", "")
-
     if not data_id and "id" in body:
         data_id = body["id"]
+    if not data_id:
+        data_id = request.query_params.get("id", "")
 
     if not data_id:
         return {"ok": False, "error": "No data.id"}
 
     if not MP_ACCESS_TOKEN:
         return {"ok": False, "error": "MP no configurado"}
+
+    if topic == "preapproval" or body.get("type") == "subscription_preapproval":
+        from payments import get_subscription
+        sub_data = get_subscription(MP_ACCESS_TOKEN, str(data_id))
+        if "error" in sub_data:
+            return {"ok": False, "error": sub_data["error"]}
+
+        lic_key = sub_data.get("external_reference", "")
+        sub_status = sub_data.get("status", "")
+
+        sub = db.query(Subscription).filter(
+            Subscription.preapproval_id == str(data_id)
+        ).first()
+
+        if sub:
+            sub.status = sub_status
+            if sub_status == "authorized":
+                sub.paid_at = datetime.now(timezone.utc)
+            db.commit()
+
+        return {"ok": True, "type": "preapproval", "status": sub_status, "license_key": lic_key}
 
     from payments import verify_webhook
     result = verify_webhook(MP_ACCESS_TOKEN, str(data_id))
@@ -243,7 +326,17 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
             payment.paid_at = datetime.now(timezone.utc)
         db.commit()
 
-    return {"ok": True, "status": result["status"], "license_key": lic_key}
+    if lic_key:
+        sub = db.query(Subscription).filter(
+            Subscription.license_key == lic_key,
+            Subscription.status == "authorized"
+        ).first()
+        if sub and result.get("status") == "approved":
+            sub.paid_at = datetime.now(timezone.utc)
+            sub.last_payment_id = str(result.get("payment_id", ""))
+            db.commit()
+
+    return {"ok": True, "status": result.get("status", "unknown"), "license_key": lic_key}
 
 
 @app.get("/api/payments/status/{license_key}")

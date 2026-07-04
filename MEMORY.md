@@ -223,35 +223,31 @@ PC del cliente                          Cloud (Railway/VPS)
 - ✅ **Landing page**: `docs/index.html` servida via GitHub Pages
 - ✅ **Mercado Pago**: integración REST lista, pendiente configurar token en Railway
 
-### Prioridades actuales (reordenadas post-venta)
+### Prioridades actuales (post-dispatcher)
 
 | Prioridad | Tarea | Quién | Por qué es crítica |
 |:---------:|-------|:-----:|-------------------|
-| 🔥 1 | **Corregir gating para Básico** (`export_enabled: true`) | 🖥 DEV | ✅ Hecho. Matriz aprobada. Export Excel va en todos los planes pagos. |
-| 🔥 2 | **Alinear Upgrade.tsx con la matriz aprobada** | 🖥 DEV | ✅ Hecho. Quitar "Exportación Excel" de la lista de "no incluye" en la card de Básico. |
-| 🔥 3 | **Dashboard admin de licencias** | 🖥 DEV | ✅ Hecho. Panel `/admin`, token separado, generar keys, ver/revocar/activar, stats. |
-| 🔥 4 | **Integración Mercado Pago** | 🖥 DEV | ✅ Hecho. REST API en cloud, crear preferencia, webhook, verificar pago. Botón "Cobrar MP" en admin. Pendiente configurar `TUSTOCK_MP_TOKEN` en Railway. |
-| 🟡 5 | **Landing page estática** | 🖥 DEV | ✅ Hecho. `docs/index.html`, dark theme responsive, GitHub Pages activo (`kamiikasee05.github.io/tustock`). |
-| 🟡 6 | **CRM en Google Sheets** | 🖥 DEV | Para no perder oportunidades de venta |
-| 🟡 5 | **Monitor Cloud (push-based, URL fija)** | 🖥 DEV | **COMPLETO.** Reemplaza Cloudflare Tunnel. Arquitectura híbrida: agente local pushea a API cloud. Login multiusuario. Dominio fijo. Desplegado en Railway. |
-| 🟡 6 | **Landing page estática** | 🖥 DEV | Para tener presencia web y recibir leads |
-| 🟢 7 | **CRM en Google Sheets** | 🖥 DEV | Para no perder oportunidades de venta |
-| 🟢 8 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
-| 🟢 9 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
+| 🔥 1 | **MP — Subscription webhook + banner** | 🖥 DEV | ✅ COMPLETADO: Suscripciones recurrentes MP implementadas. Pendiente configurar `TUSTOCK_MP_TOKEN` en Railway. |
+| 🔥 2 | **Configurar MP token en Railway** | 🖥 DEV | Sin token no funcionan pagos. Necesita cuenta MP con Suscripciones y Checkout Pro habilitados. |
+| 🟡 3 | **Configurar Railway hobby ($5/mes)** | 🧑 HUMANO | Para 24/7 de validación cloud y monitor. |
+| 🟢 4 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
+| 🟢 5 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
+| 🟢 6 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
 
 ### Tareas HUMANAS pendientes
 
 | Prioridad | Tarea | Tiempo estimado |
 |:---------:|-------|:---------------:|
-| 🔥 1 | **Instalar Monitor Premium en PC de la clienta** (Cloudflare Tunnel) | 1 hora |
-| 🔥 2 | **Cobrar $6K suscripción mes siguiente** (recordatorio) | 5 min |
-| 🔥 3 | **Pedir testimonio/caso de éxito a la clienta** (con foto del negocio si acepta) | 30 min |
-| 🔥 4 | **Pedir referidos** a la clienta ("¿conocés otro comerciante que necesite esto?") | 10 min |
-| 🟡 5 | **Publicar en grupos de Facebook** el caso de éxito (anonimizado si prefiere) | 30 min |
-| 🟡 6 | **Crear cuenta de Mercado Libre** para publicar TUSTOCK | 1 hora |
-| 🟡 7 | **Crear cuenta de Mercado Pago** (si no tenés) para cobrar | 30 min |
-| 🟢 8 | **Publicar en Mercado Libre** con el texto que prepare | 30 min |
-| 🟢 9 | **Ir a 3-5 polirrubros del barrio** a ofrecer el sistema personalmente | 2 horas |
+| 🔥 1 | **[VENTAS] Definir días de gracia y banner copy para suscripción fallida** | 15 min |
+| 🔥 2 | **Instalar Monitor Premium en PC de la clienta** (Cloudflare Tunnel) | 1 hora |
+| 🔥 3 | **Cobrar $6K suscripción mes siguiente** (recordatorio) | 5 min |
+| 🔥 4 | **Pedir testimonio/caso de éxito a la clienta** (con foto del negocio si acepta) | 30 min |
+| 🔥 5 | **Pedir referidos** a la clienta ("¿conocés otro comerciante que necesite esto?") | 10 min |
+| 🟡 6 | **Publicar en grupos de Facebook** el caso de éxito (anonimizado si prefiere) | 30 min |
+| 🟡 7 | **Crear cuenta de Mercado Libre** para publicar TUSTOCK | 1 hora |
+| 🟡 8 | **Crear cuenta de Mercado Pago** (si no tenés) para cobrar | 30 min |
+| 🟢 9 | **Publicar en Mercado Libre** con el texto que prepare | 30 min |
+| 🟢 10 | **Ir a 3-5 polirrubros del barrio** a ofrecer el sistema personalmente | 2 horas |
 
 ---
 
@@ -352,6 +348,7 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] VALIDACION CLOUD: Sync de keys al cloud, validate contra API cloud, cache 7d con fallback offline 14d. Middleware bloquea APIs si licencia expirada o inválida. Trial no requiere validación. (2026-07-02)
 - [feature] LANDING PAGE: `docs/index.html` — página estática dark theme responsive, GitHub Pages (`kamiikasee05.github.io/tustock`). Hero, features, planes, caso real, FAQ, WhatsApp CTA. (2026-07-02)
 - [feature] BLOQUEO TRIAL: Middleware bloquea todas las APIs cuando trial vence o no hay licencia. Solo health + license/status + license/activate pasan. (2026-07-02)
+- [feature] SUSCRIPCION MP RECURRENTE: `cloud/payments.py` con `create_subscription()` (preapproval), `get_subscription()`, `cancel_subscription()`. Modelo `Subscription` en cloud. Endpoint `POST /api/payments/subscribe` para Suscripcion $8K/mes con cobro recurrente automático. Webhook maneja `topic=preapproval` y `topic=payment`. Admin muestra botón "Suscribir MP" (púrpura) y estado de suscripción (Activa/Cancelada/Pendiente). (2026-07-04)
 
 ---
 
@@ -384,7 +381,8 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-02 | **Landing page**: `docs/index.html` desplegada via GitHub Pages. Dark theme responsive con planes, caso real, FAQ y WhatsApp CTA. | DEV |
 | 2026-07-02 | **Bloqueo por licencia**: middleware bloquea APIs cuando trial vence o licencia revocada. init_license no recrea trial en reinicio. | DEV |
 | 2026-07-02 | **Railway plan hobby**: decisión de pagar $5/mes para 24/7. La validación cloud depende de uptime. | Humano |
+| 2026-07-02 | **Días de gracia definidos**: 7 días tras pago rechazado. Sistema nunca se bloquea (pierde updates + soporte). Banner progresivo día 0/3/7. | Ventas |
 
 ---
 
-*Última actualización: 30 de Junio de 2026*
+*Última actualización: 4 de Julio de 2026*
