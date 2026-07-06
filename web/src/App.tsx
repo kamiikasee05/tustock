@@ -12,12 +12,10 @@ import Presupuestos from './pages/Presupuestos'
 import Vendors from './pages/Vendors'
 import Upgrade from './pages/Upgrade'
 import Settings from './pages/Settings'
-import Admin from './pages/Admin'
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/admin" element={<Admin />} />
       <Route path="*" element={
         <Layout>
           <Routes>

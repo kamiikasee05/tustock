@@ -88,7 +88,7 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 - **Validación cloud de licencias:** Cada 7 días el sistema local valida la key contra la API cloud. Si no hay internet, sigue funcionando con cache de hasta 14 días. Trial no requiere validación cloud. Admin sync-keys al generar.
 - **Bloqueo por licencia:** Middleware que bloquea todas las APIs cuando el trial vence o no hay licencia activa. Solo deja pasar health, license/status y license/activate.
 - **Landing page:** `docs/index.html` — página estática dark theme responsive servida via GitHub Pages (`kamiikasee05.github.io/tustock`). Incluye hero, features, planes, caso real, FAQ, WhatsApp CTA.
-- **Mercado Pago:** Integración REST en `cloud/payments.py`. Crear preferencias, webhook, verificar status. Admin tiene botón "Cobrar MP" y columna estado de pago. Requiere `TUSTOCK_MP_TOKEN` configurado.
+- **Mercado Pago:** Integración con dos apps (Checkout Pro para pagos únicos Básico/Pro, Suscripciones vía Plan compartido). Crear preferencias, webhook, verificar status. Admin tiene botón "Cobrar MP" y columna estado de pago. Suscripciones: Plan único `preapproval_plan` ($8K/mes) con link compartido, webhook registra nuevas suscripciones, admin las vincula a licencias desde el panel. Requiere `TUSTOCK_MP_TOKEN` configurado.
 - **Guía de Usuario PDF** generada automáticamente
 - **Documentación legal:** Términos y Condiciones de Uso + EULA, Política de Privacidad, Política de Reembolso y Cancelación (`legal/`). Links en footer de landing page y referenciados desde el registro cloud.
 - **EULA clickwrap:** Modal en primera ejecución que obliga a aceptar términos. Endpoints para servir documentos legales (`/api/license/terms`, `/api/license/privacy`, `/api/license/refund`).
@@ -188,6 +188,9 @@ PC del cliente                          Cloud (Railway/VPS)
 | POST | `/api/payments/create` | No | Crea preferencia de pago en Mercado Pago |
 | POST | `/api/payments/webhook` | No | Recibe notificaciones de pago de MP |
 | GET | `/api/payments/status/{key}` | No | Consulta estado de pago de una licencia |
+| GET | `/api/plan/subscription` | No | Info del plan de suscripción + suscripciones sin vincular |
+| POST | `/api/plan/update-webhook` | No | Configura notification_url en el plan de MP |
+| POST | `/api/plan/link-subscription` | No | Vincula una suscripción entrante a una license_key |
 
 ### Cloudflare Tunnel (actual — a reemplazar)
 
@@ -209,7 +212,7 @@ PC del cliente                          Cloud (Railway/VPS)
 
 ## 6. FASE ACTUAL DEL ROADMAP
 
-**Estamos en: Fase 1 y Fase 5 completas. Fase 1 (licencias + trial + feature gating) ✅. Monitor Cloud desplegado. Admin dashboard completo. Validación cloud de licencias implementada. Próximo: configurar Mercado Pago en Railway.**
+**Estamos en: Fase 1 y Fase 5 completas. Fase 1 (licencias + trial + feature gating) ✅. Monitor Cloud desplegado. Admin dashboard completo. Validación cloud de licencias implementada. Mercado Pago híbrido: Checkout Pro (pagos únicos) + Plan compartido (suscripciones).**
 
 ### Hitos alcanzados
 
@@ -237,30 +240,12 @@ PC del cliente                          Cloud (Railway/VPS)
 
 | Prioridad | Tarea | Quién | Por qué es crítica |
 |:---------:|-------|:-----:|-------------------|
-| 🔥 1 | **Completar datos en docs legales** (CUIT, email, domicilio) | 🧑 HUMANO | Los documentos legales están redactados pero requieren CUIT, razón social y datos de contacto reales. Sin esto no tienen validez. |
-| 🔥 2 | **Configurar MP token en Railway** | 🖥 DEV | Sin token no funcionan pagos. Necesita cuenta MP con Suscripciones y Checkout Pro habilitados. |
-| 🟡 3 | **Configurar Railway hobby ($5/mes)** | 🧑 HUMANO | Para 24/7 de validación cloud y monitor. |
-| 🟢 4 | **Registrar bases de datos en AAIP** | 🧑 HUMANO | Obligación legal si hay datos personales en cloud (Ley 25.326 art. 21). |
-| 🟢 5 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
-| 🟢 6 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
-| 🟢 7 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
-
-### Tareas HUMANAS pendientes
-
-| Prioridad | Tarea | Tiempo estimado |
-|:---------:|-------|:---------------:|
-| 🔥 1 | **[LEGAL] Completar CUIT, email y domicilio en `legal/terminos-y-condiciones.html` y `legal/politica-de-privacidad.html`** | 15 min |
-| 🔥 2 | **[VENTAS] Definir postura sobre derecho de arrepentimiento** (reembolso total vs proporcional en 10 días hábiles) | 15 min |
-| 🔥 3 | **Instalar Monitor Premium en PC de la clienta** (Cloudflare Tunnel) | 1 hora |
-| 🔥 4 | **Cobrar $6K suscripción mes siguiente** (recordatorio) | 5 min |
-| 🔥 5 | **Pedir testimonio/caso de éxito a la clienta** (con foto del negocio si acepta) | 30 min |
-| 🔥 6 | **Pedir referidos** a la clienta ("¿conocés otro comerciante que necesite esto?") | 10 min |
-| 🟡 7 | **Registrar bases de datos en AAIP** | 2 horas |
-| 🟡 8 | **Publicar en grupos de Facebook** el caso de éxito (anonimizado si prefiere) | 30 min |
-| 🟡 9 | **Crear cuenta de Mercado Libre** para publicar TUSTOCK | 1 hora |
-| 🟡 10 | **Crear cuenta de Mercado Pago** (si no tenés) para cobrar | 30 min |
-| 🟢 11 | **Publicar en Mercado Libre** con el texto que prepare | 30 min |
-| 🟢 12 | **Ir a 3-5 polirrubros del barrio** a ofrecer el sistema personalmente | 2 horas |
+| 🔥 1 | **Configurar MP token en Railway** | 🖥 DEV | Sin token no funcionan pagos. Necesita cuenta MP con Suscripciones y Checkout Pro habilitados. |
+| 🟡 2 | **Configurar Railway hobby ($5/mes)** | 🧑 HUMANO | Para 24/7 de validación cloud y monitor. |
+| 🟢 3 | **Registrar bases de datos en AAIP** | 🧑 HUMANO | Obligación legal si hay datos personales en cloud (Ley 25.326 art. 21). |
+| 🟢 4 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
+| 🟢 5 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
+| 🟢 6 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
 
 ---
 
@@ -279,6 +264,12 @@ PC del cliente                          Cloud (Railway/VPS)
 11. **No prometer features que no existen:** Si un frontend o landing page menciona una feature que no está construida (ej: "backup en la nube"), es un riesgo legal por publicidad engañosa (Ley 24.240 arts. 8-9). Reportarlo a Ventas + Legal para corregir.
 12. **Consentimiento del usuario:** Toda recolección de datos personales (registro cloud, agente, formularios) debe incluir un checkbox explícito de aceptación de la Política de Privacidad y Términos. No asumir consentimiento tácito.
 13. **El EULA clickwrap es obligatorio en primera ejecución:** El sistema debe mostrar los Términos y Condiciones al usuario la primera vez que se ejecuta, requiriendo un clic de "Aceptar" antes de continuar. Sin esto, no hay contrato válido de licencia.
+14. **NOTIFICACION NTFY OBLIGATORIA AL FINALIZAR:** Todo agente (DEV, Ventas, Legal, cualquier subagente) DEBE ejecutar `& "E:\TUSTOCK\scripts\send-ntfy.ps1"` al completar su trabajo, justo antes de entregar el resultado al usuario. Parámetros recomendados según el caso:
+    - DEV: `-Title "✅ TUSTOCK" -Message "Tarea completada" -Priority 4 -Tags "white_check_mark"`
+    - Ventas: `-Title "✅ TUSTOCK Ventas" -Message "Material generado" -Priority 3 -Tags "memo"`
+    - Legal: `-Title "⚖️ TUSTOCK Legal" -Message "Documentación actualizada" -Priority 3 -Tags "balance_scale"`
+    - Dispatcher: `-Title "🔄 TUSTOCK" -Message "Revisión completada" -Priority 3 -Tags "arrows_counterclockwise"`
+    Esto aplica a TODOS los agentes, sin excepción.
 
 ### Stack que NO se cambia
 
@@ -409,6 +400,13 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-04 | **EULA Clickwrap**: Modal en primera ejecución. Modelo License con `eula_accepted`. Endpoint `POST /api/license/accept-eula`. Componente EulaModal en Layout. Endpoints para servir docs legales: `/api/license/terms`, `/api/license/privacy`, `/api/license/refund`. | DEV |
 | 2026-07-04 | **Consentimiento registro cloud**: Checkbox obligatorio en formulario de registro del Monitor Cloud. Modelo Business con `terms_accepted`. Backend rechaza registro sin `accepts_terms: true`. | DEV |
 | 2026-07-04 | **Baja de cuenta cloud**: Endpoint `POST /api/business/delete-account` con confirmación por email. Soft-delete del Business + eliminación de MetricsPush. UI en dashboard con botón "Eliminar mi cuenta". | DEV |
+| 2026-07-05 | **Dispatcher**: Auditoría completa del código. Se detectaron 4 bugs funcionales y 5 observaciones técnicas. Documentados en sección 14. | Dispatcher |
+| 2026-07-05 | **Dispatcher**: Vault de Obsidian creado en `E:\TUSTOCK\obsidian\`. Dashboard.md centraliza navegación. Separación por áreas: Producto, Ventas, Legal, Técnico, Decisiones. | Dispatcher |
+| 2026-07-06 | **MP Suscripciones bloqueado en producción**: No se puede crear preapproval directamente por API con la cuenta actual (401/500). Los planes (preapproval_plan) sí funcionan. Decisión: usar Plan compartido con link fijo. Cliente se suscribe por MP, admin vincula manualmente. Se necesitan 2 apps de MP porque el selector de producto es excluyente (una para Checkout Pro, otra para Suscripciones). | DEV + Humano |
+| 2026-07-06 | **Suscripción vía Plan compartido implementada**: Flujo completo — GET /api/plan/subscription, POST /api/plan/update-webhook, POST /api/plan/link-subscription. Webhook mejorado para crear Subscription desde suscripción del plan. Admin.tsx: sección Plan de Suscripción MP con link compartido, lista de suscripciones sin vincular, botón Vincular. | DEV |
+| 2026-07-06 | **BUGS FIXED**: 4 bugs funcionales del MEMORY.md sección 14 corregidos + timing-safe en auth.py + cleanup (unused variables, data_id extraction). | DEV |
+| 2026-07-06 | **Plan activo ID**: `492a6877398e4831a2d36f2159320f1c` — link de suscripción `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=492a6877398e4831a2d36f2159320f1c` — funcional y probado (hermana se suscribió). Webhook pendiente de configurar en el plan. | DEV + Humano |
+| 2026-07-06 | **Modelo híbrido MP confirmado**: Checkout Pro para pagos únicos (Básico/Pro) + Plan compartido para suscripciones. Dos apps de MP separadas (selector de producto excluyente). Admin vincula suscripciones manualmente desde el panel. | DEV + Humano + Dispatcher |
 
 ---
 
@@ -424,13 +422,20 @@ PC del cliente                          Cloud (Railway/VPS)
 | Política de Privacidad | `legal/politica-de-privacidad.html` | Datos recolectados (local vs cloud), finalidad, transferencia internacional (Railway/USA), derechos ARCO, seguridad, registro AAIP pendiente |
 | Política de Reembolso | `legal/politica-de-reembolso.html` | Derecho de arrepentimiento 10 días hábiles, reembolso proporcional, cancelación de suscripción, grace period, defectos del software |
 
-**⚠️ Pendiente humano:** Completar CUIT, razón social, email y domicilio en todos los documentos legales.
+**Datos del proveedor completos:**
+
+| Campo | Valor |
+|-------|-------|
+| CUIT | 20-33489288-4 (Monotributista) |
+| Email | tustock.administracion@gmail.com |
+| Domicilio | Colón 350, Chamical (5380), La Rioja |
+| WhatsApp | +54 9 3826 403110 |
 
 ### Checklist legal
 
 | Prioridad | Item | Estado | Quién |
 |:---------:|------|:------:|:-----:|
-| 🔥 1 | Completar datos del proveedor en docs legales | 📝 Pendiente | 🧑 HUMANO |
+| 🔥 1 | Completar datos del proveedor en docs legales | ✅ Completado | 🧑 HUMANO |
 | 🔥 2 | Configurar MP token en Railway | ❌ Pendiente | 🖥 DEV |
 | 🟢 3 | Checkbox de aceptación en registro cloud | ✅ Completado | 🖥 DEV |
 | 🟢 4 | Endpoint de baja de cuenta cloud | ✅ Completado | 🖥 DEV |
@@ -439,4 +444,35 @@ PC del cliente                          Cloud (Railway/VPS)
 
 ---
 
-*Última actualización: 4 de Julio de 2026*
+---
+
+## 14. BUGS CONOCIDOS Y OBSERVACIONES TÉCNICAS
+
+> Encontrados durante auditoría de código (Julio 2026). **Bugs funcionales corregidos el 2026-07-06.**
+
+### 🐛 Bugs funcionales (CORREGIDOS ✅)
+
+| Archivo | Problema | Fix |
+|---------|----------|-----|
+| `server/routes/audits.py:22` | **Línea duplicada:** `return create_audit(...)` aparece 2 veces. | Removida línea extra |
+| `server/routes/audits.py:44` | **Línea duplicada:** `result = update_audit_item(...)` aparece 2 veces. | Removida línea extra |
+| `server/routes/pending_orders.py:140` | **Línea duplicada:** `order = db.query(PendingOrder)...` aparece 2 veces. | Removida línea extra |
+| `server/main.py:160` | **Error de indentación:** bloque `try:` indentado 4 espacios extra. | Corregida indentación |
+| `server/auth.py` | `verify_token` usa comparación directa `!=` en lugar de `secrets.compare_digest()`. | Timing-safe aplicado |
+| `cloud/api.py` webhook | `data_id` con `body["id"]` puede causar KeyError en payloads malformados. | Usado `.get()` seguro |
+| `cloud/payments.py` | Variable `units` asignada sin uso. | Removida |
+| `server/pending_orders.py:134` | Variable `pm_label` asignada sin uso. | Removida |
+
+### ⚠️ Observaciones
+
+| Archivo | Detalle |
+|---------|---------|
+| `server/auth.py` | `verify_token` usa comparación directa `!=` en lugar de `secrets.compare_digest()`. El admin SÍ usa timing-safe. |
+| `server/migrations/` | Directorio vacío. No hay sistema de migraciones (Alembic). |
+| `web/package.json` | `recharts` y `lucide-react` instalados pero **no se usan** en ningún componente. |
+| `server/services/license_service.py` | `validate_against_cloud` timeout 10s — podría fallar en conexiones lentas. |
+| `server/config.py` | `TUSTOCK_CLOUD_CACHE_DAYS` = 7 hardcodeado. MEMORY menciona 14 días porque el máximo absoluto es `CACHE_DAYS + 7` en `check_cloud_validation()`. |
+
+---
+
+*Última actualización: 6 de Julio de 2026*

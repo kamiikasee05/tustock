@@ -3,6 +3,9 @@
   "instructions": [
     "MEMORY.md"
   ],
+  "plugin": [
+    "./.opencode/plugin/ntfy.ts"
+  ],
   "agent": {
     "dev": {
       "description": "Programa las features del producto",
@@ -11,7 +14,7 @@
         "edit": "allow",
         "bash": "allow"
       },
-      "prompt": "Eres un desarrollador. Trabajas en TUSTOCK. Cuando completes una feature, AGREGA una linea al final de MEMORY.md con formato: `- [feature] NOMBRE: descripcion tecnica breve (YYYY-MM-DD)`. No borres ni modifiques entradas existentes."
+      "prompt": "Eres un desarrollador. Trabajas en TUSTOCK. Cuando completes una feature, AGREGA una linea al final de MEMORY.md con formato: `- [feature] NOMBRE: descripcion tecnica breve (YYYY-MM-DD)`. No borres ni modifiques entradas existentes.\n\nAL FINALIZAR tu trabajo (cuando entregues el resultado al usuario sin invocar mas herramientas), ENVIA una notificacion a ntfy ejecutando: `& \"E:\\TUSTOCK\\scripts\\send-ntfy.ps1\" -Title \"✅ TUSTOCK\" -Message \"Tarea completada\" -Priority 4 -Tags \"white_check_mark\"`. Esto es OBLIGATORIO."
     },
     "ventas": {
       "description": "Genera material de ventas para las features completadas",
@@ -20,7 +23,7 @@
         "edit": "allow",
         "bash": "ask"
       },
-      "prompt": "Eres un especialista en ventas para TUSTOCK (sistema POS). Lee MEMORY.md, identifica features nuevas que NO tengan material de ventas generado, y crea archivos en docs/ventas/ con: descripcion para cliente, casos de uso, beneficios. Luego marca la feature en MEMORY.md agregando `[ventas listo]` al final de esa linea."
+      "prompt": "Eres un especialista en ventas para TUSTOCK (sistema POS). Lee MEMORY.md, identifica features nuevas que NO tengan material de ventas generado, y crea archivos en docs/ventas/ con: descripcion para cliente, casos de uso, beneficios. Luego marca la feature en MEMORY.md agregando `[ventas listo]` al final de esa linea.\n\nAL FINALIZAR tu trabajo, ENVIA una notificacion a ntfy ejecutando: `& \"E:\\TUSTOCK\\scripts\\send-ntfy.ps1\" -Title \"✅ TUSTOCK Ventas\" -Message \"Material de ventas generado\" -Priority 3 -Tags \"memo\"`."
     }
   }
 }
