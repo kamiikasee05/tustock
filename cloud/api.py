@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR, MP_ACCESS_TOKEN
-from fastapi.responses import HTMLResponse
+from payments import SUBSCRIPTION_PLAN_ID, SUBSCRIPTION_PLAN_PRICE, SUBSCRIPTION_PLAN_URL, update_plan_notification_url, get_subscription_plan
 from models import init_db, get_db, Business, MetricsPush, Payment, AuthorizedKey, KeyActivation, Subscription
 
 init_db()
@@ -346,6 +346,70 @@ def create_subscription(data: dict, db: Session = Depends(get_db)):
     }
 
 
+@app.get("/api/plan/subscription")
+def get_subscription_plan_info(db: Session = Depends(get_db)):
+    if not MP_ACCESS_TOKEN:
+        raise HTTPException(400, "Mercado Pago no configurado")
+
+    plan_info = get_subscription_plan(MP_ACCESS_TOKEN, SUBSCRIPTION_PLAN_ID)
+    unlinked = db.query(Subscription).filter(
+        Subscription.license_key == "",
+        Subscription.status != "cancelled"
+    ).order_by(Subscription.created_at.desc()).all()
+
+    return {
+        "ok": True,
+        "plan_id": SUBSCRIPTION_PLAN_ID,
+        "plan_price": SUBSCRIPTION_PLAN_PRICE,
+        "init_point": SUBSCRIPTION_PLAN_URL,
+        "plan_status": plan_info.get("status", "unknown") if "error" not in plan_info else "unknown",
+        "unlinked_subscriptions": [
+            {
+                "preapproval_id": s.preapproval_id,
+                "status": s.status,
+                "customer_email": s.customer_email,
+                "paid_at": s.paid_at.isoformat() if s.paid_at else None,
+                "created_at": s.created_at.isoformat() if s.created_at else None,
+            }
+            for s in unlinked
+        ],
+    }
+
+
+@app.post("/api/plan/update-webhook")
+def update_plan_webhook(db: Session = Depends(get_db)):
+    if not MP_ACCESS_TOKEN:
+        raise HTTPException(400, "Mercado Pago no configurado")
+
+    webhook_url = "https://tustock.up.railway.app/api/payments/webhook"
+    result = update_plan_notification_url(MP_ACCESS_TOKEN, SUBSCRIPTION_PLAN_ID, webhook_url)
+    return result
+
+
+@app.post("/api/plan/link-subscription")
+def link_subscription_to_license(data: dict, db: Session = Depends(get_db)):
+    preapproval_id = data.get("preapproval_id", "").strip()
+    license_key = data.get("license_key", "").strip()
+
+    if not preapproval_id or not license_key:
+        raise HTTPException(400, "preapproval_id y license_key requeridos")
+
+    sub = db.query(Subscription).filter(
+        Subscription.preapproval_id == preapproval_id
+    ).first()
+
+    if not sub:
+        raise HTTPException(404, "Suscripción no encontrada")
+
+    if sub.license_key and sub.license_key != license_key:
+        raise HTTPException(400, f"La suscripción ya está vinculada a la licencia {sub.license_key}")
+
+    sub.license_key = license_key
+    db.commit()
+
+    return {"ok": True, "preapproval_id": preapproval_id, "license_key": license_key}
+
+
 @app.get("/api/payments/subscription-status/{license_key}")
 def subscription_status(license_key: str, db: Session = Depends(get_db)):
     subs = db.query(Subscription).filter(
@@ -399,13 +463,15 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
 
     from payments import get_subscription, get_payment
 
-    if topic == "preapproval" or body.get("type") == "subscription_preapproval":
+    if topic == "preapproval" or body.get("type") in ("subscription_preapproval", "subscription_preapproval_plan"):
         sub_data = get_subscription(MP_ACCESS_TOKEN, str(data_id))
         if "error" in sub_data:
             return {"ok": False, "error": sub_data["error"]}
 
         lic_key = sub_data.get("external_reference", "")
         sub_status = sub_data.get("status", "")
+        payer_email = sub_data.get("payer_email", "")
+        plan_id = sub_data.get("preapproval_plan_id", "")
 
         sub = db.query(Subscription).filter(
             Subscription.preapproval_id == str(data_id)
@@ -413,11 +479,25 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
 
         if sub:
             sub.status = sub_status
+            if sub_status == "authorized" and not sub.paid_at:
+                sub.paid_at = datetime.now(timezone.utc)
+            db.commit()
+        else:
+            sub = Subscription(
+                license_key=lic_key or "",
+                preapproval_id=str(data_id),
+                plan="suscripcion",
+                price=SUBSCRIPTION_PLAN_PRICE,
+                status=sub_status,
+                customer_email=payer_email,
+                init_point=f"https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id={plan_id}",
+            )
+            db.add(sub)
             if sub_status == "authorized":
                 sub.paid_at = datetime.now(timezone.utc)
             db.commit()
 
-        return {"ok": True, "type": "preapproval", "status": sub_status, "license_key": lic_key}
+        return {"ok": True, "type": "preapproval", "status": sub_status, "license_key": lic_key or "(sin asignar)", "preapproval_id": str(data_id)}
 
     if topic == "authorized_payment":
         pay_data = get_payment(MP_ACCESS_TOKEN, str(data_id))

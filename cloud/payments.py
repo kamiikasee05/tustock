@@ -11,6 +11,10 @@ from datetime import datetime, timezone
 
 MP_API = "https://api.mercadopago.com"
 
+SUBSCRIPTION_PLAN_ID = "492a6877398e4831a2d36f2159320f1c"
+SUBSCRIPTION_PLAN_PRICE = 8000.0
+SUBSCRIPTION_PLAN_URL = "https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=492a6877398e4831a2d36f2159320f1c"
+
 
 def create_preference(access_token: str, plan: str, price: float, license_key: str,
                        customer_email: str = "", customer_name: str = "") -> dict:
@@ -178,6 +182,43 @@ def cancel_subscription(access_token: str, preapproval_id: str) -> dict:
     try:
         resp = urllib.request.urlopen(req, timeout=10)
         return {"ok": True}
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode() if e.fp else str(e)
+        return {"ok": False, "error": f"MP error {e.code}: {error_body[:200]}"}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def get_subscription_plan(access_token: str, plan_id: str) -> dict:
+    req = urllib.request.Request(
+        f"{MP_API}/preapproval_plan/{plan_id}",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    try:
+        resp = urllib.request.urlopen(req, timeout=10)
+        return json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode() if e.fp else str(e)
+        return {"error": f"MP error {e.code}: {error_body[:200]}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+def update_plan_notification_url(access_token: str, plan_id: str, notification_url: str) -> dict:
+    body = json.dumps({"notification_url": notification_url}).encode("utf-8")
+    req = urllib.request.Request(
+        f"{MP_API}/preapproval_plan/{plan_id}",
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}",
+        },
+        method="PUT",
+    )
+    try:
+        resp = urllib.request.urlopen(req, timeout=15)
+        result = json.loads(resp.read())
+        return {"ok": True, "plan": result}
     except urllib.error.HTTPError as e:
         error_body = e.read().decode() if e.fp else str(e)
         return {"ok": False, "error": f"MP error {e.code}: {error_body[:200]}"}

@@ -31,6 +31,10 @@ export default function Admin() {
   const [paymentStatuses, setPaymentStatuses] = useState<Record<string, string>>({})
   const [subStatuses, setSubStatuses] = useState<Record<string, string>>({})
   const [subUrls, setSubUrls] = useState<Record<string, string>>({})
+  const [planInfo, setPlanInfo] = useState<any>(null)
+  const [planLoading, setPlanLoading] = useState(false)
+  const [linkLicense, setLinkLicense] = useState('')
+  const [linkPreapprovalId, setLinkPreapprovalId] = useState('')
 
   const CLOUD_API = 'https://tustock.up.railway.app'
 
@@ -142,34 +146,21 @@ export default function Admin() {
     setPaymentUrl('')
     setActionError('')
 
-    const email = prompt('Email del cliente para la suscripcion (obligatorio):')
-    if (!email || !email.includes('@')) {
-      setActionError('Email invalido')
-      setPaymentLoading(false)
-      return
-    }
+    fetchPlanInfo()
 
-    const prices: Record<string, number> = { basico: 80000, suscripcion: 8000, pro: 160000, trial: 0 }
-
-    try {
-      const r = await fetch(`${CLOUD_API}/api/payments/subscribe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, price: prices[plan] || 0, license_key: key, email })
-      })
-      const d = await r.json()
-      if (d.ok) {
-        setPaymentUrl(d.init_point)
-        setCopied({ key, plan })
-        setSubUrls(prev => ({ ...prev, [key]: d.init_point }))
-      } else {
-        setActionError(d.detail || 'Error al crear suscripcion')
-      }
-    } catch {
-      setActionError('No se pudo conectar al servidor cloud')
+    const planUrl = planInfo?.init_point || SUBSCRIPTION_PLAN_URL_STATIC
+    if (planUrl) {
+      setPaymentUrl(planUrl)
+      setCopied({ key, plan })
+      setSubUrls(prev => ({ ...prev, [key]: planUrl }))
+      setMessage(`Comparti este link con el cliente de la licencia ${key}. Cuando se suscriba, vinculalo desde el panel.`)
+    } else {
+      setActionError('Plan no disponible. Configurar primero el plan de suscripcion.')
     }
     setPaymentLoading(false)
   }
+
+  const SUBSCRIPTION_PLAN_URL_STATIC = 'https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=492a6877398e4831a2d36f2159320f1c'
 
   async function checkPaymentStatus(key: string) {
     try {
@@ -188,6 +179,53 @@ export default function Admin() {
     } catch { }
   }
 
+  async function fetchPlanInfo() {
+    setPlanLoading(true)
+    try {
+      const r = await fetch(`${CLOUD_API}/api/plan/subscription`)
+      setPlanInfo(await r.json())
+    } catch { }
+    setPlanLoading(false)
+  }
+
+  async function updatePlanWebhook() {
+    if (!confirm('Configurar webhook en el plan? Esto habilita notificaciones automaticas de suscripciones.')) return
+    setPlanLoading(true)
+    try {
+      const r = await fetch(`${CLOUD_API}/api/plan/update-webhook`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+      const d = await r.json()
+      if (d.ok) {
+        setMessage('Webhook configurado en el plan!')
+        fetchPlanInfo()
+      } else {
+        setActionError(d.detail || d.error || 'Error al configurar webhook')
+      }
+    } catch { setActionError('No se pudo conectar al servidor cloud') }
+    setPlanLoading(false)
+  }
+
+  async function linkSub(preapprovalId: string) {
+    const lic = linkLicense.trim() || prompt('License key para vincular:')
+    if (!lic) return
+    setPlanLoading(true)
+    try {
+      const r = await fetch(`${CLOUD_API}/api/plan/link-subscription`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preapproval_id: preapprovalId, license_key: lic })
+      })
+      const d = await r.json()
+      if (d.ok) {
+        setMessage(`Suscripcion vinculada a ${d.license_key}`)
+        fetchPlanInfo()
+        setLinkLicense('')
+      } else {
+        setActionError(d.detail || 'Error al vincular')
+      }
+    } catch { setActionError('No se pudo conectar al servidor cloud') }
+    setPlanLoading(false)
+  }
+
   useEffect(() => {
     if (auth && licenses.length > 0) {
       licenses.slice(0, 20).forEach(l => {
@@ -198,6 +236,7 @@ export default function Admin() {
         }
       })
     }
+    if (auth && !planInfo) fetchPlanInfo()
   }, [licenses.length, auth])
 
   if (!auth) {
@@ -375,6 +414,98 @@ export default function Admin() {
           </div>
         )}
       </div>
+
+      {planInfo?.ok && (
+        <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 20, marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 style={{ fontSize: 16, margin: 0 }}>Plan de Suscripción MP</h3>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={fetchPlanInfo} disabled={planLoading}
+                style={{ padding: '4px 12px', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer', fontSize: 12, background: 'var(--surface)' }}>
+                Refrescar
+              </button>
+              <button onClick={updatePlanWebhook} disabled={planLoading}
+                style={{ padding: '4px 12px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}>
+                {planLoading ? '...' : 'Configurar Webhook'}
+              </button>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+            <div style={{ background: '#1a2e1a', borderRadius: 8, padding: 12, minWidth: 160 }}>
+              <div style={{ fontSize: 11, color: '#4ade80', textTransform: 'uppercase', fontWeight: 600 }}>Plan ID</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>{planInfo.plan_status}</div>
+            </div>
+            <div style={{ background: '#1a2e1a', borderRadius: 8, padding: 12, minWidth: 120 }}>
+              <div style={{ fontSize: 11, color: '#4ade80', textTransform: 'uppercase', fontWeight: 600 }}>Precio</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>${planInfo.plan_price?.toLocaleString('es-AR')}/mes</div>
+            </div>
+            <div style={{ background: planInfo.unlinked_subscriptions?.length > 0 ? 'var(--warning)' : '#1a2e1a', borderRadius: 8, padding: 12, minWidth: 140 }}>
+              <div style={{ fontSize: 11, color: planInfo.unlinked_subscriptions?.length > 0 ? '#000' : '#4ade80', textTransform: 'uppercase', fontWeight: 600 }}>Sin vincular</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: planInfo.unlinked_subscriptions?.length > 0 ? '#000' : '#fff' }}>{planInfo.unlinked_subscriptions?.length || 0}</div>
+            </div>
+          </div>
+          <div style={{ background: 'var(--bg)', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Link de suscripción (compartir con clientes)</div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <code style={{ flex: 1, fontSize: 11, background: 'var(--surface)', padding: '6px 10px', borderRadius: 4, wordBreak: 'break-all' }}>{planInfo.init_point}</code>
+              <button onClick={() => { navigator.clipboard.writeText(planInfo.init_point); }}
+                style={{ padding: '6px 14px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                Copiar
+              </button>
+              <button onClick={() => window.open(planInfo.init_point, '_blank')}
+                style={{ padding: '6px 14px', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                Abrir
+              </button>
+            </div>
+          </div>
+
+          {planInfo.unlinked_subscriptions?.length > 0 && (
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Suscripciones sin vincular ({planInfo.unlinked_subscriptions.length})</div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                    <th style={{ textAlign: 'left', padding: '6px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>ID MP</th>
+                    <th style={{ textAlign: 'left', padding: '6px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Email</th>
+                    <th style={{ textAlign: 'center', padding: '6px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Estado</th>
+                    <th style={{ textAlign: 'right', padding: '6px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {planInfo.unlinked_subscriptions.map((s: any) => (
+                    <tr key={s.preapproval_id} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '6px', fontFamily: 'monospace', fontSize: 11 }}>{s.preapproval_id?.substring(0, 12)}...</td>
+                      <td style={{ padding: '6px' }}>{s.customer_email || '-'}</td>
+                      <td style={{ padding: '6px', textAlign: 'center' }}>
+                        <span style={{ padding: '2px 8px', borderRadius: 10, fontSize: 11, fontWeight: 600,
+                          background: s.status === 'authorized' ? 'var(--success)' : 'var(--warning)', color: '#fff' }}>
+                          {s.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '6px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', alignItems: 'center' }}>
+                          <input
+                            value={linkPreapprovalId === s.preapproval_id ? linkLicense : ''}
+                            onChange={e => { setLinkLicense(e.target.value); setLinkPreapprovalId(s.preapproval_id); }}
+                            onFocus={() => setLinkPreapprovalId(s.preapproval_id)}
+                            placeholder="License key"
+                            style={{ width: 130, padding: '4px 8px', border: '1px solid var(--border)', borderRadius: 4, fontSize: 11 }}
+                          />
+                          <button onClick={() => linkSub(s.preapproval_id)}
+                            disabled={planLoading}
+                            style={{ padding: '4px 10px', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            Vincular
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 20 }}>
         <h3 style={{ fontSize: 16, marginBottom: 12 }}>Licencias ({licenses.length})</h3>
