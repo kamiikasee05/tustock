@@ -157,31 +157,31 @@ if WEB_DIR.exists():
             from database import SessionLocal
             from services.license_service import get_license_status
             db = SessionLocal()
-                try:
-                    status = get_license_status(db)
-                    blocked = False
-                    msg = "Licencia requerida. Activá una licencia en Ajustes > Licencia."
+            try:
+                status = get_license_status(db)
+                blocked = False
+                msg = "Licencia requerida. Activá una licencia en Ajustes > Licencia."
 
-                    if status.get("trial") and status.get("expired"):
+                if status.get("trial") and status.get("expired"):
+                    blocked = True
+                    msg = "Período de prueba expirado. Activá una licencia en Ajustes > Licencia."
+                elif not status.get("active") and status.get("plan") == "none":
+                    blocked = True
+                elif not status.get("trial") and not status.get("active"):
+                    blocked = True
+                else:
+                    from services.license_service import check_cloud_validation
+                    cloud = check_cloud_validation(db)
+                    if not cloud.get("valid"):
                         blocked = True
-                        msg = "Período de prueba expirado. Activá una licencia en Ajustes > Licencia."
-                    elif not status.get("active") and status.get("plan") == "none":
-                        blocked = True
-                    elif not status.get("trial") and not status.get("active"):
-                        blocked = True
-                    else:
-                        from services.license_service import check_cloud_validation
-                        cloud = check_cloud_validation(db)
-                        if not cloud.get("valid"):
-                            blocked = True
-                            msg = "Validación de licencia pendiente. Conectate a internet para verificar."
+                        msg = "Validación de licencia pendiente. Conectate a internet para verificar."
 
-                    if blocked:
-                        return Response(
-                            content=json.dumps({"error": "license_required", "message": msg}),
-                            status_code=403,
-                            media_type="application/json",
-                        )
+                if blocked:
+                    return Response(
+                        content=json.dumps({"error": "license_required", "message": msg}),
+                        status_code=403,
+                        media_type="application/json",
+                    )
             finally:
                 db.close()
         return await call_next(request)

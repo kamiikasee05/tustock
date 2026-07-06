@@ -131,13 +131,11 @@ def approve(order_id: int, body: ApproveBody = None, db: Session = Depends(get_d
     order.processed_at = datetime.now(timezone.utc)
     db.commit()
 
-    pm_label = {"efectivo": "efectivo", "tarjeta": "tarjeta", "transferencia": "transferencia", "fiado": "fiado"}.get(pm, pm)
     return {"id": order.id, "sale_id": sale.id, "status": "approved", "total": order.total, "payment_method": pm}
 
 @router.post("/{order_id}/reject")
 def reject(order_id: int, db: Session = Depends(get_db)):
     """Rechaza un pedido pendiente sin generar venta."""
-    order = db.query(PendingOrder).filter(PendingOrder.id == order_id).first()
     order = db.query(PendingOrder).filter(PendingOrder.id == order_id).first()
     if not order:
         raise HTTPException(404, "Pedido no encontrado")

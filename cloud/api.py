@@ -449,9 +449,11 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
     except Exception:
         pass
 
-    data_id = body.get("data", {}).get("id") if isinstance(body.get("data"), dict) else body.get("data", {}).get("id", "")
-    if not data_id and "id" in body:
-        data_id = body["id"]
+    data_block = body.get("data", {})
+    if isinstance(data_block, dict):
+        data_id = data_block.get("id", "")
+    if not data_id:
+        data_id = body.get("id", "")
     if not data_id:
         data_id = request.query_params.get("id", "")
 

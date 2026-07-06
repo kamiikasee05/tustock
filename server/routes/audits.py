@@ -20,7 +20,6 @@ def list_all(db: Session = Depends(get_db)):
 def new_audit(data: AuditCreate, db: Session = Depends(get_db)):
     """Crea una nueva auditoría con todos los productos activos y su stock teórico."""
     return create_audit(db, data.notes, data.created_by or "local")
-    return create_audit(db, data.notes, data.created_by or "local")
 
 @router.get("/{audit_id}")
 def detail(audit_id: int, db: Session = Depends(get_db)):
@@ -41,7 +40,6 @@ def start(audit_id: int, db: Session = Depends(get_db)):
 @router.put("/{audit_id}/items")
 def update_item(audit_id: int, data: AuditItemUpdate, db: Session = Depends(get_db)):
     """Actualiza el conteo real de un producto dentro de una auditoría en curso."""
-    result = update_audit_item(db, audit_id, data.product_id, data.counted_qty, data.notes)
     result = update_audit_item(db, audit_id, data.product_id, data.counted_qty, data.notes)
     if not result:
         raise HTTPException(404, "Item no encontrado en esta auditoria")

@@ -26,7 +26,6 @@ def create_preference(access_token: str, plan: str, price: float, license_key: s
     }
     title = plan_names.get(plan, f"TUSTOCK - {plan}")
 
-    units = 1
     if plan == "suscripcion":
         title = "TUSTOCK Suscripción - Mensual"
 
