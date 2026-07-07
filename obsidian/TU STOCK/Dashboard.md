@@ -4,10 +4,26 @@ Centro de comando del proyecto. Cada agente actualiza su sección.
 
 ---
 
-## ✅ Software: COMPLETO. Híbrido MP operativo (Checkout Pro + Plan compartido). Token Railway configurado.
-## 🌐 En producción: 1 cliente premium activo ($6K/mes).
+## 🎯 Estado al cierre — 7 de Julio 2026
 
-## 📋 Prioridades hoy (2026-07-07)
+### ✅ Software: COMPLETO
+- Mercado Pago 100% operativo (Checkout Pro + Plan compartido)
+- Webhook configurado en el plan de suscripción
+- Token Railway configurado
+- CORS habilitado en cloud API
+- Admin panel separado y funcional
+- Monitor Cloud desplegado en Railway
+- Landing page en GitHub Pages
+- Documentación legal completa
+- EULA clickwrap, consentimiento cloud, baja de cuenta
+
+### 🌐 En producción
+- **1 cliente premium activo** ($60K entry + $6K/mes)
+- Suscripción link compartido: ✅ funcional
+
+---
+
+## 📋 Pendientes para mañana
 
 | # | Agente | Tarea | Urgencia |
 |---|--------|-------|:--------:|
@@ -15,6 +31,8 @@ Centro de comando del proyecto. Cada agente actualiza su sección.
 | 2 | 🧑 HUMANO | Instalar Monitor en PC de clienta | 🟡 |
 | 3 | 🧑 HUMANO | Cobrar suscripción mes siguiente | 🔥 |
 | 4 | 🧑 HUMANO | Pedir testimonio + referidos a clienta | 🔥 |
+| 5 | 🧑 HUMANO | Registrar bases de datos AAIP | 🟢 |
+| 6 | 🖥 DEV | CRM en Google Sheets (a pedido) | 🟢 |
 
 ---
 
@@ -37,7 +55,7 @@ Centro de comando del proyecto. Cada agente actualiza su sección.
 
 | Concepto | Costo | Frecuencia |
 |----------|------|------------|
-| Railway hobby | USD 5 | Mensual |
+| Railway hobby (pendiente) | USD 5 | Mensual |
 | Comisión MP | ~4% | Por transacción |
 | **Ingreso actual** | $6.000 ARS/mes | 1 clienta premium |
 
@@ -45,4 +63,4 @@ Centro de comando del proyecto. Cada agente actualiza su sección.
 
 **Plan ID:** `492a6877398e4831a2d36f2159320f1c`
 **Link:** `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=492a6877398e4831a2d36f2159320f1c`
-**Estado:** ✅ Webhook configurado en el plan. Flujo MP completo operativo.
+**Estado:** ✅ Webhook configurado. Flujo MP completo operativo.
