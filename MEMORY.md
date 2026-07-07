@@ -84,7 +84,7 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 - **Monitor Premium (Fase 4 adelantada):** Servicio independiente puerto 8091, login propio, dashboard mobile responsive, API read-only. Expuesto vía Cloudflare Tunnel para acceso remoto desde el celular. Solo esta clienta lo tiene.
 - **Monitor Cloud (Fase 5):** Desplegado en Railway (`tustock.up.railway.app`). API push-based, dashboard mobile responsive, login multiusuario JWT. Agente local (`cloud/agent.py`) pushea métricas cada 30s desde la PC del cliente. URL fija, sin tunnel.
 - **Launcher unificado:** `scripts/launcher.py` — inicia servidor, monitor, tunnel y cloud agent desde un solo punto. `TUSTOCK.bat` con menú interactivo de 8 opciones.
-- **Dashboard admin de licencias:** Panel `/admin` con token separado. Generar keys, ver licencias, revocar/activar, stats por plan, ingresos estimados, trials por vencer.
+- **Dashboard admin de licencias:** App independiente en `admin/` (Vite+React standalone, puerto 5174). Generar keys, ver licencias, revocar/activar, stats por plan, ingresos estimados, trials por vencer. Panel de Suscripciones MP con link compartido y vinculación de suscripciones entrantes a licencias. Scripts: `scripts/start-admin.bat`, `scripts/stop-admin.bat`.
 - **Validación cloud de licencias:** Cada 7 días el sistema local valida la key contra la API cloud. Si no hay internet, sigue funcionando con cache de hasta 14 días. Trial no requiere validación cloud. Admin sync-keys al generar.
 - **Bloqueo por licencia:** Middleware que bloquea todas las APIs cuando el trial vence o no hay licencia activa. Solo deja pasar health, license/status y license/activate.
 - **Landing page:** `docs/index.html` — página estática dark theme responsive servida via GitHub Pages (`kamiikasee05.github.io/tustock`). Incluye hero, features, planes, caso real, FAQ, WhatsApp CTA.
@@ -407,6 +407,8 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-06 | **BUGS FIXED**: 4 bugs funcionales del MEMORY.md sección 14 corregidos + timing-safe en auth.py + cleanup (unused variables, data_id extraction). | DEV |
 | 2026-07-06 | **Plan activo ID**: `492a6877398e4831a2d36f2159320f1c` — link de suscripción `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=492a6877398e4831a2d36f2159320f1c` — funcional y probado (hermana se suscribió). Webhook pendiente de configurar en el plan. | DEV + Humano |
 | 2026-07-06 | **Modelo híbrido MP confirmado**: Checkout Pro para pagos únicos (Básico/Pro) + Plan compartido para suscripciones. Dos apps de MP separadas (selector de producto excluyente). Admin vincula suscripciones manualmente desde el panel. | DEV + Humano + Dispatcher |
+| 2026-07-06 | **Admin separado del proyecto**: App independiente en `admin/` (Vite+React, puerto 5174). Removido del web/ principal y de App.tsx. Scripts `start-admin.bat` y `stop-admin.bat`. `.gitignore` actualizado para `admin/dist/`. | DEV |
+| 2026-07-06 | **DB local reparada**: Columnas faltantes (`subscription_grace_days_left`, `subscription_suspended`, `eula_accepted`, `eula_accepted_at`) agregadas a `tustock.db` via ALTER TABLE. El modelo License ya las tenía pero no existían en la DB física. | DEV |
 
 ---
 
