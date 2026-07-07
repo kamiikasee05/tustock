@@ -52,5 +52,5 @@ backups/
 config/cloud.json
 cloud/*.db
 
-# Setup flag (generated on client PC)
-config/.setup_done
+# Cloudflare Tunnel binary (auto-downloaded)
+scripts/cloudflared.exe

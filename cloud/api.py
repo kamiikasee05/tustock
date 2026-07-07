@@ -12,6 +12,7 @@ from pathlib import Path
 
 import jwt
 from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -42,6 +43,14 @@ footer{{margin-top:48px;padding-top:24px;border-top:1px solid #334155;font-size:
 </div></body></html>""")
 
 app = FastAPI(title="TUSTOCK Cloud Monitor", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def _hash_password(password: str) -> str:

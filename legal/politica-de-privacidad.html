@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TUSTOCK — Política de Privacidad</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f172a;--surface:#1e293b;--surface2:#334155;--border:#334155;--text:#e2e8f0;--muted:#94a3b8;--primary:#3b82f6;--success:#22c55e;--warning:#f59e0b;--danger:#ef4444}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;padding:40px 24px}
+.container{max-width:800px;margin:0 auto}
+h1{font-size:28px;font-weight:900;margin-bottom:4px}
+h2{font-size:20px;font-weight:800;margin:32px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+h3{font-size:16px;font-weight:700;margin:20px 0 8px}
+p,li{font-size:14px;color:var(--muted);margin-bottom:8px}
+ul{padding-left:20px;margin-bottom:12px}
+li{margin-bottom:4px}
+.updated{font-size:13px;color:var(--muted);margin:8px 0 24px}
+a{color:var(--primary)}
+strong{color:var(--text)}
+.highlight{background:var(--surface);padding:16px;border-radius:8px;border:1px solid var(--border);margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;background:var(--surface);border-radius:8px;overflow:hidden}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--border)}
+th{background:var(--surface2)}
+tr:last-child td{border-bottom:none}
+footer{margin-top:48px;padding-top:24px;border-top:1px solid var(--border);font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Política de Privacidad</h1>
+<p class="updated"><strong>Última actualización:</strong> 4 de julio de 2026</p>
+
+<p>En TUSTOCK nos tomamos en serio la privacidad de nuestros Usuarios. Esta Política de Privacidad describe qué datos personales recolectamos, cómo los usamos, almacenamos y protegemos, y qué derechos tiene el Usuario sobre sus datos, en cumplimiento de la <strong>Ley 25.326</strong> de Protección de Datos Personales y su Decreto Reglamentario 1558/2001.</p>
+
+<div class="highlight">
+<strong>Principio fundamental:</strong> TUSTOCK está diseñado para funcionar <strong>100% en la PC del Usuario</strong>. Los datos comerciales (productos, ventas, stock, clientes, proveedores) <strong>nunca salen de su computadora</strong> a menos que el Usuario contrate un plan que incluya Monitor Cloud. Incluso en ese caso, solo se envían métricas agregadas.
+</div>
+
+<h2>1. Responsable del Tratamiento</h2>
+<p>
+<strong>TUSTOCK</strong><br>
+CUIT: 20-33489288-4 | Domicilio: Colón 350, Chamical (5380), La Rioja<br>
+Contacto: <a href="https://wa.me/5493826403110">WhatsApp</a> | Email: tustock.administracion@gmail.com<br>
+</p>
+
+<h2>2. Datos que Recolectamos</h2>
+
+<h3>2.1. Datos del Sistema Local (NO salen de la PC del Usuario)</h3>
+<p>El Software instalado en la PC del Usuario almacena localmente en una base de datos SQLite:</p>
+<ul>
+<li><strong>Datos comerciales:</strong> productos, precios, stock, movimientos, ventas, clientes, proveedores, vendedores.</li>
+<li><strong>Datos de clientes del negocio:</strong> nombre, saldo (fiado). No se almacenan DNI, direcciones, teléfonos ni datos financieros de clientes del negocio a menos que el Usuario los cargue voluntariamente.</li>
+<li><strong>Configuración:</strong> preferencias del sistema, licencia.</li>
+</ul>
+<p><strong>Estos datos nunca son enviados a servidores externos ni compartidos con terceros.</strong> Permanecen exclusivamente en la computadora del Usuario.</p>
+
+<h3>2.2. Datos del Monitor Cloud (requiere Suscripción o Pro)</h3>
+<p>Si el Usuario contrata un plan con Monitor Cloud, el Agente Local envía cada 30 segundos al servidor cloud (<code>tustock.up.railway.app</code>):</p>
+
+<table>
+<tr><th>Categoría</th><th>Datos enviados</th><th>¿Incluye PII?</th></tr>
+<tr><td>Ventas del día</td><td>Total vendido, cantidad de transacciones, método de pago (efectivo/transferencia/tarjeta/fiado)</td><td>No</td></tr>
+<tr><td>Stock bajo</td><td>Nombre del producto, cantidad actual, stock mínimo</td><td>No</td></tr>
+<tr><td>Productos más vendidos</td><td>Top 5: nombre, cantidad vendida, total</td><td>No</td></tr>
+<tr><td>Deudores</td><td>Nombre del cliente, saldo pendiente</td><td>Sí — nombres comerciales</td></tr>
+</table>
+
+<p>Además, durante el registro en el Monitor Cloud, el Usuario proporciona:</p>
+<ul>
+<li><strong>Nombre del negocio</strong></li>
+<li><strong>Email</strong> (identificador de cuenta)</li>
+<li><strong>Contraseña</strong> (almacenada con hash scrypt + salt)</li>
+</ul>
+
+<h3>2.3. Datos de Pago</h3>
+<p>Los pagos se procesan a través de <strong>Mercado Pago S.A.</strong> TUSTOCK no recibe ni almacena números de tarjeta de crédito, CBU, CVU ni datos bancarios. Mercado Pago maneja esos datos bajo su propia política de privacidad. TUSTOCK recibe de Mercado Pago únicamente la confirmación del pago (aprobado/rechazado) y el email del comprador.</p>
+
+<h2>3. Finalidad del Tratamiento</h2>
+<p>Los datos personales recolectados se utilizan exclusivamente para:</p>
+<ol>
+<li>Operar el Monitor Cloud y mostrar las métricas al Usuario en el dashboard web.</li>
+<li>Validar licencias y prevenir el uso no autorizado del Software.</li>
+<li>Procesar pagos a través de Mercado Pago.</li>
+<li>Enviar comunicaciones relacionadas con la licencia (vencimiento, renovación, cambios en los términos).</li>
+<li>Cumplir con obligaciones legales y fiscales.</li>
+</ol>
+<p><strong>No utilizamos datos personales para:</strong> publicidad, perfiles comerciales, venta a terceros, ni ninguna finalidad no descrita en esta política.</p>
+
+<h2>4. Base Legal del Tratamiento</h2>
+<p>El tratamiento de datos personales se basa en:</p>
+<ul>
+<li><strong>Consentimiento del Usuario</strong> (Ley 25.326, art. 5): al registrarse en el Monitor Cloud y aceptar esta política.</li>
+<li><strong>Ejecución de un contrato</strong> (CCyC, arts. 957 y ss.): el tratamiento es necesario para prestar el servicio de Monitor Cloud.</li>
+<li><strong>Cumplimiento de obligaciones legales</strong> (Ley 11.723, Ley 24.240, normas fiscales).</li>
+</ul>
+
+<h2>5. Transferencia Internacional de Datos</h2>
+<p>El servidor del Monitor Cloud está alojado en <strong>Railway Corporation (Estados Unidos)</strong>, proveedor de infraestructura cloud. Al registrarse en el Monitor Cloud, el Usuario consiente expresamente la transferencia internacional de sus datos personales a EE.UU., en los términos del artículo 12 de la Ley 25.326.</p>
+<p>Railway cumple con estándares de seguridad reconocidos internacionalmente. Puede consultar sus prácticas de seguridad en <a href="https://railway.app/security" target="_blank">https://railway.app/security</a>.</p>
+
+<h2>6. Plazo de Conservación</h2>
+<p>Los datos personales se conservan mientras el Usuario mantenga una cuenta activa en el Monitor Cloud. Si el Usuario cancela su cuenta o su licencia expira sin renovación, los datos se conservarán por un período adicional de <strong>90 días</strong> para permitir la reactivación, luego de lo cual serán eliminados irreversiblemente.</p>
+
+<h2>7. Derechos del Usuario (ARCO)</h2>
+<p>En cumplimiento de los artículos 14 y 16 de la Ley 25.326, el Usuario tiene derecho a:</p>
+<ul>
+<li><strong>Acceso:</strong> solicitar información sobre sus datos personales almacenados.</li>
+<li><strong>Rectificación:</strong> solicitar la corrección de datos inexactos o desactualizados.</li>
+<li><strong>Cancelación:</strong> solicitar la eliminación de sus datos personales.</li>
+<li><strong>Oposición:</strong> oponerse al tratamiento de sus datos para fines específicos.</li>
+</ul>
+<p>Para ejercer estos derechos, el Usuario debe contactar al Proveedor por WhatsApp al <a href="https://wa.me/5493826403110">+54 9 3826 403110</a> identificándose con el email de su cuenta. La solicitud será respondida dentro de los <strong>10 días hábiles</strong> siguientes, conforme al artículo 16 de la Ley 25.326.</p>
+
+<div class="highlight">
+<strong>Importante:</strong> La eliminación de la cuenta cloud implica la pérdida irreversible del acceso al Monitor Cloud y a las métricas almacenadas. Los datos locales en la PC del Usuario no se ven afectados.
+</div>
+
+<h2>8. Seguridad de los Datos</h2>
+<p>Implementamos las siguientes medidas de seguridad:</p>
+<ul>
+<li><strong>Encriptación en tránsito:</strong> todas las comunicaciones entre el Agente Local y el servidor cloud utilizan HTTPS/TLS.</li>
+<li><strong>Contraseñas:</strong> almacenadas con hash scrypt + salt (factor de costo N=16384).</li>
+<li><strong>Tokens JWT:</strong> firmados con clave secreta HS256, expiración a 30 días.</li>
+<li><strong>API keys:</strong> generadas con <code>secrets.token_hex(32)</code> (256 bits).</li>
+<li><strong>Acceso restringido:</strong> el servidor cloud solo acepta conexiones autenticadas (JWT o API key).</li>
+</ul>
+<p>Sin embargo, ningún sistema es 100% seguro. El Proveedor no garantiza la seguridad absoluta de los datos contra accesos no autorizados, pero se compromete a notificar al Usuario dentro de las 48 horas siguientes a tomar conocimiento de una violación de seguridad que afecte sus datos personales.</p>
+
+<h2>9. Datos de Menores</h2>
+<p>TUSTOCK está dirigido a mayores de 18 años. No recolectamos intencionalmente datos de menores de edad. Si tomamos conocimiento de que un menor nos ha proporcionado datos personales, los eliminaremos inmediatamente.</p>
+
+<h2>10. Vinculación con Sitios de Terceros</h2>
+<p>El Software puede contener enlaces a sitios de terceros (Mercado Pago, WhatsApp, GitHub). Esta Política de Privacidad no aplica a dichos sitios. Recomendamos al Usuario revisar las políticas de privacidad de esos terceros.</p>
+
+<h2>11. Registro de Base de Datos</h2>
+<p>En cumplimiento del artículo 21 de la Ley 25.326, el Proveedor procederá a registrar la base de datos de usuarios del Monitor Cloud ante la <strong>Agencia de Acceso a la Información Pública (AAIP)</strong> dentro de los plazos legales correspondientes.</p>
+
+<h2>12. Modificaciones a esta Política</h2>
+<p>Esta Política de Privacidad puede ser actualizada periódicamente. Las modificaciones serán notificadas al Usuario con al menos 15 días de antelación a través del Software o por correo electrónico. El uso continuado del Monitor Cloud después de la entrada en vigencia de los cambios constituye aceptación de la política actualizada.</p>
+
+<h2>13. Contacto</h2>
+<p>Para cualquier consulta, ejercicio de derechos ARCO o reporte de incidentes de seguridad:</p>
+<ul>
+<li><strong>WhatsApp:</strong> <a href="https://wa.me/5493826403110">+54 9 3826 403110</a></li>
+<li><strong>Email:</strong> [completar email]</li>
+</ul>
+
+<h2>14. Autoridad de Aplicación</h2>
+<p>El Usuario puede presentar reclamos ante la <strong>Agencia de Acceso a la Información Pública (AAIP)</strong>, sita en Av. Pte. Julio A. Roca 710, CABA, o en <a href="https://www.argentina.gob.ar/aaip" target="_blank">www.argentina.gob.ar/aaip</a>.</p>
+
+<footer>
+<p>TUSTOCK &copy; 2026 — <a href="terminos-y-condiciones.html">Términos y Condiciones</a> — <a href="politica-de-reembolso.html">Política de Reembolso</a> — <a href="../docs/index.html">Volver al inicio</a></p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+# Historial de Decisiones
+
+| Fecha | Decisión | Quién |
+|------|----------|:-----:|
+| 2026-06-30 | Precio Básico $60K ARS (luego subió a $80K) | Ventas |
+| 2026-06-30 | Suscripción $6K/mes (luego subió a $8K) | Ventas |
+| 2026-06-30 | Primer cliente: librería, $60K entry + $6K/mes | Humano |
+| 2026-06-30 | Precios actualizados post-validación: $80K / $8K / $160K | Ventas |
+| 2026-06-30 | Monitor Premium adelantado para clienta premium | Ventas |
+| 2026-06-30 | Monitor Cloud aprobado (push-based, URL fija) | Ventas |
+| 2026-06-30 | Matriz de gating aprobada (Export Excel en todos los pagos) | Ventas |
+| 2026-07-02 | Mercado Pago REST construido | DEV |
+| 2026-07-02 | Validación cloud de licencias implementada | DEV |
+| 2026-07-02 | Landing page desplegada en GitHub Pages | DEV |
+| 2026-07-02 | Railway hobby plan decidido ($5/mes) | Humano |
+| 2026-07-02 | Grace period: 7 días tras pago rechazado. Sistema no se bloquea. | Ventas |
+| 2026-07-04 | Suscripciones MP vía Preapproval API | DEV |
+| 2026-07-04 | Grace period + banner progresivo implementado | DEV |
+| 2026-07-04 | Documentación legal completa | Legal |
+| 2026-07-04 | EULA Clickwrap implementado | DEV |
+| 2026-07-04 | Consentimiento registro cloud + baja de cuenta | DEV |
+| 2026-07-06 | MP Suscripciones bloqueado: usar Plan compartido con link fijo en vez de preapproval API directa | DEV + Humano |
+| 2026-07-06 | Suscripción vía Plan compartido implementada | DEV |
+| 2026-07-06 | Bugs funcionales corregidos + auth timing-safe + cleanup | DEV |
+| 2026-07-06 | Plan activo ID: `492a6877398e...` — link funcional y probado | DEV + Humano |
+| 2026-07-06 | Modelo híbrido MP confirmado: Checkout Pro + Plan compartido. 2 apps separadas. | DEV + Humano + Dispatcher |

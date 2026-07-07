@@ -84,7 +84,7 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 - **Monitor Premium (Fase 4 adelantada):** Servicio independiente puerto 8091, login propio, dashboard mobile responsive, API read-only. Expuesto vía Cloudflare Tunnel para acceso remoto desde el celular. Solo esta clienta lo tiene.
 - **Monitor Cloud (Fase 5):** Desplegado en Railway (`tustock.up.railway.app`). API push-based, dashboard mobile responsive, login multiusuario JWT. Agente local (`cloud/agent.py`) pushea métricas cada 30s desde la PC del cliente. URL fija, sin tunnel.
 - **Launcher unificado:** `scripts/launcher.py` — inicia servidor, monitor, tunnel y cloud agent desde un solo punto. `TUSTOCK.bat` con menú interactivo de 8 opciones.
-- **Dashboard admin de licencias:** App independiente en `admin/` (Vite+React standalone, puerto 5174). Generar keys, ver licencias, revocar/activar, stats por plan, ingresos estimados, trials por vencer. Panel de Suscripciones MP con link compartido y vinculación de suscripciones entrantes a licencias. Scripts: `scripts/start-admin.bat`, `scripts/stop-admin.bat`.
+- **Dashboard admin de licencias:** Panel `/admin` con token separado. Generar keys, ver licencias, revocar/activar, stats por plan, ingresos estimados, trials por vencer.
 - **Validación cloud de licencias:** Cada 7 días el sistema local valida la key contra la API cloud. Si no hay internet, sigue funcionando con cache de hasta 14 días. Trial no requiere validación cloud. Admin sync-keys al generar.
 - **Bloqueo por licencia:** Middleware que bloquea todas las APIs cuando el trial vence o no hay licencia activa. Solo deja pasar health, license/status y license/activate.
 - **Landing page:** `docs/index.html` — página estática dark theme responsive servida via GitHub Pages (`kamiikasee05.github.io/tustock`). Incluye hero, features, planes, caso real, FAQ, WhatsApp CTA.
@@ -234,18 +234,34 @@ PC del cliente                          Cloud (Railway/VPS)
 - ✅ **Launcher unificado**: TUSTOCK.bat 8 opciones, auto-start con --quick, cloud agent auto-start
 - ✅ **Validación cloud**: sync de keys al cloud, validate contra API cloud, cache 7d offline, bloqueo por licencia
 - ✅ **Landing page**: `docs/index.html` servida via GitHub Pages
-- ✅ **Mercado Pago**: integración REST lista, token en Railway configurado, Checkout Pro y Plan compartido funcionando
+- ✅ **Mercado Pago**: integración REST lista, pendiente configurar token en Railway
 
-### Prioridades actuales (Julio 2026)
+### Prioridades actuales (post-dispatcher)
 
 | Prioridad | Tarea | Quién | Por qué es crítica |
 |:---------:|-------|:-----:|-------------------|
-| 🔥 1 | **Configurar webhook del Plan MP** | 🧑 HUMANO | Sin webhook, MP no notifica nuevas suscripciones. Click "Configurar Webhook" en el admin panel. |
+| 🔥 1 | **Configurar MP token en Railway** | 🖥 DEV | Sin token no funcionan pagos. Necesita cuenta MP con Suscripciones y Checkout Pro habilitados. |
 | 🟡 2 | **Configurar Railway hobby ($5/mes)** | 🧑 HUMANO | Para 24/7 de validación cloud y monitor. |
 | 🟢 3 | **Registrar bases de datos en AAIP** | 🧑 HUMANO | Obligación legal si hay datos personales en cloud (Ley 25.326 art. 21). |
 | 🟢 4 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
 | 🟢 5 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
 | 🟢 6 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
+
+### Tareas HUMANAS pendientes
+
+| Prioridad | Tarea | Tiempo estimado |
+|:---------:|-------|:---------------:|
+| 🔥 1 | **[VENTAS] Definir postura sobre derecho de arrepentimiento** (reembolso total vs proporcional en 10 días hábiles) | 15 min |
+| 🔥 2 | **Instalar Monitor Premium en PC de la clienta** (Cloudflare Tunnel) | 1 hora |
+| 🔥 3 | **Cobrar $6K suscripción mes siguiente** (recordatorio) | 5 min |
+| 🔥 4 | **Pedir testimonio/caso de éxito a la clienta** (con foto del negocio si acepta) | 30 min |
+| 🔥 5 | **Pedir referidos** a la clienta ("¿conocés otro comerciante que necesite esto?") | 10 min |
+| 🟡 6 | **Registrar bases de datos en AAIP** | 2 horas |
+| 🟡 7 | **Publicar en grupos de Facebook** el caso de éxito (anonimizado si prefiere) | 30 min |
+| 🟡 8 | **Crear cuenta de Mercado Libre** para publicar TUSTOCK | 1 hora |
+| 🟡 9 | **Crear cuenta de Mercado Pago** (si no tenés) para cobrar | 30 min |
+| 🟢 10 | **Publicar en Mercado Libre** con el texto que prepare | 30 min |
+| 🟢 11 | **Ir a 3-5 polirrubros del barrio** a ofrecer el sistema personalmente | 2 horas |
 
 ---
 
@@ -361,10 +377,6 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] EULA CLICKWRAP: Modal de aceptación de Términos y Condiciones en primera ejecución. Backend: modelo License con `eula_accepted`, endpoint `POST /api/license/accept-eula`. Frontend: componente EulaModal en Layout que bloquea toda interacción hasta aceptar. Endpoints para servir documentos legales: `/api/license/terms`, `/api/license/privacy`, `/api/license/refund`. (2026-07-04)
 - [feature] CONSENTIMIENTO REGISTRO CLOUD: Checkbox obligatorio de aceptación de Términos y Política de Privacidad en el formulario de registro del Monitor Cloud. Modelo Business con `terms_accepted`. Backend rechaza registro sin `accepts_terms: true`. (2026-07-04)
 - [feature] BAJA DE CUENTA CLOUD: Endpoint `POST /api/business/delete-account` con confirmación por email. Elimina MetricsPush y anonimiza datos del Business (soft-delete con is_active=False). UI en dashboard con botón "Eliminar mi cuenta" y confirmación. Endpoints cloud para docs legales: `/api/licenses/terms`, `/api/licenses/privacy`, `/api/licenses/refund`. (2026-07-04)
-- [feature] ADMIN SEPARADO: App independiente en `admin/` (Vite+React, puerto 5174). Removido del web/ principal. Scripts `start-admin.bat` y `stop-admin.bat`. Proxy `/api/admin` a localhost:8090. (2026-07-06)
-- [feature] SUBSCRIPTION BANNER: Componente SubscriptionBanner muestra banner progresivo de grace period para suscripciones (día 0/3/7+). Integrado en Layout debajo de TrialBanner. (2026-07-06)
-- [feature] DB LOCAL REPARADA: Columnas faltantes agregadas a `tustock.db` via ALTER TABLE: `subscription_grace_days_left`, `subscription_suspended`, `eula_accepted`, `eula_accepted_at`. (2026-07-06)
-- [feature] CORS CLOUD API: Agregado CORSMiddleware con allow_origins=["*"] en cloud/api.py para permitir llamadas desde el admin panel (localhost:5174 → tustock.up.railway.app). (2026-07-07)
 
 ---
 
@@ -411,9 +423,6 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-06 | **BUGS FIXED**: 4 bugs funcionales del MEMORY.md sección 14 corregidos + timing-safe en auth.py + cleanup (unused variables, data_id extraction). | DEV |
 | 2026-07-06 | **Plan activo ID**: `492a6877398e4831a2d36f2159320f1c` — link de suscripción `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=492a6877398e4831a2d36f2159320f1c` — funcional y probado (hermana se suscribió). Webhook pendiente de configurar en el plan. | DEV + Humano |
 | 2026-07-06 | **Modelo híbrido MP confirmado**: Checkout Pro para pagos únicos (Básico/Pro) + Plan compartido para suscripciones. Dos apps de MP separadas (selector de producto excluyente). Admin vincula suscripciones manualmente desde el panel. | DEV + Humano + Dispatcher |
-| 2026-07-06 | **Admin separado del proyecto**: App independiente en `admin/` (Vite+React, puerto 5174). Removido del web/ principal y de App.tsx. Scripts `start-admin.bat` y `stop-admin.bat`. `.gitignore` actualizado para `admin/dist/`. | DEV |
-| 2026-07-06 | **DB local reparada**: Columnas faltantes (`subscription_grace_days_left`, `subscription_suspended`, `eula_accepted`, `eula_accepted_at`) agregadas a `tustock.db` via ALTER TABLE. El modelo License ya las tenía pero no existían en la DB física. | DEV |
-| 2026-07-07 | **CORS cloud API**: Agregado CORSMiddleware con allow_origins=["*"] para que el admin panel (localhost:5174) pueda llamar a la cloud API (tustock.up.railway.app) sin bloqueo de CORS. | DEV |
 
 ---
 
@@ -443,7 +452,7 @@ PC del cliente                          Cloud (Railway/VPS)
 | Prioridad | Item | Estado | Quién |
 |:---------:|------|:------:|:-----:|
 | 🔥 1 | Completar datos del proveedor en docs legales | ✅ Completado | 🧑 HUMANO |
-| 🔥 2 | Configurar MP token en Railway | ✅ Completado | 🖥 DEV |
+| 🔥 2 | Configurar MP token en Railway | ❌ Pendiente | 🖥 DEV |
 | 🟢 3 | Checkbox de aceptación en registro cloud | ✅ Completado | 🖥 DEV |
 | 🟢 4 | Endpoint de baja de cuenta cloud | ✅ Completado | 🖥 DEV |
 | 🟢 5 | EULA clickwrap en primera ejecución | ✅ Completado | 🖥 DEV |
@@ -482,4 +491,4 @@ PC del cliente                          Cloud (Railway/VPS)
 
 ---
 
-*Última actualización: 7 de Julio de 2026*
+*Última actualización: 6 de Julio de 2026*
