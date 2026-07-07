@@ -240,7 +240,7 @@ PC del cliente                          Cloud (Railway/VPS)
 
 | Prioridad | Tarea | Quién | Por qué es crítica |
 |:---------:|-------|:-----:|-------------------|
-| 🔥 1 | **Fix webhook del Plan MP (error 400)** | 🖥 DEV | Al hacer click en "Configurar Webhook" en admin panel, MP responde 400: "Properties to update are required". La API PUT /preapproval_plan/{id} necesita al menos una propiedad para actualizar. |
+| 🔥 1 | **(HUMANO) Testear webhook MP** | 🧑 HUMANO | Abrir admin panel → click "Configurar Webhook". El fix de DEV ya evita el error 400 (primero consulta el plan, solo hace PUT si el notification_url es diferente). CORS también agregado. |
 | 🟡 2 | **Configurar Railway hobby ($5/mes)** | 🧑 HUMANO | Para 24/7 de validación cloud y monitor. |
 | 🟢 3 | **Registrar bases de datos en AAIP** | 🧑 HUMANO | Obligación legal si hay datos personales en cloud (Ley 25.326 art. 21). |
 | 🟢 4 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
@@ -364,8 +364,10 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] ADMIN SEPARADO: App independiente en `admin/` (Vite+React, puerto 5174). Removido del web/ principal. Scripts `start-admin.bat` y `stop-admin.bat`. Proxy `/api/admin` a localhost:8090. (2026-07-06)
 - [feature] SUBSCRIPTION BANNER: Componente SubscriptionBanner muestra banner progresivo de grace period para suscripciones (día 0/3/7+). Integrado en Layout debajo de TrialBanner. (2026-07-06)
 - [feature] DB LOCAL REPARADA: Columnas faltantes agregadas a `tustock.db` via ALTER TABLE: `subscription_grace_days_left`, `subscription_suspended`, `eula_accepted`, `eula_accepted_at`. (2026-07-06)
----
+- [feature] WEBHOOK MP FIX: update_plan_notification_url ahora consulta GET /preapproval_plan/{id} primero para verificar si notification_url ya está seteado. Solo hace PUT si es diferente, evitando error 400 "Properties to update are required". (2026-07-07)
+- [feature] CORS CLOUD API: Agregado CORSMiddleware con allow_origins=["*"] en cloud/api.py para permitir llamadas desde el admin panel (localhost:5174) a la cloud API (tustock.up.railway.app). (2026-07-07)
 
+---
 ## 12. HISTORIAL DE DECISIONES
 
 | Fecha | Decisión | Quién |
@@ -411,8 +413,10 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-06 | **Modelo híbrido MP confirmado**: Checkout Pro para pagos únicos (Básico/Pro) + Plan compartido para suscripciones. Dos apps de MP separadas (selector de producto excluyente). Admin vincula suscripciones manualmente desde el panel. | DEV + Humano + Dispatcher |
 | 2026-07-06 | **Admin separado del proyecto**: App independiente en `admin/` (Vite+React, puerto 5174). Removido del web/ principal y de App.tsx. Scripts `start-admin.bat` y `stop-admin.bat`. `.gitignore` actualizado para `admin/dist/`. | DEV |
 | 2026-07-06 | **DB local reparada**: Columnas faltantes (`subscription_grace_days_left`, `subscription_suspended`, `eula_accepted`, `eula_accepted_at`) agregadas a `tustock.db` via ALTER TABLE. El modelo License ya las tenía pero no existían en la DB física. | DEV |
----
+| 2026-07-07 | **Webhook MP fix**: update_plan_notification_url ahora verifica GET primero, solo hace PUT si notification_url es diferente. Evita error 400. | DEV |
+| 2026-07-07 | **CORS cloud API**: Agregado CORSMiddleware para permitir llamadas desde admin panel (localhost:5174 → tustock.up.railway.app). | DEV |
 
+---
 ## 13. EQUIPO LEGAL
 
 > **Agente Legal:** Abogado especialista en servicios digitales (IA). Asesora en cumplimiento normativo, redacta términos legales, protege al proyecto de riesgos jurídicos. Sus directivas en materia legal son vinculantes para DEV y Ventas.
@@ -468,9 +472,7 @@ PC del cliente                          Cloud (Railway/VPS)
 
 ### 🐛 Bugs activos
 
-| Archivo | Problema | Prioridad |
-|---------|----------|:---------:|
-| `cloud/payments.py:update_plan_notification_url` | MP responde 400 al hacer PUT /preapproval_plan/{id}: "Properties to update are required". La función no envía el campo `notification_url` correctamente, o MP rechaza el update porque ya está seteado con el mismo valor. | 🔥 |
+*(No hay bugs activos conocidos)*
 
 ### ⚠️ Observaciones
 

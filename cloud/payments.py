@@ -204,6 +204,14 @@ def get_subscription_plan(access_token: str, plan_id: str) -> dict:
 
 
 def update_plan_notification_url(access_token: str, plan_id: str, notification_url: str) -> dict:
+    # Primero consultar el estado actual del plan
+    plan_info = get_subscription_plan(access_token, plan_id)
+    if "error" not in plan_info:
+        current_url = plan_info.get("notification_url", "")
+        if current_url == notification_url:
+            return {"ok": True, "message": "notification_url ya está configurado correctamente", "plan": plan_info}
+
+    # Solo hacer PUT si el plan no tiene el notification_url o es diferente
     body = json.dumps({"notification_url": notification_url}).encode("utf-8")
     req = urllib.request.Request(
         f"{MP_API}/preapproval_plan/{plan_id}",
