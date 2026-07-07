@@ -24,3 +24,4 @@
 | 2026-07-06 | Bugs funcionales corregidos + auth timing-safe + cleanup | DEV |
 | 2026-07-06 | Plan activo ID: `492a6877398e...` — link funcional y probado | DEV + Humano |
 | 2026-07-06 | Modelo híbrido MP confirmado: Checkout Pro + Plan compartido. 2 apps separadas. | DEV + Humano + Dispatcher |
+| 2026-07-07 | Error 400 al configurar webhook del Plan MP: "Properties to update are required". Posiblemente MP rechaza PUT si notification_url ya está seteado al mismo valor. Pendiente fix de DEV. | Humano + Dispatcher |

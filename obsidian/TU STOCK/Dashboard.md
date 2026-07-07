@@ -4,19 +4,18 @@ Centro de comando del proyecto. Cada agente actualiza su sección.
 
 ---
 
-## ✅ Software: COMPLETO. Híbrido MP operativo (Checkout Pro + Plan compartido).
+## ✅ Software: COMPLETO. Híbrido MP operativo (Checkout Pro + Plan compartido). Token Railway configurado.
 ## 🌐 En producción: 1 cliente premium activo ($6K/mes).
 
-## 📋 Prioridades hoy (2026-07-06)
+## 📋 Prioridades hoy (2026-07-07)
 
 | # | Agente | Tarea | Urgencia |
 |---|--------|-------|:--------:|
-| 1 | 🖥 DEV | Configurar `TUSTOCK_MP_TOKEN` en Railway (2 apps: Checkout Pro + Suscripciones) | 🔥 |
+| 1 | 🖥 DEV | Fix webhook Plan MP (error 400 al configurar) | 🔥 |
 | 2 | 🧑 HUMANO | Configurar Railway hobby ($5/mes) | 🟡 |
-| 3 | 🧑 HUMANO | Instalar Monitor en PC de clienta | 🔥 |
+| 3 | 🧑 HUMANO | Instalar Monitor en PC de clienta | 🟡 |
 | 4 | 🧑 HUMANO | Cobrar suscripción mes siguiente | 🔥 |
 | 5 | 🧑 HUMANO | Pedir testimonio + referidos a clienta | 🔥 |
-| 6 | 🧑 VENTAS | Definir derecho de arrepentimiento | 🔥 |
 
 ---
 
@@ -47,4 +46,4 @@ Centro de comando del proyecto. Cada agente actualiza su sección.
 
 **Plan ID:** `492a6877398e4831a2d36f2159320f1c`
 **Link:** `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=492a6877398e4831a2d36f2159320f1c`
-**Estado:** Funcional. Esperando configurar webhook.
+**Estado:** Funcional. Webhook bloqueado por error 400 de MP (Properties to update are required). Pendiente fix de DEV.

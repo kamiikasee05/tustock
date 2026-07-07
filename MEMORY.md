@@ -240,7 +240,7 @@ PC del cliente                          Cloud (Railway/VPS)
 
 | Prioridad | Tarea | Quién | Por qué es crítica |
 |:---------:|-------|:-----:|-------------------|
-| 🔥 1 | **Configurar webhook del Plan MP** | 🧑 HUMANO | Sin webhook, MP no notifica nuevas suscripciones. Click "Configurar Webhook" en el admin panel. |
+| 🔥 1 | **Fix webhook del Plan MP (error 400)** | 🖥 DEV | Al hacer click en "Configurar Webhook" en admin panel, MP responde 400: "Properties to update are required". La API PUT /preapproval_plan/{id} necesita al menos una propiedad para actualizar. |
 | 🟡 2 | **Configurar Railway hobby ($5/mes)** | 🧑 HUMANO | Para 24/7 de validación cloud y monitor. |
 | 🟢 3 | **Registrar bases de datos en AAIP** | 🧑 HUMANO | Obligación legal si hay datos personales en cloud (Ley 25.326 art. 21). |
 | 🟢 4 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
@@ -364,8 +364,6 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] ADMIN SEPARADO: App independiente en `admin/` (Vite+React, puerto 5174). Removido del web/ principal. Scripts `start-admin.bat` y `stop-admin.bat`. Proxy `/api/admin` a localhost:8090. (2026-07-06)
 - [feature] SUBSCRIPTION BANNER: Componente SubscriptionBanner muestra banner progresivo de grace period para suscripciones (día 0/3/7+). Integrado en Layout debajo de TrialBanner. (2026-07-06)
 - [feature] DB LOCAL REPARADA: Columnas faltantes agregadas a `tustock.db` via ALTER TABLE: `subscription_grace_days_left`, `subscription_suspended`, `eula_accepted`, `eula_accepted_at`. (2026-07-06)
-- [feature] CORS CLOUD API: Agregado CORSMiddleware con allow_origins=["*"] en cloud/api.py para permitir llamadas desde el admin panel (localhost:5174 → tustock.up.railway.app). (2026-07-07)
-
 ---
 
 ## 12. HISTORIAL DE DECISIONES
@@ -413,8 +411,6 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-06 | **Modelo híbrido MP confirmado**: Checkout Pro para pagos únicos (Básico/Pro) + Plan compartido para suscripciones. Dos apps de MP separadas (selector de producto excluyente). Admin vincula suscripciones manualmente desde el panel. | DEV + Humano + Dispatcher |
 | 2026-07-06 | **Admin separado del proyecto**: App independiente en `admin/` (Vite+React, puerto 5174). Removido del web/ principal y de App.tsx. Scripts `start-admin.bat` y `stop-admin.bat`. `.gitignore` actualizado para `admin/dist/`. | DEV |
 | 2026-07-06 | **DB local reparada**: Columnas faltantes (`subscription_grace_days_left`, `subscription_suspended`, `eula_accepted`, `eula_accepted_at`) agregadas a `tustock.db` via ALTER TABLE. El modelo License ya las tenía pero no existían en la DB física. | DEV |
-| 2026-07-07 | **CORS cloud API**: Agregado CORSMiddleware con allow_origins=["*"] para que el admin panel (localhost:5174) pueda llamar a la cloud API (tustock.up.railway.app) sin bloqueo de CORS. | DEV |
-
 ---
 
 ## 13. EQUIPO LEGAL
@@ -469,6 +465,12 @@ PC del cliente                          Cloud (Railway/VPS)
 | `cloud/api.py` webhook | `data_id` con `body["id"]` puede causar KeyError en payloads malformados. | Usado `.get()` seguro |
 | `cloud/payments.py` | Variable `units` asignada sin uso. | Removida |
 | `server/pending_orders.py:134` | Variable `pm_label` asignada sin uso. | Removida |
+
+### 🐛 Bugs activos
+
+| Archivo | Problema | Prioridad |
+|---------|----------|:---------:|
+| `cloud/payments.py:update_plan_notification_url` | MP responde 400 al hacer PUT /preapproval_plan/{id}: "Properties to update are required". La función no envía el campo `notification_url` correctamente, o MP rechaza el update porque ya está seteado con el mismo valor. | 🔥 |
 
 ### ⚠️ Observaciones
 
