@@ -211,7 +211,7 @@ def update_plan_notification_url(access_token: str, plan_id: str, notification_u
         if current_url == notification_url:
             return {"ok": True, "message": "notification_url ya está configurado correctamente", "plan": plan_info}
 
-    # Solo hacer PUT si el plan no tiene el notification_url o es diferente
+    # Hacer PUT si el plan no tiene el notification_url o es diferente
     body = json.dumps({"notification_url": notification_url}).encode("utf-8")
     req = urllib.request.Request(
         f"{MP_API}/preapproval_plan/{plan_id}",
@@ -228,6 +228,9 @@ def update_plan_notification_url(access_token: str, plan_id: str, notification_u
         return {"ok": True, "plan": result}
     except urllib.error.HTTPError as e:
         error_body = e.read().decode() if e.fp else str(e)
+        # Si MP dice "no hay propiedades para actualizar", es porque ya está seteado → OK
+        if e.code == 400 and "Properties to update are required" in error_body:
+            return {"ok": True, "message": "notification_url ya está configurado correctamente"}
         return {"ok": False, "error": f"MP error {e.code}: {error_body[:200]}"}
     except Exception as e:
         return {"ok": False, "error": str(e)}
