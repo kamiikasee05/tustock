@@ -11,11 +11,10 @@ Centro de comando del proyecto. Cada agente actualiza su sección.
 
 | # | Agente | Tarea | Urgencia |
 |---|--------|-------|:--------:|
-| 1 | 🖥 DEV | Fix webhook Plan MP (error 400 al configurar) | 🔥 |
-| 2 | 🧑 HUMANO | Configurar Railway hobby ($5/mes) | 🟡 |
-| 3 | 🧑 HUMANO | Instalar Monitor en PC de clienta | 🟡 |
-| 4 | 🧑 HUMANO | Cobrar suscripción mes siguiente | 🔥 |
-| 5 | 🧑 HUMANO | Pedir testimonio + referidos a clienta | 🔥 |
+| 1 | 🧑 HUMANO | Configurar Railway hobby ($5/mes) | 🟡 |
+| 2 | 🧑 HUMANO | Instalar Monitor en PC de clienta | 🟡 |
+| 3 | 🧑 HUMANO | Cobrar suscripción mes siguiente | 🔥 |
+| 4 | 🧑 HUMANO | Pedir testimonio + referidos a clienta | 🔥 |
 
 ---
 
@@ -46,4 +45,4 @@ Centro de comando del proyecto. Cada agente actualiza su sección.
 
 **Plan ID:** `492a6877398e4831a2d36f2159320f1c`
 **Link:** `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=492a6877398e4831a2d36f2159320f1c`
-**Estado:** Funcional. Webhook bloqueado por error 400 de MP (Properties to update are required). Pendiente fix de DEV.
+**Estado:** ✅ Webhook configurado en el plan. Flujo MP completo operativo.

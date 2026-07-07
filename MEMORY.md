@@ -234,18 +234,17 @@ PC del cliente                          Cloud (Railway/VPS)
 - ✅ **Launcher unificado**: TUSTOCK.bat 8 opciones, auto-start con --quick, cloud agent auto-start
 - ✅ **Validación cloud**: sync de keys al cloud, validate contra API cloud, cache 7d offline, bloqueo por licencia
 - ✅ **Landing page**: `docs/index.html` servida via GitHub Pages
-- ✅ **Mercado Pago**: integración REST lista, token en Railway configurado, Checkout Pro y Plan compartido funcionando
+- ✅ **Mercado Pago**: integración REST completa. Token en Railway configurado. Checkout Pro (pagos únicos) + Plan compartido (suscripciones) funcionando. Webhook configurado en el plan. Flujo MP 100% operativo.
 
 ### Prioridades actuales (Julio 2026)
 
 | Prioridad | Tarea | Quién | Por qué es crítica |
 |:---------:|-------|:-----:|-------------------|
-| 🔥 1 | **(HUMANO) Testear webhook MP** | 🧑 HUMANO | Abrir admin panel → click "Configurar Webhook". El fix de DEV ya evita el error 400 (primero consulta el plan, solo hace PUT si el notification_url es diferente). CORS también agregado. |
-| 🟡 2 | **Configurar Railway hobby ($5/mes)** | 🧑 HUMANO | Para 24/7 de validación cloud y monitor. |
-| 🟢 3 | **Registrar bases de datos en AAIP** | 🧑 HUMANO | Obligación legal si hay datos personales en cloud (Ley 25.326 art. 21). |
-| 🟢 4 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
-| 🟢 5 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
-| 🟢 6 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
+| 🟡 1 | **Configurar Railway hobby ($5/mes)** | 🧑 HUMANO | Para 24/7 de validación cloud y monitor. |
+| 🟢 2 | **Registrar bases de datos en AAIP** | 🧑 HUMANO | Obligación legal si hay datos personales en cloud (Ley 25.326 art. 21). |
+| 🟢 3 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
+| 🟢 4 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
+| 🟢 5 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
 
 ---
 
