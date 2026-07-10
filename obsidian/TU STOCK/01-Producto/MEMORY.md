@@ -1,16 +1,27 @@
 # MEMORY — TUSTOCK
 
-> Este archivo es la fuente de verdad compartida entre el **Agente de Ventas**, el **Agente de Desarrollo (DEV)** y el **Agente Legal**. Lo leo al inicio de cada sesión para saber el estado actual.
+> Este archivo es la fuente de verdad compartida entre el **Agente de Ventas**, el **Agente de Desarrollo (DEV)**, el **Agente Legal** y el **Agente de Marketing**. Lo leo al inicio de cada sesión para saber el estado actual.
 >
 > **Rol de Ventas (YO):** Conozco el producto, el mercado, los precios. Organizo, coordino y le asigno tareas humanas al usuario para vender.
 >
 > **Rol de DEV (asistente de código):** Construye exclusivamente lo que está definido aquí. No inventa features. No desarrolla fuera del roadmap.
 >
-> **Rol de Legal (abogado especialista en servicios digitales):** Asesora en cumplimiento normativo, redacta términos legales, protege al proyecto de riesgos jurídicos. Sus directivas en materia legal son vinculantes para DEV y Ventas.
+> **Rol de Legal (abogado especialista en servicios digitales):** Asesora exclusivamente en cumplimiento normativo (Ley 24.240, Ley 25.326, Ley 11.723 y demás leyes argentinas aplicables). Redacta y revisa documentación legal (términos, privacidad, reembolso). Emite directivas vinculantes para DEV, Ventas y Marketing cuando detecta incumplimientos legales. **NO toca código, NO toca el dashboard de Obsidian, NO desarrolla features.** Su única herramienta es el dictamen legal y la orden directa a DEV.
+>
+> **Rol de Marketing (creativo publicitario):** Crea contenido y campañas para salir al mercado. Diseña posts, volantes, secuencias de WhatsApp, anuncios. Trabaja en coordinación con Ventas. Sus entregables van en `docs/marketing/` y `obsidian/TU STOCK/06-Marketing/`. **NO toca código, NO modifica precios, NO toca temas legales sin consultar a Legal.**
 >
 > **Regla especial — Cliente Premium:** La clienta que paga $60K entry + $6K/mes tiene un plan híbrido legacy (pago único + suscripción). Tiene acceso al Monitor Cloud, updates continuos y soporte prioritario. Su tier en código es `premium`. Ningún cliente nuevo accede a este precio ni a este tier. Es la primera clienta y cierra antes del lanzamiento oficial.
 
 **Regla de legacy pricing:** Si un referido pregunta cuánto pagó ella, la respuesta es: *"Fue la primera cliente y compró antes del lanzamiento oficial. Esos precios ya no están disponibles."*
+
+> **Cuentas de MP y ML dedicadas al proyecto (Julio 2026):** TUSTOCK tiene cuenta propia de Mercado Pago y Mercado Libre. Antes se usaba la cuenta personal del humano. Las apps de MP (Checkout Pro y Suscripciones) deben crearse desde la cuenta nueva del proyecto para tener tokens exclusivos. La cuenta personal ya no se usa para TUSTOCK.
+>
+> **Apps MP del proyecto (Julio 2026):**
+> - **Checkout Pro** (pagos únicos Básico/Pro): Token `APP_USR-5761868084474454-070920-2303c082ae331b797c821f5982d85907-3533000902`
+> - **Suscripciones** (plan $8K/mes): Token `APP_USR-8662621767820459-070920-3e8974088c26d7a8adf2ee59b5ff1a33-3533000902`
+> - **Webhook URL:** `https://tustock.up.railway.app/api/payments/webhook`
+> - **Back URLs:** `https://tustock.up.railway.app`
+> - **Railway configurado:** ✅ `TUSTOCK_MP_TOKEN` (Checkout Pro) + `TUSTOCK_MP_SUBS_TOKEN` (Suscripciones) — Julio 2026
 
 ---
 
@@ -84,11 +95,12 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 - **Monitor Premium (Fase 4 adelantada):** Servicio independiente puerto 8091, login propio, dashboard mobile responsive, API read-only. Expuesto vía Cloudflare Tunnel para acceso remoto desde el celular. Solo esta clienta lo tiene.
 - **Monitor Cloud (Fase 5):** Desplegado en Railway (`tustock.up.railway.app`). API push-based, dashboard mobile responsive, login multiusuario JWT. Agente local (`cloud/agent.py`) pushea métricas cada 30s desde la PC del cliente. URL fija, sin tunnel.
 - **Launcher unificado:** `scripts/launcher.py` — inicia servidor, monitor, tunnel y cloud agent desde un solo punto. `TUSTOCK.bat` con menú interactivo de 8 opciones.
-- **Dashboard admin de licencias:** Panel `/admin` con token separado. Generar keys, ver licencias, revocar/activar, stats por plan, ingresos estimados, trials por vencer.
+- **Dashboard admin de licencias:** App independiente en `admin/` (Vite+React standalone, puerto 5174). Generar keys, ver licencias, revocar/activar, stats por plan, ingresos estimados, trials por vencer. Panel de Suscripciones MP con link compartido y vinculación de suscripciones entrantes a licencias. Scripts: `scripts/start-admin.bat`, `scripts/stop-admin.bat`.
 - **Validación cloud de licencias:** Cada 7 días el sistema local valida la key contra la API cloud. Si no hay internet, sigue funcionando con cache de hasta 14 días. Trial no requiere validación cloud. Admin sync-keys al generar.
 - **Bloqueo por licencia:** Middleware que bloquea todas las APIs cuando el trial vence o no hay licencia activa. Solo deja pasar health, license/status y license/activate.
 - **Landing page:** `docs/index.html` — página estática dark theme responsive servida via GitHub Pages (`kamiikasee05.github.io/tustock`). Incluye hero, features, planes, caso real, FAQ, WhatsApp CTA.
 - **Mercado Pago:** Integración con dos apps (Checkout Pro para pagos únicos Básico/Pro, Suscripciones vía Plan compartido). Crear preferencias, webhook, verificar status. Admin tiene botón "Cobrar MP" y columna estado de pago. Suscripciones: Plan único `preapproval_plan` ($8K/mes) con link compartido, webhook registra nuevas suscripciones, admin las vincula a licencias desde el panel. Requiere `TUSTOCK_MP_TOKEN` configurado.
+- **MCP Mercado Pago (oficial):** Configurado en `opencode.json` como server remoto (`https://mcp.mercadopago.com/mcp`). Herramientas: búsqueda de docs MP, gestión de apps/credenciales (OAuth), configuración de webhooks, creación de test users, quality measurement de integración. **NO reemplaza** `cloud/payments.py` (que maneja pagos reales vía REST API). El MCP es para desarrollo, testing y validación. Conexión via OAuth automática de OpenCode. Docs: https://www.mercadopago.com.ar/developers/es/docs/mcp-server/connection
 - **Guía de Usuario PDF** generada automáticamente
 - **Documentación legal:** Términos y Condiciones de Uso + EULA, Política de Privacidad, Política de Reembolso y Cancelación (`legal/`). Links en footer de landing page y referenciados desde el registro cloud.
 - **EULA clickwrap:** Modal en primera ejecución que obliga a aceptar términos. Endpoints para servir documentos legales (`/api/license/terms`, `/api/license/privacy`, `/api/license/refund`).
@@ -234,34 +246,19 @@ PC del cliente                          Cloud (Railway/VPS)
 - ✅ **Launcher unificado**: TUSTOCK.bat 8 opciones, auto-start con --quick, cloud agent auto-start
 - ✅ **Validación cloud**: sync de keys al cloud, validate contra API cloud, cache 7d offline, bloqueo por licencia
 - ✅ **Landing page**: `docs/index.html` servida via GitHub Pages
-- ✅ **Mercado Pago**: integración REST lista, pendiente configurar token en Railway
+- ✅ **Mercado Pago**: integración REST completa. Token en Railway configurado. Checkout Pro (pagos únicos) + Plan compartido (suscripciones) funcionando. Webhook configurado en el plan. Flujo MP 100% operativo.
 
-### Prioridades actuales (post-dispatcher)
+### Prioridades actuales (Julio 2026)
 
 | Prioridad | Tarea | Quién | Por qué es crítica |
 |:---------:|-------|:-----:|-------------------|
-| 🔥 1 | **Configurar MP token en Railway** | 🖥 DEV | Sin token no funcionan pagos. Necesita cuenta MP con Suscripciones y Checkout Pro habilitados. |
-| 🟡 2 | **Configurar Railway hobby ($5/mes)** | 🧑 HUMANO | Para 24/7 de validación cloud y monitor. |
-| 🟢 3 | **Registrar bases de datos en AAIP** | 🧑 HUMANO | Obligación legal si hay datos personales en cloud (Ley 25.326 art. 21). |
-| 🟢 4 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
-| 🟢 5 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
-| 🟢 6 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
-
-### Tareas HUMANAS pendientes
-
-| Prioridad | Tarea | Tiempo estimado |
-|:---------:|-------|:---------------:|
-| 🔥 1 | **[VENTAS] Definir postura sobre derecho de arrepentimiento** (reembolso total vs proporcional en 10 días hábiles) | 15 min |
-| 🔥 2 | **Instalar Monitor Premium en PC de la clienta** (Cloudflare Tunnel) | 1 hora |
-| 🔥 3 | **Cobrar $6K suscripción mes siguiente** (recordatorio) | 5 min |
-| 🔥 4 | **Pedir testimonio/caso de éxito a la clienta** (con foto del negocio si acepta) | 30 min |
-| 🔥 5 | **Pedir referidos** a la clienta ("¿conocés otro comerciante que necesite esto?") | 10 min |
-| 🟡 6 | **Registrar bases de datos en AAIP** | 2 horas |
-| 🟡 7 | **Publicar en grupos de Facebook** el caso de éxito (anonimizado si prefiere) | 30 min |
-| 🟡 8 | **Crear cuenta de Mercado Libre** para publicar TUSTOCK | 1 hora |
-| 🟡 9 | **Crear cuenta de Mercado Pago** (si no tenés) para cobrar | 30 min |
-| 🟢 10 | **Publicar en Mercado Libre** con el texto que prepare | 30 min |
-| 🟢 11 | **Ir a 3-5 polirrubros del barrio** a ofrecer el sistema personalmente | 2 horas |
+| 🔥 1 | **Comprar dominio tustock.com.ar** ($8.500) | 🧑 HUMANO | Tener presencia profesional. Landing page con dominio propio. |
+| 🔥 2 | **Campaña de salida al mercado** | 📢 MARKETING | Crear contenido para Facebook Groups, WhatsApp, ML. |
+| 🟡 3 | **Configurar Railway hobby ($5/mes)** | 🧑 HUMANO | Para 24/7 de validación cloud y monitor. |
+| 🟢 4 | **Registrar bases de datos en AAIP** (PASO 1 + 2) | 🧑 HUMANO | Obligación legal (Ley 25.326 art. 21). |
+| 🟢 5 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
+| 🟢 6 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
+| 🟢 7 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
 
 ---
 
@@ -286,6 +283,8 @@ PC del cliente                          Cloud (Railway/VPS)
     - Legal: `-Title "⚖️ TUSTOCK Legal" -Message "Documentación actualizada" -Priority 3 -Tags "balance_scale"`
     - Dispatcher: `-Title "🔄 TUSTOCK" -Message "Revisión completada" -Priority 3 -Tags "arrows_counterclockwise"`
     Esto aplica a TODOS los agentes, sin excepción.
+15. **Legal NO toca código ni el dashboard de Obsidian:** El agente Legal se limita a leer archivos, redactar documentos legales (`.html` en `legal/`), y emitir directivas por escrito. Cualquier modificación a código fuente, archivos de configuración, Markdown de Obsidian o infraestructura debe ser ejecutada por DEV o el Dispatcher. Legal que viola esta regla debe ser reportado inmediatamente.
+16. **Marketing NO toca código ni precios:** El agente Marketing crea contenido publicitario en `docs/marketing/` y `obsidian/TU STOCK/06-Marketing/`. NO modifica el producto ni los precios. Cualquier afirmación sobre features debe ser verificada contra la sección 3 (Qué está construido). Si menciona algo que no existe, es publicidad engañosa (Ley 24.240 art. 8-9).
 
 ### Stack que NO se cambia
 
@@ -333,10 +332,58 @@ PC del cliente                          Cloud (Railway/VPS)
 |-------|:-----:|:---------:|
 | WhatsApp directo a comerciantes locales | 🟢 Activo | 🔥 Alta |
 | Boca a boca / referidos de clienta actual | 🟢 Activo | 🔥 Alta |
-| Facebook Groups (kiosqueros, almaceneros) | 🟡 Pendiente | 🔥 Alta |
-| Mercado Libre | 🟡 Pendiente (crear cuenta) | 🔥 Alta |
+| Facebook Groups (kiosqueros, almaceneros) | 🟢 Activo (cuenta unida a grupos) | 🔥 Alta |
+| Mercado Libre | 🟢 Activo (cuenta TUSTOCK creada) | 🔥 Alta |
 | Proveedores mayoristas (comisión) | 🔴 Futuro | 🟢 Baja |
 | Mercado de apps Tiendanube/Empretienda | 🔴 Futuro | 🟢 Baja |
+
+---
+
+## 9.5 MCP MERCADO PAGO — Herramienta de Desarrollo
+
+> **Configurado:** `opencode.json` → `mcp.mercadopago` (server remoto, OAuth automático)
+> **URL:** `https://mcp.mercadopago.com/mcp`
+> **Docs:** https://www.mercadopago.com.ar/developers/es/docs/mcp-server/connection
+
+### Qué hace el MCP
+
+El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
+
+| Herramienta | Uso para TUSTOCK |
+|---|---|
+| `search_documentation` | Buscar docs de la API MP desde el IDE |
+| `get_documentation_page` | Traer páginas específicas (ej: webhooks, suscripciones) |
+| `get_credentials` | Verificar credenciales de la app MP |
+| `create_application` | Crear apps nuevas (solo OAuth) |
+| `application_list` | Listar apps existentes |
+| Webhook tools | Configurar/monitorear webhooks |
+| Test users | Crear usuarios de prueba con fondos ficticios |
+| Quality check | Evaluar calidad de nuestra integración MP |
+
+### Qué NO hace el MCP
+
+**NO reemplaza `cloud/payments.py`**. El MCP no tiene herramientas para:
+- Crear preferencias de pago (Checkout Pro)
+- Consultar pagos por ID
+- Crear/cancelar suscripciones (preapproval)
+- Procesar reembolsos
+- Manejar customers
+
+### Estrategia de uso
+
+| Capa | Herramienta | Para qué |
+|------|-------------|----------|
+| **Producción** | `cloud/payments.py` (REST urllib) | Pagos reales, webhooks, suscripciones |
+| **Desarrollo** | MCP | Buscar docs, test users, quality check |
+| **Testing** | MCP test users → `payments.py` | Probar flujo completo sin gastar plata |
+| **Validación** | MCP quality check | Antes de escalar a más clientes |
+
+### Para DEV: Cómo usar el MCP
+
+1. **Duda sobre un endpoint de MP:** Preguntarle al MCP con `search_documentation`
+2. **Probar un flujo de pago:** Crear test user con MCP → usar `payments.py` con ese user
+3. **Verificar webhook:** Usar webhook tools del MCP
+4. **Quality check:** Correr quality measurement antes de cada release mayor
 
 ---
 
@@ -377,9 +424,18 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] EULA CLICKWRAP: Modal de aceptación de Términos y Condiciones en primera ejecución. Backend: modelo License con `eula_accepted`, endpoint `POST /api/license/accept-eula`. Frontend: componente EulaModal en Layout que bloquea toda interacción hasta aceptar. Endpoints para servir documentos legales: `/api/license/terms`, `/api/license/privacy`, `/api/license/refund`. (2026-07-04)
 - [feature] CONSENTIMIENTO REGISTRO CLOUD: Checkbox obligatorio de aceptación de Términos y Política de Privacidad en el formulario de registro del Monitor Cloud. Modelo Business con `terms_accepted`. Backend rechaza registro sin `accepts_terms: true`. (2026-07-04)
 - [feature] BAJA DE CUENTA CLOUD: Endpoint `POST /api/business/delete-account` con confirmación por email. Elimina MetricsPush y anonimiza datos del Business (soft-delete con is_active=False). UI en dashboard con botón "Eliminar mi cuenta" y confirmación. Endpoints cloud para docs legales: `/api/licenses/terms`, `/api/licenses/privacy`, `/api/licenses/refund`. (2026-07-04)
+- [feature] ADMIN SEPARADO: App independiente en `admin/` (Vite+React, puerto 5174). Removido del web/ principal. Scripts `start-admin.bat` y `stop-admin.bat`. Proxy `/api/admin` a localhost:8090. (2026-07-06)
+- [feature] SUBSCRIPTION BANNER: Componente SubscriptionBanner muestra banner progresivo de grace period para suscripciones (día 0/3/7+). Integrado en Layout debajo de TrialBanner. (2026-07-06)
+- [feature] DB LOCAL REPARADA: Columnas faltantes agregadas a `tustock.db` via ALTER TABLE: `subscription_grace_days_left`, `subscription_suspended`, `eula_accepted`, `eula_accepted_at`. (2026-07-06)
+- [feature] WEBHOOK MP FIX: update_plan_notification_url ahora consulta GET /preapproval_plan/{id} primero para verificar si notification_url ya está seteado. Solo hace PUT si es diferente, evitando error 400 "Properties to update are required". (2026-07-07)
+- [feature] CORS CLOUD API: Agregado CORSMiddleware con allow_origins=["*"] en cloud/api.py para permitir llamadas desde el admin panel (localhost:5174) a la cloud API (tustock.up.railway.app). (2026-07-07)
+- [feature] FIX PUBLICIDAD ENGAÑOSA: Eliminado "Backup en la nube" de notIncluded del plan Pro en Upgrade.tsx (Ley 24.240 art. 8-9). (2026-07-08)
+- [feature] FIX EMAIL PRIVACIDAD: Reemplazado [completar email] por tustock.administracion@gmail.com en sección 13 de politica-de-privacidad.html. (2026-07-08)
+- [feature] MCP MERCADO PAGO: Server remoto oficial de MP configurado en opencode.json (https://mcp.mercadopago.com/mcp). Conexión via OAuth. Herramientas: docs, test users, webhooks, quality check. NO reemplaza payments.py (producción). Para dev/testing. (2026-07-09)
+- [feature] DUAL MP TOKENS: cloud/config.py exporta MP_ACCESS_TOKEN (Checkout Pro) y MP_SUBS_TOKEN (Suscripciones). cloud/api.py usa el token correcto según operación. Fallback a MP_ACCESS_TOKEN si no hay segundo token. Fix webhook: topic=payment usa MP_SUBS_TOKEN. (2026-07-09)
+- [feature] DUAL MP TOKENS: cloud/config.py exporta MP_ACCESS_TOKEN (Checkout Pro) y MP_SUBS_TOKEN (Suscripciones). cloud/api.py usa el token correcto según operación. Fallback a MP_ACCESS_TOKEN si no hay segundo token. (2026-07-09)
 
 ---
-
 ## 12. HISTORIAL DE DECISIONES
 
 | Fecha | Decisión | Quién |
@@ -421,14 +477,27 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-06 | **MP Suscripciones bloqueado en producción**: No se puede crear preapproval directamente por API con la cuenta actual (401/500). Los planes (preapproval_plan) sí funcionan. Decisión: usar Plan compartido con link fijo. Cliente se suscribe por MP, admin vincula manualmente. Se necesitan 2 apps de MP porque el selector de producto es excluyente (una para Checkout Pro, otra para Suscripciones). | DEV + Humano |
 | 2026-07-06 | **Suscripción vía Plan compartido implementada**: Flujo completo — GET /api/plan/subscription, POST /api/plan/update-webhook, POST /api/plan/link-subscription. Webhook mejorado para crear Subscription desde suscripción del plan. Admin.tsx: sección Plan de Suscripción MP con link compartido, lista de suscripciones sin vincular, botón Vincular. | DEV |
 | 2026-07-06 | **BUGS FIXED**: 4 bugs funcionales del MEMORY.md sección 14 corregidos + timing-safe en auth.py + cleanup (unused variables, data_id extraction). | DEV |
-| 2026-07-06 | **Plan activo ID**: `492a6877398e4831a2d36f2159320f1c` — link de suscripción `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=492a6877398e4831a2d36f2159320f1c` — funcional y probado (hermana se suscribió). Webhook pendiente de configurar en el plan. | DEV + Humano |
+| 2026-07-06 | **Plan activo ID**: `27a1162efe9e47e68cd1349307b02eb2` — link de suscripción `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=27a1162efe9e47e68cd1349307b02eb2` — Creado desde app TUSTOCK Suscripciones (cuenta nueva). Webhook configurable desde admin panel. | DEV + Humano |
 | 2026-07-06 | **Modelo híbrido MP confirmado**: Checkout Pro para pagos únicos (Básico/Pro) + Plan compartido para suscripciones. Dos apps de MP separadas (selector de producto excluyente). Admin vincula suscripciones manualmente desde el panel. | DEV + Humano + Dispatcher |
+| 2026-07-06 | **Admin separado del proyecto**: App independiente en `admin/` (Vite+React, puerto 5174). Removido del web/ principal y de App.tsx. Scripts `start-admin.bat` y `stop-admin.bat`. `.gitignore` actualizado para `admin/dist/`. | DEV |
+| 2026-07-06 | **DB local reparada**: Columnas faltantes (`subscription_grace_days_left`, `subscription_suspended`, `eula_accepted`, `eula_accepted_at`) agregadas a `tustock.db` via ALTER TABLE. El modelo License ya las tenía pero no existían en la DB física. | DEV |
+| 2026-07-07 | **Webhook MP fix**: update_plan_notification_url ahora verifica GET primero, solo hace PUT si notification_url es diferente. Evita error 400. | DEV |
+| 2026-07-07 | **CORS cloud API**: Agregado CORSMiddleware para permitir llamadas desde admin panel (localhost:5174 → tustock.up.railway.app). | DEV |
+| 2026-07-08 | **Revisión legal completa**: Legal auditó Términos, Privacidad, Reembolso, landing page, EULA clickwrap, consentimiento cloud, baja de cuenta y Upgrade.tsx. Detectó publicidad engañosa en Upgrade.tsx (Backup en la nube — Ley 24.240 art. 8-9) y email placeholder en Política de Privacidad. Directivas vinculantes emitidas para DEV. | ⚖️ Legal |
+| 2026-07-08 | **Fix publicidad engañosa**: DEV eliminó "Backup en la nube" de notIncluded del plan Pro en Upgrade.tsx (directiva Legal). | 🖥 DEV |
+| 2026-07-08 | **Fix email privacidad**: DEV reemplazó [completar email] por tustock.administracion@gmail.com en politica-de-privacidad.html (directiva Legal). | 🖥 DEV |
+| 2026-07-09 | **Guía registro AAIP**: Dispatcher elaboró guía paso a paso en `obsidian/TU STOCK/03-Legal/Registro AAIP.md` para que el humano registre la base de datos del Monitor Cloud ante el RNBDP (AAIP). | Dispatcher |
+| 2026-07-09 | **Agente Marketing**: Creado en opencode.json. Crea contenido y campañas para salida al mercado. Trabaja con Ventas. No toca código ni precios. | Dispatcher |
+| 2026-07-09 | **Dominio tustock.com.ar**: Prioridad 🔥 1. Humano consigue capital ($8.500). Marketing prepara campaña para cuando el dominio esté activo. | 🧑 HUMANO + 📢 MARKETING |
+| 2026-07-09 | **MCP Mercado Pago conectado**: Server remoto oficial (`https://mcp.mercadopago.com/mcp`) configurado en `opencode.json`. Conexión via OAuth automática. Herramientas: docs, test users, webhooks, quality check. **NO reemplaza** `payments.py` (producción). El MCP es para dev/testing/quality. | 🧑 HUMANO + 🖥 DEV |
+| 2026-07-09 | **Cuentas MP y ML dedicadas al proyecto**: Creadas cuentas nuevas de Mercado Pago y Mercado Libre exclusivas para TUSTOCK. Se deja de usar la cuenta personal del humano. Las apps de MP (Checkout Pro y Suscripciones) deben crearse desde la cuenta nueva para tokens exclusivos. Tokens: Checkout Pro `APP_USR-5761...0902`, Suscripciones `APP_USR-8662...0902`. | 🧑 HUMANO |
+| 2026-07-09 | **Grupos de Facebook activos**: Humano se agregó a grupos de kiosqueros/almaceneros para publicitar TUSTOCK. Marketing crea copies para publicación. | 🧑 HUMANO + 📢 MARKETING |
+| 2026-07-09 | **Dual MP tokens**: Código actualizado para soportar dos tokens de MP (Checkout Pro + Suscripciones). Env vars: TUSTOCK_MP_TOKEN y TUSTOCK_MP_SUBS_TOKEN. Fallback automático. | 🖥 DEV |
 
 ---
-
 ## 13. EQUIPO LEGAL
 
-> **Agente Legal:** Abogado especialista en servicios digitales (IA). Asesora en cumplimiento normativo, redacta términos legales, protege al proyecto de riesgos jurídicos. Sus directivas en materia legal son vinculantes para DEV y Ventas.
+> **Agente Legal:** Abogado especialista en servicios digitales (IA). Asesora exclusivamente en cumplimiento normativo (Ley 24.240, Ley 25.326, Ley 11.723 y demás leyes argentinas aplicables). Redacta y revisa documentación legal (términos, privacidad, reembolso). Emite directivas vinculantes para DEV y Ventas cuando detecta incumplimientos legales. **NO toca código, NO toca el dashboard de Obsidian, NO desarrolla features.** Su única herramienta es el dictamen legal y la orden directa a DEV.
 
 ### Documentos redactados (Julio 2026)
 
@@ -452,11 +521,13 @@ PC del cliente                          Cloud (Railway/VPS)
 | Prioridad | Item | Estado | Quién |
 |:---------:|------|:------:|:-----:|
 | 🔥 1 | Completar datos del proveedor en docs legales | ✅ Completado | 🧑 HUMANO |
-| 🔥 2 | Configurar MP token en Railway | ❌ Pendiente | 🖥 DEV |
+| 🔥 2 | Configurar MP token en Railway | ✅ Completado | 🖥 DEV |
 | 🟢 3 | Checkbox de aceptación en registro cloud | ✅ Completado | 🖥 DEV |
 | 🟢 4 | Endpoint de baja de cuenta cloud | ✅ Completado | 🖥 DEV |
 | 🟢 5 | EULA clickwrap en primera ejecución | ✅ Completado | 🖥 DEV |
-| 🟢 6 | Registro de bases de datos AAIP | ❌ Pendiente | 🧑 HUMANO |
+| 🟢 6 | Registro de bases de datos AAIP | ❌ Pendiente (guía disponible en `obsidian/TU STOCK/03-Legal/Registro AAIP.md`) | 🧑 HUMANO |
+| 🔥 7 | Eliminar "Backup en la nube" de Upgrade.tsx (publicidad engañosa — Ley 24.240 art. 8-9) | ✅ Corregido 2026-07-08 | 🖥 DEV |
+| 🟡 8 | Completar email `[completar email]` en política de privacidad (sección 13 Contacto) | ✅ Corregido 2026-07-08 | 🖥 DEV |
 
 ---
 
@@ -479,6 +550,10 @@ PC del cliente                          Cloud (Railway/VPS)
 | `cloud/payments.py` | Variable `units` asignada sin uso. | Removida |
 | `server/pending_orders.py:134` | Variable `pm_label` asignada sin uso. | Removida |
 
+### 🐛 Bugs activos
+
+*(No hay bugs activos conocidos)*
+
 ### ⚠️ Observaciones
 
 | Archivo | Detalle |
@@ -491,4 +566,4 @@ PC del cliente                          Cloud (Railway/VPS)
 
 ---
 
-*Última actualización: 6 de Julio de 2026*
+*Última actualización: 9 de Julio de 2026*

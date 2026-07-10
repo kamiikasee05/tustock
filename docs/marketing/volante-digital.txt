@@ -1,0 +1,109 @@
+========================================================
+   MINI VOLANTE DIGITAL
+   Para hacer en Canva / Photoshop
+   Medida sugerida: 1080x1080px (cuadrado para WhatsApp/Instagram)
+   o 1080x1920px (story/estado WhatsApp)
+========================================================
+
+
+--- COLORES Y ESTILO ---
+
+- Fondo: azul oscuro (#0f172a a #1e293b)
+- Texto principal: blanco (#ffffff)
+- Texto secundario: gris claro (#94a3b8)
+- Acentos: celeste (#3b82f6) y verde (#22c55e)
+- Fuente sugerida: Inter (bold en títulos, regular en cuerpo)
+- Sin foto de persona — solo ilustraciones planas o iconos
+
+--- ICONOGRAFÍA SUGERIDA ---
+
+Usar iconos planos, color blanco o celeste, estilo "lineal" (como Lucide o Font Awesome):
+
+- PC + señal wifi tachada → "Sin internet"
+- Teléfono con gráfico 📊 → "Monitor desde el celu"
+- Caja 📦 → "Stock en tiempo real"
+- Billete / moneda → "Pago único"
+- Android robot → "App incluida"
+- Reloj ⏱ → "15 min de instalación"
+
+--- TEXTO PRINCIPAL (VERSIÓN 1080x1080 - CARGA) ---
+
+[icono: PC + señal tachada]
+SIN INTERNET
+
+[icono: caja + checklist]
+STOCK EN TIEMPO REAL
+
+[icono: teléfono + gráfico]
+MONITOR DESDE EL CELU
+
+[texto grande, bold]
+$80.000
+[texto chico]
+pago único · sin cuotas
+
+[texto mediano]
+O $8.000/mes con monitor cloud incluido
+
+[botón / CTA]
+📱 PROBALO 30 DÍAS GRATIS
+[texto chico debajo]
+kamiikasee05.github.io/tustock
+
+[texto pequeño abajo]
+TUSTOCK · Hecho en Argentina · CUIT 20-33489288-4
+
+
+--- TEXTO PRINCIPAL (VERSIÓN 1080x1920 - HISTORIA) ---
+
+[logo: TUSTOCK en blanco]
+
+[espacio]
+
+[icono grande: PC + WiFi tachado]
+Fr: TUS DATOS EN TU PC
+Sc: Nadie más ve la información de tu negocio
+
+[icono: caja + check]
+Fr: STOCK SIEMPRE AL DÍA
+Sc: Sabé cuánto tenés sin ir al depósito
+
+[icono: Android]
+Fr: APP ANDROID INCLUIDA
+Sc: Escaneá códigos con el celular
+
+[icono: teléfono + ojo]
+Fr: MONITOR REMOTO
+Sc: Mirá las ventas desde el celu
+
+[separador]
+
+[texto grande]
+$80.000
+pago único
+
+[texto mediano]
+O $8.000/mes con Monitor Cloud
+
+[botón grande]
+PROBALO 30 DÍAS GRATIS
+
+[link texto chico]
+kamiikasee05.github.io/tustock
+
+[texto final chico]
+WhatsApp: +54 9 3826 403110
+Ricardo Godoy · CUIT 20-33489288-4
+
+
+--- INDICACIONES PARA CANVA ---
+
+1. Buscar plantilla "App Showcase" o "Poster" en oscuro
+2. Cambiar colores a la paleta TUSTOCK
+3. Poner texto según la versión de arriba
+4. Reemplazar iconos por los sugeridos (usar "Elements" → "Icons" en Canva)
+5. Descargar como PNG
+6. Usar para publicar en:
+   - Grupos de Facebook
+   - Estados de WhatsApp
+   - Historias de Instagram

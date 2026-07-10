@@ -18,7 +18,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR, MP_ACCESS_TOKEN
+from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR, MP_ACCESS_TOKEN, MP_SUBS_TOKEN
 from payments import SUBSCRIPTION_PLAN_ID, SUBSCRIPTION_PLAN_PRICE, SUBSCRIPTION_PLAN_URL, update_plan_notification_url, get_subscription_plan
 from models import init_db, get_db, Business, MetricsPush, Payment, AuthorizedKey, KeyActivation, Subscription
 
@@ -321,8 +321,8 @@ def create_payment(data: dict, db: Session = Depends(get_db)):
 
 @app.post("/api/payments/subscribe")
 def create_subscription(data: dict, db: Session = Depends(get_db)):
-    if not MP_ACCESS_TOKEN:
-        raise HTTPException(400, "Mercado Pago no configurado en el servidor")
+    if not MP_SUBS_TOKEN:
+        raise HTTPException(400, "Mercado Pago Suscripciones no configurado en el servidor")
 
     plan = data.get("plan", "suscripcion")
     price = data.get("price", 0)
@@ -333,7 +333,7 @@ def create_subscription(data: dict, db: Session = Depends(get_db)):
         raise HTTPException(400, "Email del cliente requerido para crear suscripcion")
 
     from payments import create_subscription as mp_create_sub
-    result = mp_create_sub(MP_ACCESS_TOKEN, plan, price, license_key, email)
+    result = mp_create_sub(MP_SUBS_TOKEN, plan, price, license_key, email)
     if not result.get("ok"):
         raise HTTPException(400, result.get("error", "Error al crear suscripción"))
 
@@ -357,10 +357,10 @@ def create_subscription(data: dict, db: Session = Depends(get_db)):
 
 @app.get("/api/plan/subscription")
 def get_subscription_plan_info(db: Session = Depends(get_db)):
-    if not MP_ACCESS_TOKEN:
-        raise HTTPException(400, "Mercado Pago no configurado")
+    if not MP_SUBS_TOKEN:
+        raise HTTPException(400, "Mercado Pago Suscripciones no configurado")
 
-    plan_info = get_subscription_plan(MP_ACCESS_TOKEN, SUBSCRIPTION_PLAN_ID)
+    plan_info = get_subscription_plan(MP_SUBS_TOKEN, SUBSCRIPTION_PLAN_ID)
     unlinked = db.query(Subscription).filter(
         Subscription.license_key == "",
         Subscription.status != "cancelled"
@@ -387,11 +387,11 @@ def get_subscription_plan_info(db: Session = Depends(get_db)):
 
 @app.post("/api/plan/update-webhook")
 def update_plan_webhook(db: Session = Depends(get_db)):
-    if not MP_ACCESS_TOKEN:
-        raise HTTPException(400, "Mercado Pago no configurado")
+    if not MP_SUBS_TOKEN:
+        raise HTTPException(400, "Mercado Pago Suscripciones no configurado")
 
     webhook_url = "https://tustock.up.railway.app/api/payments/webhook"
-    result = update_plan_notification_url(MP_ACCESS_TOKEN, SUBSCRIPTION_PLAN_ID, webhook_url)
+    result = update_plan_notification_url(MP_SUBS_TOKEN, SUBSCRIPTION_PLAN_ID, webhook_url)
     return result
 
 
@@ -469,13 +469,13 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
     if not data_id:
         return {"ok": False, "error": "No data.id"}
 
-    if not MP_ACCESS_TOKEN:
+    if not MP_ACCESS_TOKEN and not MP_SUBS_TOKEN:
         return {"ok": False, "error": "MP no configurado"}
 
     from payments import get_subscription, get_payment
 
     if topic == "preapproval" or body.get("type") in ("subscription_preapproval", "subscription_preapproval_plan"):
-        sub_data = get_subscription(MP_ACCESS_TOKEN, str(data_id))
+        sub_data = get_subscription(MP_SUBS_TOKEN, str(data_id))
         if "error" in sub_data:
             return {"ok": False, "error": sub_data["error"]}
 
@@ -511,7 +511,7 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
         return {"ok": True, "type": "preapproval", "status": sub_status, "license_key": lic_key or "(sin asignar)", "preapproval_id": str(data_id)}
 
     if topic == "authorized_payment":
-        pay_data = get_payment(MP_ACCESS_TOKEN, str(data_id))
+        pay_data = get_payment(MP_SUBS_TOKEN, str(data_id))
         if "error" in pay_data:
             return {"ok": False, "error": pay_data["error"]}
 
@@ -537,7 +537,10 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
         return {"ok": True, "type": "authorized_payment", "status": pay_status, "license_key": lic_key}
 
     from payments import verify_webhook
-    result = verify_webhook(MP_ACCESS_TOKEN, str(data_id))
+
+    is_subscription_topic = topic == "payment" or body.get("type") in ("payment", "subscription_payment")
+    webhook_token = MP_SUBS_TOKEN if is_subscription_topic else MP_ACCESS_TOKEN
+    result = verify_webhook(webhook_token, str(data_id))
     if not result.get("ok"):
         return {"ok": False, "error": result.get("error")}
 

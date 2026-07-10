@@ -30,4 +30,4 @@
 - **Pagos únicos (Básico/Pro):** Checkout Pro de Mercado Pago
 - **Suscripciones ($8K/mes):** Plan compartido de MP con link fijo
 - **Admin vincula** las suscripciones nuevas manualmente desde el panel
-- Link de suscripción: `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=492a6877398e4831a2d36f2159320f1c`
+- Link de suscripción: `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=27a1162efe9e47e68cd1349307b02eb2`

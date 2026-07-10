@@ -14,7 +14,7 @@
 ## Completado recientemente
 
 - ✅ `TUSTOCK_MP_TOKEN` configurado en Railway (producción)
-- ✅ Suscripción MP vía Plan compartido (link fijo) — plan ID `492a6877398e4831a2d36f2159320f1c`
+- ✅ Suscripción MP vía Plan compartido (link fijo) — plan ID `27a1162efe9e47e68cd1349307b02eb2`
 - ✅ Modelo híbrido MP: Checkout Pro (pagos únicos) + Plan compartido (suscripciones)
 - ✅ GRACE PERIOD suscripción con banner progresivo (SubscriptionBanner.tsx)
 - ✅ EULA clickwrap + consentimiento cloud + baja de cuenta

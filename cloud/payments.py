@@ -11,9 +11,9 @@ from datetime import datetime, timezone
 
 MP_API = "https://api.mercadopago.com"
 
-SUBSCRIPTION_PLAN_ID = "492a6877398e4831a2d36f2159320f1c"
+SUBSCRIPTION_PLAN_ID = "27a1162efe9e47e68cd1349307b02eb2"
 SUBSCRIPTION_PLAN_PRICE = 8000.0
-SUBSCRIPTION_PLAN_URL = "https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=492a6877398e4831a2d36f2159320f1c"
+SUBSCRIPTION_PLAN_URL = "https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=27a1162efe9e47e68cd1349307b02eb2"
 
 
 def create_preference(access_token: str, plan: str, price: float, license_key: str,
