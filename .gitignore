@@ -40,6 +40,11 @@ Thumbs.db
 .env
 .env.local
 
+# Respaldos de sesiones
+respaldos/
+session-*.md
+*.log.md
+
 # Logs
 logs/
 *.pid
