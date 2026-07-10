@@ -40,7 +40,7 @@ const plans = [
       'Monitor remoto desde el celular',
       'Exportación a Excel',
     ],
-    notIncluded: ['Backup en la nube'],
+    notIncluded: [],
   },
 ]
 

@@ -65,7 +65,7 @@ Generar los primeros **10 clientes** (pagos únicos o suscripciones) mediante pr
 
 ## Pendientes de Marketing
 
-- [ ] Posts para Facebook Groups (3 variantes)
+- [x] Posts para Facebook Groups (3 variantes) — Diseños creados en Canva 10/7
 - [ ] Secuencia de WhatsApp (presentación, seguimiento, cierre)
 - [ ] Volante/flyer digital para WhatsApp
 - [ ] Anuncio para cuando tengamos dominio propio
@@ -73,4 +73,28 @@ Generar los primeros **10 clientes** (pagos únicos o suscripciones) mediante pr
 
 ---
 
-*Documento creado por el Dispatcher — 9 de Julio de 2026*
+## Diseños creados (10 de Julio 2026)
+
+Se crearon 3 diseños en Canva para Facebook Groups usando el MCP de Canva:
+
+### Post 1 — "¿Cuánto stock tenés AHORA?"
+- Ángulo: Dolor del inventario
+- Diseño dark theme con paleta TUSTOCK
+- Exportado como PNG
+- Canva: [Editar](https://www.canva.com/d/9ZOA3xjQsQhOkcU) | [Ver](https://www.canva.com/d/k3YbHuYsh797EPF)
+
+### Post 2 — "Desde casa veo las ventas del día"
+- Ángulo: Testimonial / caso real de clienta premium
+- Cita destacada de la clienta de librería
+- Exportado como PNG
+- Canva: [Editar](https://www.canva.com/d/PlmLxk4srDWDw02) | [Ver](https://www.canva.com/d/6qQoA2RJ3HariPL)
+
+### Post 3 — "¿Por qué TUSTOCK cuesta $80.000 y no $500.000?"
+- Ángulo: Comparación precio vs competencia
+- Side-by-side: features que no sirven vs. lo que importa
+- Exportado como PNG
+- Canva: [Editar](https://www.canva.com/d/ivOARSZ2xn-x_9A) | [Ver](https://www.canva.com/d/fNRFiRXxYEbKNPT)
+
+---
+
+*Documento actualizado por el Dispatcher — 10 de Julio de 2026*

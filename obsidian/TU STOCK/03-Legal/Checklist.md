@@ -18,3 +18,7 @@
 | Política de Reembolso | `legal/politica-de-reembolso.html` |
 
 **Datos del proveedor:** CUIT 20-33489288-4, tustock.administracion@gmail.com, Colón 350 Chamical La Rioja, WhatsApp +54 9 3826 403110
+
+## 📋 Guía de registro AAIP
+
+Ver [[Registro AAIP]] — paso a paso completo para registrar la base de datos del Monitor Cloud en el RNBDP (Ley 25.326 art. 21).

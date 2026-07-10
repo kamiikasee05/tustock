@@ -440,6 +440,9 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 - [feature] DUAL MP TOKENS: cloud/config.py exporta MP_ACCESS_TOKEN (Checkout Pro) y MP_SUBS_TOKEN (Suscripciones). cloud/api.py usa el token correcto según operación. Fallback a MP_ACCESS_TOKEN si no hay segundo token. (2026-07-09)
 - [feature] TELENOTAS: Bot de Telegram para capturar ideas vía texto/audio. Transcribe audios con Whisper, guarda en inbox/ diario, clasifica por proyecto usando Groq LLM. Servicio 24/7 en Windows. (2026-07-09)
 - [feature] CANVA MCP: Server remoto oficial de Canva configurado en opencode.json (https://mcp.canva.com/mcp). Crear diseños, editar, exportar PNG/JPG/PDF. Para generar imágenes de Facebook y Mercado Libre. (2026-07-10)
+- [feature] DISEÑOS FACEBOOK POST 1: "¿Cuánto stock tenés AHORA?" — diseño 1080x1350px dark theme con paleta TUSTOCK. Creado en Canva, exportado PNG. Para publicar en grupos de Facebook. (2026-07-10)
+- [feature] DISEÑOS FACEBOOK POST 2: "Desde casa veo las ventas del día" — diseño testimonial con caso real de clienta premium. Creado en Canva, exportado PNG. (2026-07-10)
+- [feature] DISEÑOS FACEBOOK POST 3: "¿Por qué TUSTOCK cuesta $80.000 y no $500.000?" — diseño comparativo precio vs competencia. Creado en Canva, exportado PNG. (2026-07-10)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
