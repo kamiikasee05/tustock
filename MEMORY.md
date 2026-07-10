@@ -445,6 +445,7 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 - [feature] DISEÑOS FACEBOOK POST 1: "¿Cuánto stock tenés AHORA?" — diseño 1080x1350px dark theme con paleta TUSTOCK. Creado en Canva, exportado PNG. Para publicar en grupos de Facebook. (2026-07-10)
 - [feature] DISEÑOS FACEBOOK POST 2: "Desde casa veo las ventas del día" — diseño testimonial con caso real de clienta premium. Creado en Canva, exportado PNG. (2026-07-10)
 - [feature] DISEÑOS FACEBOOK POST 3: "¿Por qué TUSTOCK cuesta $80.000 y no $500.000?" — diseño comparativo precio vs competencia. Creado en Canva, exportado PNG. (2026-07-10)
+- [feature] NANO BANANA MCP: MCP de Google Nano Banana (Gemini 3.1 Flash Image) configurado en opencode.json como `@maheidem/nanobanana-mcp`. Generación de imágenes hiperrealistas para Facebook/ML usando el modelo de imagen de Google. Requiere GEMINI_API_KEY seteada como env var. (2026-07-10)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
@@ -507,6 +508,7 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 | 2026-07-09 | **TELENOTAS creado**: Bot de Telegram para capturar ideas. Transcribe audios, guarda en inbox/, clasifica por proyecto con Groq LLM. Servicio 24/7. | 🧑 HUMANO + 🖥 DEV |
 | 2026-07-10 | **Canva MCP conectado**: Server remoto oficial de Canva (`https://mcp.canva.com/mcp`) configurado en `opencode.json`. Crear diseños, editar, exportar. Para imágenes de Facebook y ML. | 🧑 HUMANO + 🖥 DEV |
 | 2026-07-10 | **NO a farmacia multi-sucursal**: Se rechaza oportunidad de farmacia con 3 sucursales ($15M/mes facturación). No estamos preparados técnica ni comercialmente. El gap es abismal: falta AFIP, ANMAT, obras sociales, multi-sucursal, lotes/vencimiento, multi-usuario. Requeriría 10-15 meses de desarrollo y $6.5M-9.75M ARS. Nos mantenemos en mercado original (kioscos, librerías, almacenes). | 🧑 HUMANO + Dispatcher |
+| 2026-07-10 | **Nano Banana MCP conectado**: Google Gemini 3.1 Flash Image MCP (`@maheidem/nanobanana-mcp`) configurado en opencode.json con GEMINI_API_KEY seteada. Generación de imágenes hiperrealistas para Facebook/ML. Reemplaza a Canva para contenido visual de marketing. | 🖥 DEV + 🧑 HUMANO |
 
 ---
 ## 13. EQUIPO LEGAL

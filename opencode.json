@@ -14,6 +14,15 @@
       "type": "remote",
       "url": "https://mcp.canva.com/mcp",
       "enabled": true
+    },
+    "nanobanana": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["--yes", "@maheidem/nanobanana-mcp"],
+      "env": {
+        "GEMINI_API_KEY": "AQ.Ab8RN6IeC0Gh7k09DDK8UqDiBLnc5UQdgazWjkGKjfDE7koFPQ"
+      },
+      "enabled": true
     }
   },
   "plugin": [
