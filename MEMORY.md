@@ -10,6 +10,8 @@
 >
 > **Rol de Marketing (creativo publicitario):** Crea contenido y campañas para salir al mercado. Diseña posts, volantes, secuencias de WhatsApp, anuncios. Trabaja en coordinación con Ventas. Sus entregables van en `docs/marketing/` y `obsidian/TU STOCK/06-Marketing/`. **NO toca código, NO modifica precios, NO toca temas legales sin consultar a Legal.**
 >
+> **Rol del Dispatcher (🧑‍💻 YO):** Coordino los agentes, actualizo MEMORY.md, sincronizo Obsidian, y soy el **único propietario de TELENOTAS** (`E:\TELENOTAS\`). Reviso el inbox al inicio de cada sesión y decido qué ideas procesar. Ni DEV, ni Ventas, ni Legal, ni Marketing tocan TELENOTAS.
+>
 > **Regla especial — Cliente Premium:** La clienta que paga $60K entry + $6K/mes tiene un plan híbrido legacy (pago único + suscripción). Tiene acceso al Monitor Cloud, updates continuos y soporte prioritario. Su tier en código es `premium`. Ningún cliente nuevo accede a este precio ni a este tier. Es la primera clienta y cierra antes del lanzamiento oficial.
 
 **Regla de legacy pricing:** Si un referido pregunta cuánto pagó ella, la respuesta es: *"Fue la primera cliente y compró antes del lanzamiento oficial. Esos precios ya no están disponibles."*
