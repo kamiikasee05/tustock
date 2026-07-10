@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Dashboard.md",
+                "file": "06-Marketing/Campaña Salida al Mercado.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Dashboard"
+              "title": "Campaña Salida al Mercado"
             }
           }
         ]
@@ -185,12 +185,15 @@
   },
   "active": "6f1af9e561ba0662",
   "lastOpenFiles": [
-    "05-Decisiones/Historial.md",
     "Dashboard.md",
+    "04-Tecnico/Pendientes DEV.md",
+    "06-Marketing/Campaña Salida al Mercado.md",
+    "03-Legal/Registro AAIP.md",
+    "06-Marketing",
+    "02-Ventas/Canales.md",
+    "05-Decisiones/Historial.md",
     "02-Ventas/Tareas Humanas.md",
     "02-Ventas/Speech.md",
-    "02-Ventas/Canales.md",
-    "04-Tecnico/Pendientes DEV.md",
     "04-Tecnico/Endpoints.md",
     "04-Tecnico/Arquitectura.md",
     "03-Legal/Checklist.md",

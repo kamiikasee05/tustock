@@ -504,6 +504,7 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 | 2026-07-09 | **Dual MP tokens**: Código actualizado para soportar dos tokens de MP (Checkout Pro + Suscripciones). Env vars: TUSTOCK_MP_TOKEN y TUSTOCK_MP_SUBS_TOKEN. Fallback automático. | 🖥 DEV |
 | 2026-07-09 | **TELENOTAS creado**: Bot de Telegram para capturar ideas. Transcribe audios, guarda en inbox/, clasifica por proyecto con Groq LLM. Servicio 24/7. | 🧑 HUMANO + 🖥 DEV |
 | 2026-07-10 | **Canva MCP conectado**: Server remoto oficial de Canva (`https://mcp.canva.com/mcp`) configurado en `opencode.json`. Crear diseños, editar, exportar. Para imágenes de Facebook y ML. | 🧑 HUMANO + 🖥 DEV |
+| 2026-07-10 | **NO a farmacia multi-sucursal**: Se rechaza oportunidad de farmacia con 3 sucursales ($15M/mes facturación). No estamos preparados técnica ni comercialmente. El gap es abismal: falta AFIP, ANMAT, obras sociales, multi-sucursal, lotes/vencimiento, multi-usuario. Requeriría 10-15 meses de desarrollo y $6.5M-9.75M ARS. Nos mantenemos en mercado original (kioscos, librerías, almacenes). | 🧑 HUMANO + Dispatcher |
 
 ---
 ## 13. EQUIPO LEGAL
