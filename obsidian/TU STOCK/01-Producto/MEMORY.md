@@ -246,16 +246,20 @@ PC del cliente                          Cloud (Railway/VPS)
 - ✅ **Launcher unificado**: TUSTOCK.bat 8 opciones, auto-start con --quick, cloud agent auto-start
 - ✅ **Validación cloud**: sync de keys al cloud, validate contra API cloud, cache 7d offline, bloqueo por licencia
 - ✅ **Landing page**: `docs/index.html` servida via GitHub Pages
-- ✅ **Mercado Pago**: integración REST completa. Token en Railway configurado. Checkout Pro (pagos únicos) + Plan compartido (suscripciones) funcionando. Webhook configurado en el plan. Flujo MP 100% operativo.
+- ✅ **Mercado Pago**: integración REST completa. Dos apps con tokens exclusivos (Checkout Pro + Suscripciones). Plan de suscripción `27a1162efe9e47e68cd1349307b02eb2` creado desde cuenta TUSTOCK. Webhook configurable. Flujo MP 100% operativo con dual tokens.
+- ✅ **MCP Mercado Pago**: Server remoto oficial conectado en opencode.json. Para dev/testing/quality check.
+- ✅ **Cuentas dedicadas**: MP y ML con cuenta propia del proyecto (no más cuenta personal).
+- ✅ **Marketing**: Copies para Facebook Groups + guía de publicación en ML creados en `docs/marketing/`.
+- ✅ **Dual tokens MP**: `TUSTOCK_MP_TOKEN` (Checkout Pro) + `TUSTOCK_MP_SUBS_TOKEN` (Suscripciones) configurados en Railway.
 
 ### Prioridades actuales (Julio 2026)
 
 | Prioridad | Tarea | Quién | Por qué es crítica |
 |:---------:|-------|:-----:|-------------------|
 | 🔥 1 | **Comprar dominio tustock.com.ar** ($8.500) | 🧑 HUMANO | Tener presencia profesional. Landing page con dominio propio. |
-| 🔥 2 | **Campaña de salida al mercado** | 📢 MARKETING | Crear contenido para Facebook Groups, WhatsApp, ML. |
-| 🟡 3 | **Configurar Railway hobby ($5/mes)** | 🧑 HUMANO | Para 24/7 de validación cloud y monitor. |
-| 🟢 4 | **Registrar bases de datos en AAIP** (PASO 1 + 2) | 🧑 HUMANO | Obligación legal (Ley 25.326 art. 21). |
+| 🔥 2 | **Publicar en Facebook Groups** | 🧑 HUMANO | Copies listos en `docs/marketing/copies-facebook-grupos.md`. Solo copiar y pegar en los grupos. |
+| 🔥 3 | **Publicar en Mercado Libre** | 🧑 HUMANO | Guía lista en `docs/marketing/guia-mercadolibre.md`. Seguir los pasos. |
+| 🟡 4 | **Registrar bases de datos en AAIP** (PASO 1 + 2) | 🧑 HUMANO | Obligación legal (Ley 25.326 art. 21). Guía en `obsidian/TU STOCK/03-Legal/Registro AAIP.md`. |
 | 🟢 5 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
 | 🟢 6 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
 | 🟢 7 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
@@ -434,6 +438,8 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 - [feature] MCP MERCADO PAGO: Server remoto oficial de MP configurado en opencode.json (https://mcp.mercadopago.com/mcp). Conexión via OAuth. Herramientas: docs, test users, webhooks, quality check. NO reemplaza payments.py (producción). Para dev/testing. (2026-07-09)
 - [feature] DUAL MP TOKENS: cloud/config.py exporta MP_ACCESS_TOKEN (Checkout Pro) y MP_SUBS_TOKEN (Suscripciones). cloud/api.py usa el token correcto según operación. Fallback a MP_ACCESS_TOKEN si no hay segundo token. Fix webhook: topic=payment usa MP_SUBS_TOKEN. (2026-07-09)
 - [feature] DUAL MP TOKENS: cloud/config.py exporta MP_ACCESS_TOKEN (Checkout Pro) y MP_SUBS_TOKEN (Suscripciones). cloud/api.py usa el token correcto según operación. Fallback a MP_ACCESS_TOKEN si no hay segundo token. (2026-07-09)
+- [feature] TELENOTAS: Bot de Telegram para capturar ideas vía texto/audio. Transcribe audios con Whisper, guarda en inbox/ diario, clasifica por proyecto usando Groq LLM. Servicio 24/7 en Windows. (2026-07-09)
+- [feature] CANVA MCP: Server remoto oficial de Canva configurado en opencode.json (https://mcp.canva.com/mcp). Crear diseños, editar, exportar PNG/JPG/PDF. Para generar imágenes de Facebook y Mercado Libre. (2026-07-10)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
@@ -493,6 +499,8 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 | 2026-07-09 | **Cuentas MP y ML dedicadas al proyecto**: Creadas cuentas nuevas de Mercado Pago y Mercado Libre exclusivas para TUSTOCK. Se deja de usar la cuenta personal del humano. Las apps de MP (Checkout Pro y Suscripciones) deben crearse desde la cuenta nueva para tokens exclusivos. Tokens: Checkout Pro `APP_USR-5761...0902`, Suscripciones `APP_USR-8662...0902`. | 🧑 HUMANO |
 | 2026-07-09 | **Grupos de Facebook activos**: Humano se agregó a grupos de kiosqueros/almaceneros para publicitar TUSTOCK. Marketing crea copies para publicación. | 🧑 HUMANO + 📢 MARKETING |
 | 2026-07-09 | **Dual MP tokens**: Código actualizado para soportar dos tokens de MP (Checkout Pro + Suscripciones). Env vars: TUSTOCK_MP_TOKEN y TUSTOCK_MP_SUBS_TOKEN. Fallback automático. | 🖥 DEV |
+| 2026-07-09 | **TELENOTAS creado**: Bot de Telegram para capturar ideas. Transcribe audios, guarda en inbox/, clasifica por proyecto con Groq LLM. Servicio 24/7. | 🧑 HUMANO + 🖥 DEV |
+| 2026-07-10 | **Canva MCP conectado**: Server remoto oficial de Canva (`https://mcp.canva.com/mcp`) configurado en `opencode.json`. Crear diseños, editar, exportar. Para imágenes de Facebook y ML. | 🧑 HUMANO + 🖥 DEV |
 
 ---
 ## 13. EQUIPO LEGAL
@@ -566,4 +574,4 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 
 ---
 
-*Última actualización: 9 de Julio de 2026*
+*Última actualización: 10 de Julio de 2026*
