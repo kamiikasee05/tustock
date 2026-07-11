@@ -447,6 +447,8 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 - [feature] DISEÑOS FACEBOOK POST 2: "Desde casa veo las ventas del día" — diseño testimonial con caso real de clienta premium. Creado en Canva, exportado PNG. (2026-07-10)
 - [feature] DISEÑOS FACEBOOK POST 3: "¿Por qué TUSTOCK cuesta $80.000 y no $500.000?" — diseño comparativo precio vs competencia. Creado en Canva, exportado PNG. (2026-07-10)
 - [feature] NANO BANANA MCP: MCP de Google Nano Banana (Gemini 3.1 Flash Image) configurado en opencode.json como `@maheidem/nanobanana-mcp`. Generación de imágenes hiperrealistas para Facebook/ML usando el modelo de imagen de Google. Requiere GEMINI_API_KEY seteada como env var. (2026-07-10)
+- [feature] NANO BANANA MCP ELIMINADO: Eliminado de opencode.json por rate-limit de API free tier. El usuario genera imágenes directamente con los prompts documentados. (2026-07-10)
+- [feature] ARGENTINIZACIÓN DE PROMPTS: Los 3 prompts de imagen para Facebook Groups reescritos con ambientación argentina auténtica (kiosco con persianas, mosaico, alfajores, yerba, lotería; librería con cuadernos Rayita, cartelito de "abierto"; mate en la escena de precio). Actualizado en Dashboard.md, Tareas Humanas.md, Campaña Salida al Mercado.md y plan-imagenes-fb.md. (2026-07-10)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
@@ -512,6 +514,8 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 | 2026-07-10 | **Nano Banana MCP conectado**: Google Gemini 3.1 Flash Image MCP (`@maheidem/nanobanana-mcp`) configurado en opencode.json con GEMINI_API_KEY seteada. Generación de imágenes hiperrealistas para Facebook/ML. Reemplaza a Canva para contenido visual de marketing. | 🖥 DEV + 🧑 HUMANO |
 | 2026-07-10 | **Nano Banana MCP eliminado**: Eliminado de opencode.json por rate-limit de API free tier. El usuario genera imágenes directamente con los prompts documentados. | 🧑 HUMANO + Dispatcher |
 | 2026-07-10 | **Auditoría legal de prompts y copies**: Marketing + Legal revisaron los 3 prompts de imagen y 3 copies de Facebook. Legal emitió 4 directivas vinculantes (D1-D4) corregidas: "3 segundos" → "al instante", "30 días gratis" → con aclaración "(hasta 100 productos)", "$300.000+" → "cientos de miles", "Sus empleados" → "Tomá pedidos". También se corrigió "Hace 2 semanas" → "Hace unas semanas". Dictamen en `docs/legal/dictamen-prompts-imagenes.md`. | ⚖️ Legal + 📢 Marketing |
+| 2026-07-10 | **Nano Banana MCP eliminado por rate-limit**: Ambas API keys (personal y nueva) rate-limited por cuota diaria free tier de Google. El usuario genera imágenes directamente. Se actualizó opencode.json. | 🧑 HUMANO + Dispatcher |
+| 2026-07-10 | **ARGENTINIZACIÓN DE PROMPTS**: Los 3 prompts de imagen reescritos con ambientación argentina auténtica. Post 1: kiosco argentino con persianas, mosaico, lotería, alfajores. Post 2: librería con cuadernos Rayita, cartelito de "abierto". Post 3: mate en mostrador. Actualizados en todos los archivos de Marketing y Ventas. | 🧑 HUMANO + Dispatcher |
 
 ---
 ## 13. EQUIPO LEGAL
