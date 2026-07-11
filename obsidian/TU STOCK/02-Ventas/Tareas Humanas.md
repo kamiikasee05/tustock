@@ -4,31 +4,24 @@
 
 ---
 
-## 🔥 Prioridad Alta
+## 🔥 Orden de ejecución (confirmado)
 
-| # | Tarea | Tiempo |
-|:-:|-------|:------:|
-| 1 | **Generar las 3 imágenes** con los prompts de abajo usando tu generador de imágenes favorito | 30 min |
-| 2 | **Publicar Post 1 en Facebook Groups** — imagen + Copy 1 (ver sección de copies abajo) | 15 min |
-| 3 | **Comprar dominio tustock.com.ar** ($8.500) | 10 min |
-| 4 | Cobrar suscripción mes siguiente a clienta | 5 min |
-| 5 | Pedir testimonio + referidos a clienta | 30 min |
+> 1️⃣ Dominio → 2️⃣ Imágenes → 3️⃣ Facebook Groups → 4️⃣ Mercado Libre → 5️⃣ Railway (cuando se acaben los créditos)
 
-## 🟡 Prioridad Media
-
-| # | Tarea | Tiempo |
-|:-:|-------|:------:|
-| 6 | Publicar Post 2 en Facebook Groups (1 sem después del Post 1) | 15 min |
-| 7 | Publicar Post 3 en Facebook Groups (1 sem después del Post 2) | 15 min |
-| 8 | Configurar Railway hobby ($5/mes) | 5 min |
-| 9 | Instalar Monitor en PC de clienta | 1 hora |
-
-## 🟢 Prioridad Baja
-
-| # | Tarea | Tiempo |
-|:-:|-------|:------:|
-| 10 | **AAIP Paso 1:** Inscripción del Responsable (guía en [[03-Legal/Registro AAIP]]) | 2 horas |
-| 11 | **AAIP Paso 2:** Registro de la BD (después del paso 1) | 2 horas |
+| # | Tarea | Tiempo | Plata |
+|:-:|-------|:------:|:-----:|
+| 1 | **Comprar dominio tustock.com.ar** en nic.ar con CUIT+Clave Fiscal | 15 min | **$8.500** |
+| 2 | **Generar las 3 imágenes** con los prompts de la sección de abajo | 30 min | $0 |
+| 3 | **Publicar Post 1 en Facebook Groups** — imagen + copy (sección de abajo) | 15 min | $0 |
+| 4 | **Publicar Post 2 en Facebook Groups** (1 sem después del Post 1) | 15 min | $0 |
+| 5 | **Publicar Post 3 en Facebook Groups** (1 sem después del Post 2) | 15 min | $0 |
+| 6 | **Publicar en Mercado Libre** (guía en `docs/marketing/guia-mercadolibre.md`) | 30 min | $0 |
+| 7 | Pasar Railway a Hobby ($5/mes) cuando se acaben los créditos gratis | 5 min | $5 USD |
+| 8 | Instalar Monitor en PC de clienta | 1 hora | $0 |
+| 9 | Cobrar suscripción mes siguiente a clienta | 5 min | - |
+| 10 | Pedir testimonio + referidos a clienta | 30 min | $0 |
+| 11 | **AAIP Paso 1:** Inscripción del Responsable (guía en [[03-Legal/Registro AAIP]]) | 2 horas | $0 |
+| 12 | **AAIP Paso 2:** Registro de la BD (después del paso 1) | 2 horas | $0 |
 
 ---
 

@@ -258,13 +258,14 @@ PC del cliente                          Cloud (Railway/VPS)
 
 | Prioridad | Tarea | Quién | Por qué es crítica |
 |:---------:|-------|:-----:|-------------------|
-| 🔥 1 | **Comprar dominio tustock.com.ar** ($8.500) | 🧑 HUMANO | Tener presencia profesional. Landing page con dominio propio. |
-| 🔥 2 | **Publicar en Facebook Groups** | 🧑 HUMANO | Copies listos en `docs/marketing/copies-facebook-grupos.md`. Solo copiar y pegar en los grupos. |
+| 🔥 1 | **Comprar dominio tustock.com.ar** ($8.500) | 🧑 HUMANO | Presencia profesional. Landing page con dominio propio antes de publicitar. |
+| 🔥 2 | **Generar las 3 imágenes y publicar en Facebook Groups** | 🧑 HUMANO | Imágenes auditadas por Legal. Copies listos en `docs/marketing/copies-facebook-grupos.md`. Post 1: dolor de stock, Post 2: caso real, Post 3: precio. 1 por semana. |
 | 🔥 3 | **Publicar en Mercado Libre** | 🧑 HUMANO | Guía lista en `docs/marketing/guia-mercadolibre.md`. Seguir los pasos. |
-| 🟡 4 | **Registrar bases de datos en AAIP** (PASO 1 + 2) | 🧑 HUMANO | Obligación legal (Ley 25.326 art. 21). Guía en `obsidian/TU STOCK/03-Legal/Registro AAIP.md`. |
-| 🟢 5 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
-| 🟢 6 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
-| 🟢 7 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
+| 🟡 4 | **Pasar Railway a Hobby cuando se acaben los créditos gratis** | 🧑 HUMANO | $5/mes. El crédito free trial se usa primero, después se paga. |
+| 🟡 5 | **Registrar bases de datos en AAIP** (PASO 1 + 2) | 🧑 HUMANO | Obligación legal (Ley 25.326 art. 21). Guía en `obsidian/TU STOCK/03-Legal/Registro AAIP.md`. |
+| 🟢 6 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
+| 🟢 7 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
+| 🟢 8 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
 
 ---
 

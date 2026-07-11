@@ -50,13 +50,13 @@ Centro de comando del proyecto. Cada agente actualiza su sección.
 
 | #  | Agente       | Tarea | Urgencia |
 |:--:|:------------:|-------|:--------:|
-| 1  | 🧑 HUMANO    | **Generar las 3 imágenes** con los prompts de arriba (usando tu generador) | 🔥 |
-| 2  | 🧑 HUMANO    | **Publicar Post 1 en FB Groups** — imagen + [[06-Marketing/Campaña Salida al Mercado#Copy 1 - Gancho Dolor del inventario\|Copy 1]] | 🔥 |
-| 3  | 🧑 HUMANO    | **Comprar dominio tustock.com.ar** ($8.500) | 🔥 |
-| 4  | 🧑 HUMANO    | Publicar Post 2 en FB Groups (1 sem después) | 🟡 |
-| 5  | 🧑 HUMANO    | Publicar Post 3 en FB Groups (1 sem después) | 🟡 |
-| 6  | 📢 MARKETING | Exportar diseños Canva como PNG si no usás generador externo | 🟡 |
-| 7  | 🧑 HUMANO    | Configurar Railway hobby ($5/mes) | 🟡 |
+| 1  | 🧑 HUMANO    | **Comprar dominio tustock.com.ar** ($8.500) — presencia profesional | 🔥 |
+| 2  | 🧑 HUMANO    | **Generar las 3 imágenes** con los prompts (sección de arriba) | 🔥 |
+| 3  | 🧑 HUMANO    | **Publicar Post 1 en FB Groups** — imagen + [[06-Marketing/Campaña Salida al Mercado#Copy 1 - Gancho Dolor del inventario\|Copy 1]] | 🔥 |
+| 4  | 🧑 HUMANO    | Publicar Post 2 en FB Groups (1 sem después del Post 1) | 🟡 |
+| 5  | 🧑 HUMANO    | Publicar Post 3 en FB Groups (1 sem después del Post 2) | 🟡 |
+| 6  | 🧑 HUMANO    | **Publicar en Mercado Libre** — guía en `docs/marketing/guia-mercadolibre.md` | 🔥 |
+| 7  | 🧑 HUMANO    | Pasar Railway a Hobby ($5/mes) cuando se acaben los créditos gratis | 🟡 |
 | 8  | 🧑 HUMANO    | Instalar Monitor en PC de clienta | 🟡 |
 | 9  | 🧑 HUMANO    | Cobrar suscripción mes siguiente | 🔥 |
 | 10 | 🧑 HUMANO    | Pedir testimonio + referidos a clienta | 🔥 |
