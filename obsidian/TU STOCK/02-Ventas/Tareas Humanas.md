@@ -148,9 +148,18 @@ TUSTOCK — Ricardo Godoy | CUIT 20-33489288-4
 
 Ver prompts completos en [[Guia Mercado Libre#11 Prompts para las imágenes de ML 1200x1200]]
 
-**Para las screenshots reales** (hacelas vos con Win+Shift+S):
+**Para las 4 imágenes de ML:**
+
+| # | Imagen | Cómo |
+|:-:|--------|------|
+| 1 | Portada (logo + bullets) | Prompt sección 11 directo a Gemini |
+| 2 | Dashboard en mockup laptop | Subís captura a Gemini + prompt de sección 12 |
+| 3 | POS en mockup laptop | Subís captura a Gemini + prompt de sección 12 |
+| 4 | Checklist beneficios | Prompt sección 11 directo a Gemini |
+
+**Para las capturas de pantalla** (Win+Shift+S):
 1. El seed ya está cargado (15 productos + 7 ventas)
 2. Abrí `http://localhost:8090/` → dashboard
 3. Abrí `http://localhost:8090/sales` → POS
 4. Abrí `http://localhost:8090/products` → productos
-5. Ver instrucciones detalladas en [[Guia Mercado Libre#12 Screenshots — Qué capturar (hacelo VOS)]]
+5. Más detalle en [[Guia Mercado Libre#12 Screenshots — Qué capturar (hacelo VOS)]]

@@ -278,3 +278,25 @@ Product comparison card 1200x1200px square format, dark background (#0f172a). La
 5. Exportá PNG
 
 Los prompts de las 4 imágenes están en la [[Guia Mercado Libre#11 Prompts para las imágenes de ML 1200x1200|sección 11]] de esta misma guía.
+
+### Si preferís usar Gemini (desde chrome://gemini.google.com)
+
+**Para las imágenes 1 (Portada) y 4 (Checklist):** copiá los prompts de la sección 11 directo.
+
+**Para las imágenes 2 (Dashboard) y 3 (POS):**
+1. Abrí Gemini
+2. Subí la captura (el PNG que guardaste)
+3. Pegá este prompt:
+
+> "Tomá esta captura de pantalla y transformala en una imagen profesional para Mercado Libre. Pone el contenido de la captura dentro de una laptop moderna con bordes redondeados, sobre un fondo oscuro degradé #0f172a a #1e293b. Abajo agregá un label chico que diga 'Dashboard TUSTOCK — Stock y Ventas en tiempo real' en letra blanca delgada. Formato cuadrado 1200x1200px. Estilo mockup de producto tech, minimalista."
+
+Para el POS cambiá el label por "POS TUSTOCK — Cargá ventas al instante".
+
+### Resumen: tus 4 imágenes para ML
+
+| # | Imagen | Cómo la hacés |
+|:-:|--------|--------------|
+| 1 | **Portada** (logo + "Sin internet · Pago único · App Android") | Prompt sección 11 en Gemini |
+| 2 | **Dashboard** (captura dentro de laptop mockup) | Subís ml-dashboard.png + prompt de arriba |
+| 3 | **POS** (captura dentro de laptop mockup) | Subís ml-pos.png + prompt de arriba (cambiando el label) |
+| 4 | **Checklist** (4 beneficios + CTA) | Prompt sección 11 en Gemini |
