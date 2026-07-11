@@ -148,7 +148,9 @@ TUSTOCK — Ricardo Godoy | CUIT 20-33489288-4
 
 Ver prompts completos en [[Guia Mercado Libre#11 Prompts para las imágenes de ML 1200x1200]]
 
-**Para las screenshots reales** (recomendado):
-1. `cd server && python seed.py` → carga 15 productos + 7 ventas
-2. Iniciá TUSTOCK y sacá capturas del dashboard + POS
-3. Subilas a Canva con fondo oscuro TUSTOCK y exportá 1200x1200
+**Para las screenshots reales** (hacelas vos con Win+Shift+S):
+1. El seed ya está cargado (15 productos + 7 ventas)
+2. Abrí `http://localhost:8090/` → dashboard
+3. Abrí `http://localhost:8090/sales` → POS
+4. Abrí `http://localhost:8090/products` → productos
+5. Ver instrucciones detalladas en [[Guia Mercado Libre#12 Screenshots — Qué capturar (hacelo VOS)]]

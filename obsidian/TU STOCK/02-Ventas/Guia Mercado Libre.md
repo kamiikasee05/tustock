@@ -238,13 +238,43 @@ Product comparison card 1200x1200px square format, dark background (#0f172a). La
 
 ---
 
-## 12. Cómo tomar las screenshots reales
+## 12. Screenshots — Qué capturar (hacelo VOS)
 
-Para las imágenes 2 y 3, lo más profesional es capturar el sistema funcionando:
+> El sistema ya tiene datos de seed cargados (15 productos + 7 ventas).
+> Tomá las capturas con **Win+Shift+S**.
 
-1. Ejecutá el seed: `cd server && python seed.py` (borra datos viejos y carga 15 productos + 7 ventas)
-2. Iniciá TUSTOCK (`TUSTOCK.bat` > opción 1)
-3. Abrí el navegador en `http://localhost:8090`
-4. Capturá pantalla (Win+Shift+S) del dashboard y del POS
-5. Subí las capturas a Canva, poneles el fondo oscuro de TUSTOCK y texto overlay
-6. Exportá cuadrado 1200x1200
+### Captura 1 — Dashboard
+1. Abrí `http://localhost:8090/` en Chrome
+2. Esperá que cargue (1-2 segundos)
+3. Win+Shift+S → **Recorte rectangular**
+4. Seleccioná TODO el dashboard (las 4 tarjetas + tabla de stock bajo + acciones rápidas)
+5. Guardá como `ml-dashboard.png`
+
+**Muestra:** Ventas Hoy $7.050, 2 transacciones, 2 artículos, ticket promedio $3.525, tabla de stock bajo con alerta roja, y acciones rápidas.
+
+### Captura 2 — POS / Ventas
+1. Abrí `http://localhost:8090/sales` en Chrome
+2. Esperá que cargue
+3. Win+Shift+S → **Recorte rectangular**
+4. Seleccioná el panel de ventas (carrito, productos, total)
+5. Guardá como `ml-pos.png`
+
+**Muestra:** La interfaz del POS con selector de productos y carrito de compras.
+
+### Captura 3 — Productos
+1. Abrí `http://localhost:8090/products` en Chrome
+2. Esperá que cargue
+3. Win+Shift+S → **Recorte rectangular**
+4. Seleccioná la tabla de productos
+5. Guardá como `ml-products.png`
+
+**Muestra:** Lista de 15 productos con código, nombre, precio, stock.
+
+### Cómo usarlas en las imágenes de ML
+1. Abrí **Canva** → Crear diseño → 1200x1200 px
+2. Subí la captura
+3. Ponela sobre fondo oscuro TUSTOCK (#0f172a)
+4. Agregale texto overlay si querés (ej: "Dashboard en tiempo real")
+5. Exportá PNG
+
+Los prompts de las 4 imágenes están en la [[Guia Mercado Libre#11 Prompts para las imágenes de ML 1200x1200|sección 11]] de esta misma guía.
