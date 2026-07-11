@@ -204,3 +204,47 @@ Incluir en la descripción y tags:
 - [ ] Preguntas frecuentes preparadas
 - [ ] Disponibilidad para responder WhatsApp rápido
 - [ ] Link de la landing page verificado: https://kamiikasee05.github.io/tustock
+
+---
+
+## 11. Prompts para las imágenes de ML (1200x1200)
+
+### Imagen 1 — Portada (logo + propuesta de valor)
+
+```
+Product photography 1200x1200px square format, dark background (#0f172a to #1e293b gradient). Bold white text centered: "TUSTOCK" in large modern sans-serif font. Below in smaller cyan (#06b6d4): "Sistema de Stock y Ventas". Three bullet points in white with cyan checkmarks: "✅ Sin internet" / "✅ Pago único" / "✅ App Android incluida". Bottom right corner subtle glow effect. Clean, professional software product packaging style. No photos, pure graphic design. High-end SaaS product aesthetic.
+```
+
+### Imagen 2 — Dashboard con datos
+
+> **⚠️ Esta funciona mejor como screenshot real del sistema con seed cargado.**
+> Si preferís generarla con IA:
+
+```
+Software interface mockup 1200x1200px square format, dark theme dashboard with sidebar menu. Main panel showing a summary card row: "Ventas Hoy: $45.230" in green, "Stock Bajo: 3 productos" in red, "Clientes: 12". Below a table with columns Producto, Stock, Precio. Right side a small chart bar graph in cyan. Professional POS/dashboard interface, dark background, clean modern UI, no text outside the screen. Mockup inside a subtle laptop frame. Cinematic lighting.
+```
+
+### Imagen 3 — POS / App Android
+
+```
+Split screen 1200x1200px square format. Left half (70%): dark themed POS interface showing a sale in progress with 4 items listed (Coca-Cola x2, Alfajor, Yerba, Galletitas), total "$8.450" in large green text, payment method buttons "Efectivo" / "Tarjeta" / "Fiado" in cyan. Right half (30%): smartphone mockup showing Android app with barcode scanning interface, camera viewfinder overlay scanning a product. Dark background consistent with TUSTOCK brand. Clean modern UI, photo-realistic.
+```
+
+### Imagen 4 — Comparativa / Checklist
+
+```
+Product comparison card 1200x1200px square format, dark background (#0f172a). Large white checkmark icon at top. Four benefit rows with icons: "💻 En tu PC — No en la nube" / "⚡ 15 min de instalación — Sin técnico" / "📱 App Android incluida — Escaneá códigos" / "💰 Pago único — Sin cuotas". Each row in white text with cyan accent. Bottom CTA button: "PROBALO 30 DÍAS GRATIS (hasta 100 productos)". Clean minimal design, professional software landing page style.
+```
+
+---
+
+## 12. Cómo tomar las screenshots reales
+
+Para las imágenes 2 y 3, lo más profesional es capturar el sistema funcionando:
+
+1. Ejecutá el seed: `cd server && python seed.py` (borra datos viejos y carga 15 productos + 7 ventas)
+2. Iniciá TUSTOCK (`TUSTOCK.bat` > opción 1)
+3. Abrí el navegador en `http://localhost:8090`
+4. Capturá pantalla (Win+Shift+S) del dashboard y del POS
+5. Subí las capturas a Canva, poneles el fondo oscuro de TUSTOCK y texto overlay
+6. Exportá cuadrado 1200x1200

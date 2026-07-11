@@ -141,3 +141,14 @@ TUSTOCK — Ricardo Godoy | CUIT 20-33489288-4
 | Railway hobby | USD 5 (~$6.000 ARS) | Mensual |
 | Comisión MP | ~4% | Por transacción |
 | **Ingreso actual** | $6.000 ARS/mes | 1 clienta premium |
+
+---
+
+## 📸 Imágenes para ML (nuevas, las de FB no sirven)
+
+Ver prompts completos en [[Guia Mercado Libre#11 Prompts para las imágenes de ML 1200x1200]]
+
+**Para las screenshots reales** (recomendado):
+1. `cd server && python seed.py` → carga 15 productos + 7 ventas
+2. Iniciá TUSTOCK y sacá capturas del dashboard + POS
+3. Subilas a Canva con fondo oscuro TUSTOCK y exportá 1200x1200
