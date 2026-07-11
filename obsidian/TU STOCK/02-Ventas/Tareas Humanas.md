@@ -1,6 +1,6 @@
 # Tareas HUMANAS Pendientes
 
-**Actualizado: 10 de Julio 2026**
+**Actualizado: 11 de Julio 2026**
 
 ---
 
@@ -8,16 +8,15 @@
 
 > 1️⃣ Dominio → 2️⃣ Imágenes → 3️⃣ Facebook Groups → 4️⃣ Mercado Libre → 5️⃣ Railway (cuando se acaben los créditos)
 
-| # | Tarea | Tiempo | Plata |
-|:-:|-------|:------:|:-----:|
-| 1 | **Comprar dominio tustock.com.ar** en nic.ar con CUIT+Clave Fiscal | 15 min | **$8.500** |
-| 2 | **Generar las 3 imágenes** con los prompts de la sección de abajo | 30 min | $0 |
-| 3 | **Publicar Post 1 en Facebook Groups** — imagen + copy (sección de abajo) | 15 min | $0 |
-| 4 | **Publicar Post 2 en Facebook Groups** (1 sem después del Post 1) | 15 min | $0 |
-| 5 | **Publicar Post 3 en Facebook Groups** (1 sem después del Post 2) | 15 min | $0 |
-| 6 | **Publicar en Mercado Libre** ([[Guia Mercado Libre]]) | 30 min | $0 |
-| 7 | Pasar Railway a Hobby ($5/mes) cuando se acaben los créditos gratis | 5 min | $5 USD |
-| 8 | Instalar Monitor en PC de clienta | 1 hora | $0 |
+| # | Tarea | Tiempo | Plata | Estado |
+|:-:|-------|:------:|:-----:|:------:|
+| 1 | **Comprar dominio tustock.com.ar** en nic.ar con CUIT+Clave Fiscal | 15 min | **$8.500** | ⏳ Pendiente |
+| ✅ | **Post 1 publicado en Facebook** (3 grupos, 30k+ c/u) | — | $0 | ✅ **Listo 11/7** |
+| 2 | **Publicar Post 2 en Facebook Groups** (caso real testimonial) | 15 min | $0 | ⏳ 1 sem después |
+| 3 | **Publicar Post 3 en Facebook Groups** (precio vs competencia) | 15 min | $0 | ⏳ 1 sem después del Post 2 |
+| 4 | **Publicar en Mercado Libre** ([[Guia Mercado Libre]]) — imágenes listas | 30 min | $0 | 🟡 Imágenes listas, falta publicar |
+| 5 | Pasar Railway a Hobby ($5/mes) cuando se acaben los créditos gratis | 5 min | $5 USD | ⏳ |
+| 6 | Instalar Monitor en PC de clienta | 1 hora | $0 | ⏳ |
 | 9 | Cobrar suscripción mes siguiente a clienta | 5 min | - |
 | 10 | Pedir testimonio + referidos a clienta | 30 min | $0 |
 | 11 | **AAIP Paso 1:** Inscripción del Responsable (guía en [[03-Legal/Registro AAIP]]) | 2 horas | $0 |

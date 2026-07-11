@@ -259,8 +259,9 @@ PC del cliente                          Cloud (Railway/VPS)
 | Prioridad | Tarea | Quién | Por qué es crítica |
 |:---------:|-------|:-----:|-------------------|
 | 🔥 1 | **Comprar dominio tustock.com.ar** ($8.500) | 🧑 HUMANO | Presencia profesional. Landing page con dominio propio antes de publicitar. |
-| 🔥 2 | **Generar las 3 imágenes y publicar en Facebook Groups** | 🧑 HUMANO | Imágenes auditadas por Legal. Copies listos en `docs/marketing/copies-facebook-grupos.md`. Post 1: dolor de stock, Post 2: caso real, Post 3: precio. 1 por semana. |
-| 🔥 3 | **Publicar en Mercado Libre** | 🧑 HUMANO | Guía lista en `docs/marketing/guia-mercadolibre.md`. Seguir los pasos. |
+| ✅ | **Post 1 publicado en 3 grupos de Facebook** (30k+ miembros c/u) | 🧑 HUMANO | Hecho 11/7. Post 2: dentro de 1 semana. Post 3: 1 sem después. |
+| 🟢 2 | **Publicar Post 2 en Facebook Groups** (caso real testimonial) | 🧑 HUMANO | 1 sem después del Post 1. Copy + imagen lista. |
+| 🔥 3 | **Publicar en Mercado Libre** | 🧑 HUMANO | Guía + prompts + imágenes generadas. Solo falta publicar. |
 | 🟡 4 | **Pasar Railway a Hobby cuando se acaben los créditos gratis** | 🧑 HUMANO | $5/mes. El crédito free trial se usa primero, después se paga. |
 | 🟡 5 | **Registrar bases de datos en AAIP** (PASO 1 + 2) | 🧑 HUMANO | Obligación legal (Ley 25.326 art. 21). Guía en `obsidian/TU STOCK/03-Legal/Registro AAIP.md`. |
 | 🟢 6 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
@@ -449,6 +450,9 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 - [feature] NANO BANANA MCP: MCP de Google Nano Banana (Gemini 3.1 Flash Image) configurado en opencode.json como `@maheidem/nanobanana-mcp`. Generación de imágenes hiperrealistas para Facebook/ML usando el modelo de imagen de Google. Requiere GEMINI_API_KEY seteada como env var. (2026-07-10)
 - [feature] NANO BANANA MCP ELIMINADO: Eliminado de opencode.json por rate-limit de API free tier. El usuario genera imágenes directamente con los prompts documentados. (2026-07-10)
 - [feature] ARGENTINIZACIÓN DE PROMPTS: Los 3 prompts de imagen para Facebook Groups reescritos con ambientación argentina auténtica (kiosco con persianas, mosaico, alfajores, yerba, lotería; librería con cuadernos Rayita, cartelito de "abierto"; mate en la escena de precio). Actualizado en Dashboard.md, Tareas Humanas.md, Campaña Salida al Mercado.md y plan-imagenes-fb.md. (2026-07-10)
+- [feature] PRIMER POST EN FACEBOOK: Publicado Post 1 ("¿Cuánto stock tenés AHORA?") en 3 grupos de Facebook de 30k+ miembros c/u. Copy auditado por Legal+Marketing. (2026-07-11)
+- [feature] GUIA ML EN OBSIDIAN: Copiada `docs/marketing/guia-mercadolibre.md` a obsidian/02-Ventas/ con prompts para 4 imágenes ML (1200x1200), instrucciones de captura de screenshots y prompts para Gemini mockups. (2026-07-11)
+- [feature] ML IMAGES LISTAS: Las 4 imágenes de Mercado Libre generadas via Gemini en Chrome usando prompts con mockups de laptop sobre fondo oscuro TUSTOCK. Listas para publicar. (2026-07-11)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
@@ -516,6 +520,9 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 | 2026-07-10 | **Auditoría legal de prompts y copies**: Marketing + Legal revisaron los 3 prompts de imagen y 3 copies de Facebook. Legal emitió 4 directivas vinculantes (D1-D4) corregidas: "3 segundos" → "al instante", "30 días gratis" → con aclaración "(hasta 100 productos)", "$300.000+" → "cientos de miles", "Sus empleados" → "Tomá pedidos". También se corrigió "Hace 2 semanas" → "Hace unas semanas". Dictamen en `docs/legal/dictamen-prompts-imagenes.md`. | ⚖️ Legal + 📢 Marketing |
 | 2026-07-10 | **Nano Banana MCP eliminado por rate-limit**: Ambas API keys (personal y nueva) rate-limited por cuota diaria free tier de Google. El usuario genera imágenes directamente. Se actualizó opencode.json. | 🧑 HUMANO + Dispatcher |
 | 2026-07-10 | **ARGENTINIZACIÓN DE PROMPTS**: Los 3 prompts de imagen reescritos con ambientación argentina auténtica. Post 1: kiosco argentino con persianas, mosaico, lotería, alfajores. Post 2: librería con cuadernos Rayita, cartelito de "abierto". Post 3: mate en mostrador. Actualizados en todos los archivos de Marketing y Ventas. | 🧑 HUMANO + Dispatcher |
+| 2026-07-11 | **PRIMER POST EN FACEBOOK PUBLICADO**: Post 1 ("¿Cuánto stock tenés AHORA?") publicado en 3 grupos de Facebook de 30k+ miembros c/u. Copy+lienzo auditado por Legal+Marketing. | 🧑 HUMANO + Dispatcher |
+| 2026-07-11 | **GUIA ML EN OBSIDIAN**: Guía de Mercado Libre movida a `obsidian/02-Ventas/` con prompts para 4 imágenes ML + instrucciones de captura + prompts Gemini. | 🧑 HUMANO + Dispatcher |
+| 2026-07-11 | **IMÁGENES ML GENERADAS**: Las 4 imágenes de Mercado Libre listas (portada, dashboard mockup, POS mockup, checklist) generadas vía Gemini en Chrome. Pendiente publicar en ML. | 🧑 HUMANO |
 
 ---
 ## 13. EQUIPO LEGAL
@@ -589,4 +596,4 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 
 ---
 
-*Última actualización: 10 de Julio de 2026*
+*Última actualización: 11 de Julio de 2026*
