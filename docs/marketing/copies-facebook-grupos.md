@@ -18,14 +18,14 @@ Si un producto se te rompe, se vence o "mágicamente desaparece", ya perdiste pl
 TUSTOCK es un sistema que instalás en tu PC en 15 minutos. Sin técnico, sin complicaciones.
 
 ✅ Sabés cuánto tenés de cada cosa en tiempo real
-✅ Registrás ventas en 3 segundos con el carrito POS
+✅ Registrás ventas al instante con el carrito POS
 ✅ Escaneás códigos de barras con tu celular (app Android incluida)
 ✅ Generás informes de ventas, métodos de pago y top productos
 ✅ Exportás todo a Excel
 
 Y lo mejor: **funciona sin internet**. Tus datos están en tu PC, no en la nube.
 
-Probá 30 días gratis sin poner un peso:
+Probá 30 días gratis (hasta 100 productos) sin poner un peso:
 
 https://wa.me/5493826403110?text=Hola!%20Quiero%20probar%20TUSTOCK
 
@@ -46,7 +46,7 @@ Más info: https://kamiikasee05.github.io/tustock
 "Desde casa veo las ventas del día, el stock bajo y quién me debe plata."
 
 Una librería compró TUSTOCK hace unas semanas. Hoy:
-→ Sus empleados toman pedidos escaneando códigos con el celu
+→ Tomá pedidos escaneando códigos con el celu
 → Ella ve las ventas desde su casa sin estar en el negocio
 → Sabe exactamente qué falta y qué sobra
 → No pierde tiempo revisando cuadernos por el fiado
@@ -55,7 +55,7 @@ Una librería compró TUSTOCK hace unas semanas. Hoy:
 
 TUSTOCK es un sistema de stock y ventas para kioscos, librerías y almacenes. Se paga una sola vez ($80.000) o por mes ($8.000/mes).
 
-30 días de prueba gratis. Sin compromiso.
+30 días de prueba gratis (hasta 100 productos). Sin compromiso.
 
 https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20Trial%20de%20TUSTOCK
 
@@ -73,7 +73,7 @@ https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20Trial%20de%20TUSTOCK
 
 ¿Cuánto estás pagando por tu sistema de gestión?
 
-Hay opciones que te cobran $300.000+ por año. Tienen contabilidad, e-commerce, facturación... cosas que un kiosco o almacén no usa.
+Hay opciones que te cobran cientos de miles por año. Tienen contabilidad, e-commerce, facturación... cosas que un kiosco o almacén no usa.
 
 TUSTOCK es distinto:
 
@@ -86,7 +86,7 @@ TUSTOCK es distinto:
 
 Y si querés ver ventas desde el celular, el plan Suscripción incluye Monitor Cloud con URL fija.
 
-Probá 30 días gratis antes de decidir:
+Probá 30 días gratis (hasta 100 productos) antes de decidir:
 
 https://wa.me/5493826403110?text=Hola!%20Quiero%20info%20de%20TUSTOCK
 

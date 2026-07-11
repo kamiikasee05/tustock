@@ -509,6 +509,8 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 | 2026-07-10 | **Canva MCP conectado**: Server remoto oficial de Canva (`https://mcp.canva.com/mcp`) configurado en `opencode.json`. Crear diseños, editar, exportar. Para imágenes de Facebook y ML. | 🧑 HUMANO + 🖥 DEV |
 | 2026-07-10 | **NO a farmacia multi-sucursal**: Se rechaza oportunidad de farmacia con 3 sucursales ($15M/mes facturación). No estamos preparados técnica ni comercialmente. El gap es abismal: falta AFIP, ANMAT, obras sociales, multi-sucursal, lotes/vencimiento, multi-usuario. Requeriría 10-15 meses de desarrollo y $6.5M-9.75M ARS. Nos mantenemos en mercado original (kioscos, librerías, almacenes). | 🧑 HUMANO + Dispatcher |
 | 2026-07-10 | **Nano Banana MCP conectado**: Google Gemini 3.1 Flash Image MCP (`@maheidem/nanobanana-mcp`) configurado en opencode.json con GEMINI_API_KEY seteada. Generación de imágenes hiperrealistas para Facebook/ML. Reemplaza a Canva para contenido visual de marketing. | 🖥 DEV + 🧑 HUMANO |
+| 2026-07-10 | **Nano Banana MCP eliminado**: Eliminado de opencode.json por rate-limit de API free tier. El usuario genera imágenes directamente con los prompts documentados. | 🧑 HUMANO + Dispatcher |
+| 2026-07-10 | **Auditoría legal de prompts y copies**: Marketing + Legal revisaron los 3 prompts de imagen y 3 copies de Facebook. Legal emitió 4 directivas vinculantes (D1-D4) corregidas: "3 segundos" → "al instante", "30 días gratis" → con aclaración "(hasta 100 productos)", "$300.000+" → "cientos de miles", "Sus empleados" → "Tomá pedidos". También se corrigió "Hace 2 semanas" → "Hace unas semanas". Dictamen en `docs/legal/dictamen-prompts-imagenes.md`. | ⚖️ Legal + 📢 Marketing |
 
 ---
 ## 13. EQUIPO LEGAL

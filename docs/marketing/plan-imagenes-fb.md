@@ -37,19 +37,19 @@ Exportar cuando el humano vaya a publicar cada post. Las imágenes se descargan 
 ### Prompt Post 1 — Dolor del inventario
 
 ```
-Social media post 1080x1350px, dark blue gradient background (#0f172a to #1e293b). A frustrated small shop owner standing in a messy storage room surrounded by cardboard boxes, looking at a notebook confused. Text overlay in bold white sans-serif: "¿Cuánto stock tenés AHORA?" Subtext in light gray: "No más o menos. No creo que quedan." Green checkmark icons listing: Stock en tiempo real · Ventas en 3 segundos · App Android. CTA button in cyan blue: "PROBALO 30 DÍAS GRATIS". Clean, minimal, moody lighting.
+Social media post 1080x1350px, dark blue gradient background (#0f172a to #1e293b). A frustrated small shop owner standing in a messy storage room surrounded by cardboard boxes, looking at a notebook confused. Text overlay in bold white sans-serif: "¿Cuánto stock tenés AHORA?" Subtext in light gray: "No más o menos. No creo que quedan." Green checkmark icons listing: Stock en tiempo real · Ventas al instante · App Android. CTA button in cyan blue: "PROBALO 30 DÍAS GRATIS (hasta 100 productos)". Clean, minimal, moody lighting.
 ```
 
 ### Prompt Post 2 — Caso real / testimonial
 
 ```
-Social media post 1080x1350px, dark blue gradient background. A warm, cozy stationery shop interior seen from a distance, warm sunlight coming through the window, shelves with notebooks. A smartphone mockup in foreground showing a dashboard with sales graphs. Quote text in cyan blue larger font: "Desde casa veo las ventas del día, el stock bajo y quién me debe plata." Below: "Clienta con librería — Hace 2 semanas." Green checkmarks listing benefits. CTA button: "PROBALO 30 DÍAS GRATIS". Photo-realistic, authentic, not staged.
+Social media post 1080x1350px, dark blue gradient background. A warm, cozy stationery shop interior seen from a distance, warm sunlight coming through the window, shelves with notebooks. A smartphone mockup in foreground showing a dashboard with sales graphs. Quote text in cyan blue larger font: "Desde casa veo las ventas del día, el stock bajo y quién me debe plata." Below: "Clienta con librería — Hace unas semanas." Green checkmarks listing benefits. CTA button: "PROBALO 30 DÍAS GRATIS (hasta 100 productos)". Photo-realistic, authentic, not staged.
 ```
 
 ### Prompt Post 3 — Precio vs competencia
 
 ```
-Social media post 1080x1350px, dark blue gradient background. Split screen visual: Left side in gray/red showing a complex dashboard full of charts and numbers with a crossed out "$300.000+/año". Right side in green/cyan showing a clean simple tablet POS interface with "$80.000 pago único" in large bold green numbers. In the middle, a VS badge. Bottom text: "O $8.000/mes con Monitor Cloud". CTA button. Clean comparison layout.
+Social media post 1080x1350px, dark blue gradient background. Split screen visual: Left side in gray/red showing a complex dashboard full of charts and numbers with a crossed out "cientos de miles por año". Right side in green/cyan showing a clean simple tablet POS interface with "$80.000 pago único" in large bold green numbers. In the middle, a VS badge. Bottom text: "O $8.000/mes con Monitor Cloud". CTA button. Clean comparison layout.
 ```
 
 ### Cuándo usar Nano Banana

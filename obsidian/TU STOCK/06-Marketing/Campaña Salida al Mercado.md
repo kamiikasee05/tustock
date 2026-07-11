@@ -83,7 +83,7 @@ Se crearon 3 diseños en Canva para Facebook Groups. Luego se exploró Nano Bana
 - **Canva:** [Editar](https://www.canva.com/d/9ZOA3xjQsQhOkcU) | [Ver](https://www.canva.com/d/k3YbHuYsh797EPF)
 - **Copy asociado:** `docs/marketing/copies-facebook-grupos.md` → Copy 1
 - **Prompt Nano Banana (alternativa futura):**
-  > Social media post 1080x1350px, dark blue gradient background (#0f172a to #1e293b). A frustrated small shop owner standing in a messy storage room surrounded by cardboard boxes, looking at a notebook confused. Text overlay in bold white sans-serif: "¿Cuánto stock tenés AHORA?" Subtext in light gray: "No más o menos. No creo que quedan." Green checkmark icons listing: Stock en tiempo real · Ventas en 3 segundos · App Android. CTA button in cyan blue: "PROBALO 30 DÍAS GRATIS". Clean, minimal, moody lighting.
+  > Social media post 1080x1350px, dark blue gradient background (#0f172a to #1e293b). A frustrated small shop owner standing in a messy storage room surrounded by cardboard boxes, looking at a notebook confused. Text overlay in bold white sans-serif: "¿Cuánto stock tenés AHORA?" Subtext in light gray: "No más o menos. No creo que quedan." Green checkmark icons listing: Stock en tiempo real · Ventas al instante · App Android. CTA button in cyan blue: "PROBALO 30 DÍAS GRATIS (hasta 100 productos)". Clean, minimal, moody lighting.
 
 ### Post 2 — "Desde casa veo las ventas del día"
 - **Ángulo:** Testimonial / caso real de clienta premium
@@ -91,7 +91,7 @@ Se crearon 3 diseños en Canva para Facebook Groups. Luego se exploró Nano Bana
 - **Canva:** [Editar](https://www.canva.com/d/PlmLxk4srDWDw02) | [Ver](https://www.canva.com/d/6qQoA2RJ3HariPL)
 - **Copy asociado:** `docs/marketing/copies-facebook-grupos.md` → Copy 2
 - **Prompt Nano Banana (alternativa futura):**
-  > Social media post 1080x1350px, dark blue gradient background. A warm, cozy stationery shop interior seen from a distance, warm sunlight coming through the window, shelves with notebooks. A smartphone mockup in foreground showing a dashboard with sales graphs. Quote text in cyan blue larger font: "Desde casa veo las ventas del día, el stock bajo y quién me debe plata." Below: "Clienta con librería — Hace 2 semanas." Green checkmarks listing benefits. CTA button: "PROBALO 30 DÍAS GRATIS". Photo-realistic, authentic, not staged.
+  > Social media post 1080x1350px, dark blue gradient background. A warm, cozy stationery shop interior seen from a distance, warm sunlight coming through the window, shelves with notebooks. A smartphone mockup in foreground showing a dashboard with sales graphs. Quote text in cyan blue larger font: "Desde casa veo las ventas del día, el stock bajo y quién me debe plata." Below: "Clienta con librería — Hace unas semanas." Green checkmarks listing benefits. CTA button: "PROBALO 30 DÍAS GRATIS (hasta 100 productos)". Photo-realistic, authentic, not staged.
 
 ### Post 3 — "¿Por qué TUSTOCK cuesta $80.000 y no $500.000?"
 - **Ángulo:** Comparación precio vs competencia
@@ -99,7 +99,7 @@ Se crearon 3 diseños en Canva para Facebook Groups. Luego se exploró Nano Bana
 - **Canva:** [Editar](https://www.canva.com/d/ivOARSZ2xn-x_9A) | [Ver](https://www.canva.com/d/fNRFiRXxYEbKNPT)
 - **Copy asociado:** `docs/marketing/copies-facebook-grupos.md` → Copy 3
 - **Prompt Nano Banana (alternativa futura):**
-  > Social media post 1080x1350px, dark blue gradient background. Split screen visual: Left side in gray/red showing a complex dashboard full of charts and numbers with a crossed out "$300.000+/año". Right side in green/cyan showing a clean simple tablet POS interface with "$80.000 pago único" in large bold green numbers. In the middle, a VS badge. Bottom text: "O $8.000/mes con Monitor Cloud". CTA button. Clean comparison layout.
+  > Social media post 1080x1350px, dark blue gradient background. Split screen visual: Left side in gray/red showing a complex dashboard full of charts and numbers with a crossed out "cientos de miles por año". Right side in green/cyan showing a clean simple tablet POS interface with "$80.000 pago único" in large bold green numbers. In the middle, a VS badge. Bottom text: "O $8.000/mes con Monitor Cloud". CTA button. Clean comparison layout.
 
 ---
 
@@ -118,14 +118,14 @@ Si un producto se te rompe, se vence o "mágicamente desaparece", ya perdiste pl
 TUSTOCK es un sistema que instalás en tu PC en 15 minutos. Sin técnico, sin complicaciones.
 
 ✅ Sabés cuánto tenés de cada cosa en tiempo real
-✅ Registrás ventas en 3 segundos con el carrito POS
+✅ Registrás ventas al instante con el carrito POS
 ✅ Escaneás códigos de barras con tu celular (app Android incluida)
 ✅ Generás informes de ventas, métodos de pago y top productos
 ✅ Exportás todo a Excel
 
 Y lo mejor: **funciona sin internet**. Tus datos están en tu PC, no en la nube.
 
-Probá 30 días gratis sin poner un peso:
+Probá 30 días gratis (hasta 100 productos) sin poner un peso:
 
 https://wa.me/5493826403110?text=Hola!%20Quiero%20probar%20TUSTOCK
 
@@ -144,7 +144,7 @@ Más info: https://kamiikasee05.github.io/tustock
 "Desde casa veo las ventas del día, el stock bajo y quién me debe plata."
 
 Una librería compró TUSTOCK hace unas semanas. Hoy:
-→ Sus empleados toman pedidos escaneando códigos con el celu
+→ Tomá pedidos escaneando códigos con el celu
 → Ella ve las ventas desde su casa sin estar en el negocio
 → Sabe exactamente qué falta y qué sobra
 → No pierde tiempo revisando cuadernos por el fiado
@@ -153,7 +153,7 @@ Una librería compró TUSTOCK hace unas semanas. Hoy:
 
 TUSTOCK es un sistema de stock y ventas para kioscos, librerías y almacenes. Se paga una sola vez ($80.000) o por mes ($8.000/mes).
 
-30 días de prueba gratis. Sin compromiso.
+30 días de prueba gratis (hasta 100 productos). Sin compromiso.
 
 https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20Trial%20de%20TUSTOCK
 
@@ -169,7 +169,7 @@ https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20Trial%20de%20TUSTOCK
 
 ¿Cuánto estás pagando por tu sistema de gestión?
 
-Hay opciones que te cobran $300.000+ por año. Tienen contabilidad, e-commerce, facturación... cosas que un kiosco o almacén no usa.
+Hay opciones que te cobran cientos de miles por año. Tienen contabilidad, e-commerce, facturación... cosas que un kiosco o almacén no usa.
 
 TUSTOCK es distinto:
 
@@ -182,7 +182,7 @@ TUSTOCK es distinto:
 
 Y si querés ver ventas desde el celular, el plan Suscripción incluye Monitor Cloud con URL fija.
 
-Probá 30 días gratis antes de decidir:
+Probá 30 días gratis (hasta 100 productos) antes de decidir:
 
 https://wa.me/5493826403110?text=Hola!%20Quiero%20info%20de%20TUSTOCK
 
