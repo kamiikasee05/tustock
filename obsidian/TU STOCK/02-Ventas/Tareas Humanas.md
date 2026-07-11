@@ -15,7 +15,7 @@
 | 3 | **Publicar Post 1 en Facebook Groups** — imagen + copy (sección de abajo) | 15 min | $0 |
 | 4 | **Publicar Post 2 en Facebook Groups** (1 sem después del Post 1) | 15 min | $0 |
 | 5 | **Publicar Post 3 en Facebook Groups** (1 sem después del Post 2) | 15 min | $0 |
-| 6 | **Publicar en Mercado Libre** (guía en `docs/marketing/guia-mercadolibre.md`) | 30 min | $0 |
+| 6 | **Publicar en Mercado Libre** ([[Guia Mercado Libre]]) | 30 min | $0 |
 | 7 | Pasar Railway a Hobby ($5/mes) cuando se acaben los créditos gratis | 5 min | $5 USD |
 | 8 | Instalar Monitor en PC de clienta | 1 hora | $0 |
 | 9 | Cobrar suscripción mes siguiente a clienta | 5 min | - |
