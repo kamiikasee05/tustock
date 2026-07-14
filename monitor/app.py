@@ -47,29 +47,41 @@ LOGIN_HTML = r"""<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TUSTOCK Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f2f5;display:flex;justify-content:center;align-items:center;min-height:100vh}
-.card{background:#fff;border-radius:16px;padding:40px;width:90%;max-width:380px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
-h1{font-size:22px;margin-bottom:4px;color:#1a1a2e}
-p{font-size:13px;color:#6b7280;margin-bottom:24px}
-label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px}
-input{width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-bottom:16px}
-button{width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer}
-button:hover{background:#1d4ed8}
-.error{color:#dc2626;font-size:13px;margin-bottom:12px;display:none}
+body{font-family:'Inter',system-ui,sans-serif;background:#10131a;color:#e1e2ec;display:flex;justify-content:center;align-items:center;min-height:100vh;-webkit-font-smoothing:antialiased}
+.login-wrapper{width:90%;max-width:380px}
+.login-card{background:rgba(30,41,59,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:40px 32px}
+.login-logo{font-size:24px;font-weight:900;color:#adc6ff;letter-spacing:-0.5px;margin-bottom:6px;text-align:center}
+.login-sub{font-size:13px;color:#8b95a5;margin-bottom:28px;text-align:center;font-weight:500}
+.error{color:#ffb4ab;font-size:13px;margin-bottom:14px;display:none;text-align:center;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.2);border-radius:8px;padding:8px 12px}
+label{font-size:12px;font-weight:600;color:#8b95a5;display:block;margin-bottom:6px;letter-spacing:0.3px}
+input{width:100%;padding:12px 14px;background:rgba(11,14,21,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:14px;font-family:inherit;color:#e1e2ec;margin-bottom:18px;outline:none;transition:border-color 0.2s}
+input:focus{border-color:#4d8eff;box-shadow:0 0 0 2px rgba(77,142,255,0.2)}
+input::placeholder{color:#424754}
+button{width:100%;padding:13px;background:linear-gradient(135deg,#4d8eff,#3a6fdb);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;margin-top:4px}
+button:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(77,142,255,0.3)}
+button:active{transform:translateY(0)}
+.login-footer{text-align:center;margin-top:20px;font-size:11px;color:#424754}
+@media(max-width:420px){.login-card{padding:32px 24px}}
 </style>
 </head>
 <body>
-<div class="card">
-<h1>TUSTOCK Monitor</h1>
-<p>Acceso al panel de monitoreo remoto</p>
+<div class="login-wrapper">
+<div class="login-card">
+<div class="login-logo">TUSTOCK</div>
+<div class="login-sub">Monitor de Monitoreo Remoto</div>
 <div id="error" class="error"></div>
 <label>Usuario</label>
-<input type="text" id="user" autofocus>
+<input type="text" id="user" autofocus autocomplete="username">
 <label>Contraseña</label>
-<input type="password" id="pass" onkeydown="if(event.key==='Enter')login()">
+<input type="password" id="pass" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
 <button onclick="login()">Ingresar</button>
+</div>
+<div class="login-footer">TUSTOCK &copy; 2026</div>
 </div>
 <script>
 async function login(){
@@ -77,7 +89,7 @@ const u=document.getElementById('user').value.trim(),p=document.getElementById('
 if(!u||!p)return;
 const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
 if(r.ok)window.location.reload();
-else document.getElementById('error').style.display='block',document.getElementById('error').textContent='Usuario o contraseña incorrectos'
+else{const e=document.getElementById('error');e.style.display='block';e.textContent='Usuario o contraseña incorrectos'}
 }
 </script>
 </body>

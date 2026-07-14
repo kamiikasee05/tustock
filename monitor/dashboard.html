@@ -4,141 +4,576 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>TUSTOCK Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f2f5;color:#1a1a2e;padding-bottom:80px}
-.header{background:#1a1a2e;color:#fff;padding:16px 20px;position:sticky;top:0;z-index:10}
-.header h1{font-size:18px;font-weight:700}
-.header .sub{font-size:12px;color:#94a3b8;margin-top:2px}
-.header .refresh{float:right;font-size:12px;color:#94a3b8}
-.container{padding:12px}
+:root {
+  --bg: #10131a;
+  --surface-lowest: #0b0e15;
+  --surface-low: #191b23;
+  --surface: #1d2027;
+  --surface-high: #272a31;
+  --surface-highest: #32353c;
+  --surface-bright: #363941;
+  --on-surface: #e1e2ec;
+  --on-surface-variant: #8b95a5;
+  --outline: rgba(255,255,255,0.12);
+  --primary: #adc6ff;
+  --primary-container: #4d8eff;
+  --success: #059669;
+  --success-bg: rgba(5,150,105,0.12);
+  --info: #4d8eff;
+  --info-bg: rgba(77,142,255,0.12);
+  --warning: #d97706;
+  --warning-bg: rgba(217,119,6,0.12);
+  --danger: #dc2626;
+  --danger-bg: rgba(220,38,38,0.12);
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box }
+html { scroll-behavior:smooth }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--on-surface);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 60px;
+}
+.text-right { text-align:right }
+.text-center { text-align:center }
+.muted { color: var(--on-surface-variant) }
 
-.row{display:flex;gap:10px;margin-bottom:10px}
-.col{flex:1}
-.card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:10px}
-.card-title{font-size:11px;font-weight:600;text-transform:uppercase;color:#6b7280;margin-bottom:6px;letter-spacing:.5px}
-.card .big{font-size:28px;font-weight:800;line-height:1.2}
-.card .big.green{color:#059669}
-.card .big.blue{color:#2563eb}
-.card .big.orange{color:#d97706}
-.card .big.red{color:#dc2626}
-.card .label{font-size:12px;color:#6b7280;margin-top:2px}
+/* ── Header ──────────────────────────────────────── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(16,19,26,0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(66,71,84,0.25);
+  padding: 14px 20px;
+}
+.header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.header-left { display:flex; align-items:center; gap:10px }
+.header-logo {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: var(--primary);
+}
+.header-date {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  font-weight: 500;
+}
+.header-right { display:flex; align-items:center; gap:14px }
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px rgba(5,150,105,0.5);
+  animation: pulse 2s infinite;
+}
+.status-dot.offline {
+  background: var(--danger);
+  box-shadow: 0 0 6px rgba(220,38,38,0.5);
+  animation: none;
+}
+@keyframes pulse {
+  0%,100% { opacity:1 }
+  50% { opacity:0.5 }
+}
+.refresh-countdown {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  font-variant-numeric: tabular-nums;
+}
+.refresh-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  color: var(--on-surface-variant);
+  transition: color 0.2s;
+}
+.refresh-btn:hover { color: var(--primary) }
+.refresh-btn svg { width: 16px; height: 16px }
 
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:6px 4px;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;border-bottom:1px solid #e5e7eb}
-td{padding:8px 4px;border-bottom:1px solid #f3f4f6}
-tr:last-child td{border-bottom:none}
-.text-right{text-align:right}
-.text-center{text-align:center}
-.text-muted{color:#6b7280}
-.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
-.tag.green{background:#d1fae5;color:#065f46}
-.tag.yellow{background:#fef3c7;color:#92400e}
-.tag.red{background:#fee2e2;color:#991b1b}
-.tag.blue{background:#dbeafe;color:#1e40af}
-.tag.gray{background:#f3f4f6;color:#374151}
+/* ── Container ───────────────────────────────────── */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px 20px;
+}
 
-.empty{text-align:center;padding:24px;color:#9ca3af;font-size:13px}
+/* ── Cards ───────────────────────────────────────── */
+.card {
+  background: rgba(30,41,59,0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 14px;
+  transition: opacity 0.3s ease;
+}
+.card-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--on-surface-variant);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+}
+.big {
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.big.green { color: var(--success) }
+.big.blue { color: var(--info) }
+.big.orange { color: var(--warning) }
+.big.red { color: var(--danger) }
+.card .label {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  margin-top: 4px;
+  font-weight: 500;
+}
 
-@media(max-width:480px){
-.header{padding:12px 14px}
-.container{padding:8px}
-.row{flex-direction:column;gap:6px}
-.card{padding:12px;border-radius:10px}
-.card .big{font-size:24px}
+/* ── KPI Grid ────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.kpi-card {
+  background: rgba(30,41,59,0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--on-surface-variant);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kpi-label svg { width: 13px; height: 13px; opacity:0.7 }
+.kpi-value {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-sub {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* ── Month Banner ────────────────────────────────── */
+.month-banner {
+  background: linear-gradient(135deg, rgba(77,142,255,0.1) 0%, rgba(49,49,192,0.08) 100%);
+  border: 1px solid rgba(77,142,255,0.2);
+  border-radius: var(--radius-lg);
+  padding: 18px 22px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.month-banner .month-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--primary);
+}
+.month-banner .month-total {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--on-surface);
+  font-variant-numeric: tabular-nums;
+}
+.month-banner .month-count {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  font-weight: 500;
+  text-align: right;
+}
+
+/* ── Tables ──────────────────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th {
+  text-align: left;
+  padding: 8px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--on-surface-variant);
+  border-bottom: 1px solid var(--outline);
+}
+td {
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom:none }
+tr { transition: background 0.15s }
+tr:hover td { background: rgba(255,255,255,0.02) }
+
+/* ── Tags ────────────────────────────────────────── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+.tag.green { background: var(--success-bg); color: var(--success) }
+.tag.blue { background: var(--info-bg); color: var(--info) }
+.tag.yellow { background: rgba(234,179,8,0.12); color: #eab308 }
+.tag.red { background: var(--danger-bg); color: var(--danger) }
+.tag.gray { background: rgba(139,149,165,0.12); color: var(--on-surface-variant) }
+
+/* ── Progress Bar ────────────────────────────────── */
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--surface-low);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--primary-container);
+  transition: width 0.6s ease;
+}
+
+/* ── Empty State ─────────────────────────────────── */
+.empty {
+  text-align: center;
+  padding: 36px 20px;
+  color: var(--on-surface-variant);
+  font-size: 13px;
+  font-weight: 500;
+}
+.empty svg {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 10px;
+  opacity: 0.35;
+}
+.empty p { margin-top: 4px }
+
+/* ── Footer ──────────────────────────────────────── */
+.footer {
+  text-align: center;
+  padding: 16px;
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  opacity: 0.6;
+}
+
+/* ── Loading ─────────────────────────────────────── */
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--on-surface-variant);
+  font-size: 14px;
+  font-weight: 500;
+}
+.loading-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin: 0 3px;
+  animation: loadPulse 1.2s infinite;
+}
+.loading-dot:nth-child(2) { animation-delay: 0.2s }
+.loading-dot:nth-child(3) { animation-delay: 0.4s }
+@keyframes loadPulse {
+  0%,100% { opacity:0.2; transform:scale(0.8) }
+  50% { opacity:1; transform:scale(1.2) }
+}
+
+/* ── Fade animation ──────────────────────────────── */
+.fade-in { animation: fadeIn 0.4s ease }
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(6px) }
+  to { opacity:1; transform:translateY(0) }
+}
+
+/* ── Responsive ──────────────────────────────────── */
+@media (max-width: 640px) {
+  .header { padding: 12px 14px }
+  .container { padding: 12px 14px }
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px }
+  .kpi-value { font-size: 20px }
+  .big { font-size: 26px }
+  .month-banner { flex-direction: column; align-items: flex-start; gap: 4px; padding: 16px 18px }
+  .month-banner .month-count { text-align: left }
+  .card { padding: 16px }
+  table { font-size: 12px }
+  th { font-size: 9px; padding: 6px 6px }
+  td { padding: 8px 6px }
+  .header-date { display: none }
+}
+@media (max-width: 380px) {
+  .kpi-grid { grid-template-columns: 1fr }
 }
 </style>
 </head>
 <body>
+
+<!-- Header -->
 <div class="header">
-<div class="refresh" id="timer">actualizando en 30s</div>
-<h1>TUSTOCK</h1>
-<div class="sub" id="subtitle">Monitor — Cargando...</div>
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-logo">TUSTOCK</div>
+      <div class="header-date" id="headerDate">Cargando...</div>
+    </div>
+    <div class="header-right">
+      <div class="status-dot" id="statusDot" title="Conectado"></div>
+      <div class="refresh-countdown" id="timer">30s</div>
+      <button class="refresh-btn" onclick="forceRefresh()" title="Actualizar ahora">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"/><path d="M2.5 22v-6h6"/><path d="M21.34 8A10 10 0 0 0 4 6l-1.5 2"/><path d="M2.66 16A10 10 0 0 0 20 18l1.5-2"/></svg>
+      </button>
+    </div>
+  </div>
 </div>
 
+<!-- Main content -->
 <div class="container" id="app">
-<div style="text-align:center;padding:40px;color:#9ca3af;font-size:14px">Cargando...</div>
+  <div class="loading">
+    Cargando datos
+    <span class="loading-dot"></span>
+    <span class="loading-dot"></span>
+    <span class="loading-dot"></span>
+  </div>
 </div>
+
+<!-- Footer -->
+<div class="footer" id="footer"></div>
 
 <script>
 const $ = id => document.getElementById(id);
 const API = '/api';
+const svgIcons = {
+  dollar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  ticket: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>',
+  cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>',
+  wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>',
+  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+  trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  empty: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 7h10"/><path d="M7 12h10"/><path d="M7 17h6"/></svg>'
+};
 
-function fmt(n){return n.toLocaleString('es-AR',{minimumFractionDigits:0})}
-function fmtMoney(n){return '$'+Number(n).toLocaleString('es-AR',{minimumFractionDigits:0})}
-
-async function load(){
-try{
-const r=await fetch(API+'/metrics');if(!r.ok){if(r.status===401)window.location.reload();return}
-const d=await r.json();
-render(d);
-$('subtitle').textContent='Monitor — '+d.date;
-}catch(e){$('app').innerHTML='<div class="empty" style="padding:60px">Error de conexión. Reintentando...</div>'}
+function fmtMoney(n) {
+  return '$' + Number(n).toLocaleString('es-AR', { minimumFractionDigits: 0 });
 }
 
-function render(d){
-const s=d.sales_today;
-let html='';
-
-// Cards superiores
-html+=`<div class="row">`;
-html+=`<div class="col"><div class="card"><div class="card-title">Ventas Hoy</div><div class="big green">${fmtMoney(s.total)}</div><div class="label">${s.count} transacciones · ${s.items_sold} items</div></div></div>`;
-html+=`<div class="col"><div class="card"><div class="card-title">Ticket Prom.</div><div class="big blue">${fmtMoney(s.count>0?s.total/s.count:0)}</div><div class="label">por venta</div></div></div>`;
-html+=`</div>`;
-
-// Métodos de pago
-if(d.by_method.length){
-html+=`<div class="card"><div class="card-title">Métodos de Pago Hoy</div><table><tr><th>Método</th><th class="text-center">Ventas</th><th class="text-right">Total</th></tr>`;
-for(const m of d.by_method){
-const tag=m.method==='efectivo'?'green':m.method==='tarjeta'?'blue':m.method==='transferencia'?'yellow':m.method==='fiado'?'red':'gray';
-html+=`<tr><td><span class="tag ${tag}">${m.method}</span></td><td class="text-center">${m.count}</td><td class="text-right">${fmtMoney(m.total)}</td></tr>`;
-}
-html+=`</table></div>`;
+function fmtNum(n) {
+  return Number(n).toLocaleString('es-AR');
 }
 
-// Stock bajo
-if(d.low_stock.length){
-html+=`<div class="card"><div class="card-title">⚠️ Stock Bajo</div><table><tr><th>Producto</th><th class="text-center">Actual</th><th class="text-center">Mín</th></tr>`;
-for(const l of d.low_stock){
-const cls=l.current===0?'red':l.current<=l.min_stock?'orange':'';
-html+=`<tr><td>${l.name}</td><td class="text-center"><strong class="${cls}">${l.current}</strong></td><td class="text-center text-muted">${l.min_stock}</td></tr>`;
-}
-html+=`</table></div>`;
+function methodTag(m) {
+  const map = { efectivo:'green', tarjeta:'blue', transferencia:'yellow', fiado:'red' };
+  return map[m] || 'gray';
 }
 
-// Top productos
-if(d.top_products.length){
-html+=`<div class="card"><div class="card-title">🏆 Más Vendidos (7 días)</div><table><tr><th>Producto</th><th class="text-center">Cant.</th><th class="text-right">Total</th></tr>`;
-for(const t of d.top_products){
-html+=`<tr><td>${t.name}</td><td class="text-center">${t.quantity}</td><td class="text-right">${fmtMoney(t.total)}</td></tr>`;
-}
-html+=`</table></div>`;
+function methodLabel(m) {
+  const map = { efectivo:'Efectivo', tarjeta:'Tarjeta', transferencia:'Transferencia', fiado:'Fiado' };
+  return map[m] || m;
 }
 
-// Deudores
-if(d.debtors.length){
-html+=`<div class="card"><div class="card-title">💰 Clientes con Deuda</div><table><tr><th>Cliente</th><th class="text-right">Saldo</th></tr>`;
-for(const c of d.debtors){
-html+=`<tr><td>${c.name}</td><td class="text-right" style="color:#dc2626;font-weight:600">${fmtMoney(c.balance)}</td></tr>`;
-}
-html+=`</table></div>`;
-}
-
-if(!d.low_stock.length&&!d.top_products.length&&!d.debtors.length){
-html+=`<div class="empty">Sin novedades para mostrar</div>`;
+async function loadSummary() {
+  try {
+    const r = await fetch(API + '/metrics/summary');
+    if (!r.ok) return;
+    const d = await r.json();
+    $('app').dataset.monthTotal = d.month.total;
+    $('app').dataset.monthCount = d.month.count;
+  } catch(e) {}
 }
 
-$('app').innerHTML=html;
+async function load() {
+  try {
+    const r = await fetch(API + '/metrics');
+    if (!r.ok) {
+      if (r.status === 401) { window.location.href = '/'; return; }
+      throw new Error('API error');
+    }
+    const d = await r.json();
+    $('statusDot').className = 'status-dot';
+    $('statusDot').title = 'Conectado';
+    render(d);
+  } catch(e) {
+    $('statusDot').className = 'status-dot offline';
+    $('statusDot').title = 'Sin conexión';
+  }
 }
 
-// Auto-refresh cada 30 segundos
-let countdown=30;
-setInterval(()=>{
-countdown--;
-$('timer').textContent='actualizando en '+countdown+'s';
-if(countdown<=0){countdown=30;load()}
-},1000);
+function render(d) {
+  const s = d.sales_today;
+  const ticket = s.count > 0 ? Math.round(s.total / s.count) : 0;
+  const mTotal = $('app').dataset.monthTotal || 0;
+  const mCount = $('app').dataset.monthCount || 0;
 
+  let h = '';
+
+  // Month banner
+  h += `<div class="month-banner fade-in">
+    <div>
+      <div class="month-label">${svgIcons['wallet']} Ventas del Mes</div>
+      <div class="month-total">${fmtMoney(mTotal)}</div>
+    </div>
+    <div class="month-count">${fmtNum(mCount)} transacciones</div>
+  </div>`;
+
+  // KPI grid
+  h += `<div class="kpi-grid fade-in">`;
+  h += `<div class="kpi-card"><div class="kpi-label">${svgIcons['dollar']} Ventas Hoy</div><div class="kpi-value green">${fmtMoney(s.total)}</div><div class="kpi-sub">${fmtNum(s.count)} transacciones</div></div>`;
+  h += `<div class="kpi-card"><div class="kpi-label">${svgIcons['ticket']} Ticket Promedio</div><div class="kpi-value blue">${fmtMoney(ticket)}</div><div class="kpi-sub">por venta</div></div>`;
+  h += `<div class="kpi-card"><div class="kpi-label">${svgIcons['cart']} Items Vendidos</div><div class="kpi-value" style="color:var(--on-surface)">${fmtNum(s.items_sold)}</div><div class="kpi-sub">unidades hoy</div></div>`;
+  h += `<div class="kpi-card"><div class="kpi-label">${svgIcons['wallet']} Métodos de Pago</div><div class="kpi-value" style="color:var(--on-surface);font-size:18px">${d.by_method.length}</div><div class="kpi-sub">${d.by_method.length > 0 ? d.by_method.map(m => methodLabel(m.method)).slice(0,3).join(', ') : 'Ninguno'}</div></div>`;
+  h += `</div>`;
+
+  // Payment methods table
+  if (d.by_method.length) {
+    h += `<div class="card fade-in"><div class="card-title">${svgIcons['wallet']} Métodos de Pago Hoy</div><table>
+      <tr><th>Método</th><th class="text-center">Ventas</th><th class="text-right">Total</th></tr>`;
+    for (const m of d.by_method) {
+      h += `<tr><td><span class="tag ${methodTag(m.method)}">${methodLabel(m.method)}</span></td><td class="text-center">${fmtNum(m.count)}</td><td class="text-right" style="font-weight:700;font-variant-numeric:tabular-nums">${fmtMoney(m.total)}</td></tr>`;
+    }
+    h += `</table></div>`;
+  }
+
+  // Low stock
+  if (d.low_stock.length) {
+    h += `<div class="card fade-in" style="border-color:rgba(217,119,6,0.25)"><div class="card-title" style="color:var(--warning)">${svgIcons['alert']} Stock Bajo</div><table>
+      <tr><th>Producto</th><th class="text-center">Actual</th><th class="text-center">Mínimo</th><th style="width:80px">Nivel</th></tr>`;
+    for (const l of d.low_stock) {
+      const maxBar = Math.max(l.min_stock * 2, 1);
+      const pct = Math.min((l.current / maxBar) * 100, 100);
+      const barColor = l.current === 0 ? 'var(--danger)' : l.current <= l.min_stock ? 'var(--warning)' : 'var(--success)';
+      h += `<tr><td style="font-weight:600">${l.name}</td><td class="text-center"><strong style="color:${barColor}">${fmtNum(l.current)}</strong></td><td class="text-center muted">${fmtNum(l.min_stock)}</td><td><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${barColor}"></div></div></td></tr>`;
+    }
+    h += `</table></div>`;
+  } else {
+    h += `<div class="card fade-in"><div class="card-title" style="color:var(--success)">${svgIcons['alert']} Stock Bajo</div><div class="empty">${svgIcons['empty']}<p>Todos los productos tienen stock suficiente</p></div></div>`;
+  }
+
+  // Top products
+  if (d.top_products.length) {
+    const maxQty = d.top_products[0].quantity;
+    h += `<div class="card fade-in"><div class="card-title">${svgIcons['trophy']} Más Vendidos (7 días)</div><table>
+      <tr><th>Producto</th><th class="text-center">Cant.</th><th class="text-right">Total</th><th style="width:80px"></th></tr>`;
+    for (const t of d.top_products) {
+      const pct = maxQty > 0 ? (t.quantity / maxQty) * 100 : 0;
+      h += `<tr><td style="font-weight:600">${t.name}</td><td class="text-center">${fmtNum(t.quantity)}</td><td class="text-right" style="font-weight:700;font-variant-numeric:tabular-nums">${fmtMoney(t.total)}</td><td><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></td></tr>`;
+    }
+    h += `</table></div>`;
+  } else {
+    h += `<div class="card fade-in"><div class="card-title">${svgIcons['trophy']} Más Vendidos (7 días)</div><div class="empty">${svgIcons['empty']}<p>Sin ventas registradas en los últimos 7 días</p></div></div>`;
+  }
+
+  // Debtors
+  if (d.debtors.length) {
+    h += `<div class="card fade-in" style="border-color:rgba(220,38,38,0.2)"><div class="card-title" style="color:var(--danger)">${svgIcons['users']} Clientes con Deuda</div><table>
+      <tr><th>Cliente</th><th class="text-right">Saldo Adeudado</th></tr>`;
+    for (const c of d.debtors) {
+      h += `<tr><td style="font-weight:600">${c.name}</td><td class="text-right" style="color:var(--danger);font-weight:700;font-variant-numeric:tabular-nums">${fmtMoney(c.balance)}</td></tr>`;
+    }
+    h += `</table></div>`;
+  } else {
+    h += `<div class="card fade-in"><div class="card-title">${svgIcons['users']} Clientes con Deuda</div><div class="empty">${svgIcons['empty']}<p>No hay deudas pendientes</p></div></div>`;
+  }
+
+  $('app').innerHTML = h;
+
+  // Update footer
+  const now = new Date();
+  const ts = now.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  $('footer').textContent = 'Última actualización: ' + ts;
+
+  // Update header date
+  const dateStr = new Date(d.date + 'T12:00:00').toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  $('headerDate').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+}
+
+function forceRefresh() {
+  countdown = 0;
+  $('timer').textContent = '...';
+}
+
+// Auto-refresh
+let countdown = 30;
+setInterval(() => {
+  countdown--;
+  $('timer').textContent = countdown + 's';
+  if (countdown <= 0) {
+    countdown = 30;
+    load();
+    loadSummary();
+  }
+}, 1000);
+
+// Init
+loadSummary();
 load();
 </script>
 </body>
