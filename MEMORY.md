@@ -230,6 +230,13 @@ PC del cliente                          Cloud (Railway/VPS)
 - ✅ **Primer post de Facebook publicado** (11/7): Post 1 ("¿Cuánto stock tenés AHORA?") en 3 grupos de 30k+ miembros. Copy+lienzo auditado por Legal+Marketing.
 - ✅ **Mercado Libre publicado** (12/7): MLA3596381120 / MLAU4283798573. Título, categoría, precio ($80K), 5 imágenes, descripción plain text, envío, pagos, envío gratis. Verificado contra HTML descargado.
 - ✅ **Programa Despegue ML analizado**: $45K ARS garantía (recuperable 100%), $45K en publicidad gratis, reputación verde claro. Riesgo bajo para producto digital. Pendiente activar por el humano.
+### Agenda para mañana (15 de Julio 2026)
+
+| # | Tarea | Quién | Notas |
+|---|-------|:-----:|-------|
+| 1 | **Prompt Stitch para frontend TUSTOCK** (web/src/) | 🎨 UI | El usuario dijo que el rediseño actual es "muy sutil". UI genera un prompt como el de la landing, con el design system Stitch, para que Stitch rediseñe el frontend React completo (dashboard, POS, productos, etc). El Monitor Cloud le gustó — replicar ese nivel de cambio. |
+| 2 | **Publicar Post 2 en Facebook** (caso testimonial) | 🧑 HUMANO | Post 1 fue 11/7 → Post 2 toca ~18/7. Copy + imagen ya listos. |
+
 ### Prioridades actuales (Julio 2026)
 
 | Prioridad | Tarea | Quién | Por qué es crítica |
@@ -462,6 +469,8 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-14 | **Seguridad Cloud API**: Rate limiting en memoria (login 5/15min, register 3/30min, HTTP 429) + audit log JSONL para 9 eventos sensibles. `cloud/audit.py` nuevo, `cloud/api.py` modificado. | 🖥 DEV |
 | 2026-07-14 | **Stitch Design System aplicado a TODO**: Landing, Monitor Premium, Monitor Cloud y Admin Dashboard rediseñados con dark theme #10131a, glass effects, Inter font. Unificación visual completa del ecosistema TUSTOCK. | 🎨 UI |
 | 2026-07-14 | **EULA deadlock fix**: 4 bugs encadenados causaban deadlock permanente del modal de ToS. refresh() no retornaba promise, handleAccept no awaited refresh, submitting no se reseteaba, backend retornaba 400 si ya aceptabas. Todo corregido. | 🖥 DEV |
+| 2026-07-14 | **Auth roto por security audit**: Commit 21b09bb cambió TUSTOCK_TOKEN default a "" pero nunca se creó .env. Frontend hardcodea "tustock-local-token". Resultado: 401 en todos los endpoints, sistema inutilizable. Default restaurado. | 🖥 DEV + Dispatcher |
+| 2026-07-14 | **Feedback de usuario**: Rediseño del frontend (React app principal) es "muy sutil". Monitor Cloud y Landing les gustó. Mañana UI genera prompt Stitch para rediseñar el frontend completo. | 🧑 HUMANO |
 
 ---
 ## 13. EQUIPO LEGAL
