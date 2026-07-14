@@ -235,7 +235,10 @@ PC del cliente                          Cloud (Railway/VPS)
 | # | Tarea | Quién | Notas |
 |---|-------|:-----:|-------|
 | 1 | **Prompt Stitch para frontend TUSTOCK** (web/src/) | 🎨 UI | El usuario dijo que el rediseño actual es "muy sutil". UI genera un prompt como el de la landing, con el design system Stitch, para que Stitch rediseñe el frontend React completo (dashboard, POS, productos, etc). El Monitor Cloud le gustó — replicar ese nivel de cambio. |
-| 2 | **Publicar Post 2 en Facebook** (caso testimonial) | 🧑 HUMANO | Post 1 fue 11/7 → Post 2 toca ~18/7. Copy + imagen ya listos. |
+| 2 | **Mover Admin a carpeta separada + gitignore** | 🖥 DEV + Dispatcher | El admin (`admin/`) se muda a una carpeta fuera del repo (ej: `E:\TUSTOCK_ADMIN\`). `.gitignore` en el root para ignorar todo. El usuario es el ÚNICO que lo usa. NO debe estar en el repo. |
+| 3 | **Chequeo completo del sistema post-rediseño** | 🔍 Dispatcher + DEV | Después de que UI implemente el rediseño, hacer auditoría: landing, frontend, monitor local, monitor cloud, admin. Verificar que todo funcione y se vea bien. |
+| 4 | **Publicar Post 2 en Facebook** (caso testimonial) | 🧑 HUMANO | Post 1 fue 11/7 → Post 2 toca ~18/7. Copy + imagen ya listos. |
+| 5 | **Crear `.env` real con tokens** | 🖥 DEV | Los tokens (`TUSTOCK_TOKEN`, `TUSTOCK_ADMIN_TOKEN`) no deberían estar como defaults en config.py. Crear `.env` en el server y `.gitignore` para que el security audit no rompa nada de nuevo. |
 
 ### Prioridades actuales (Julio 2026)
 
