@@ -239,6 +239,7 @@ PC del cliente                          Cloud (Railway/VPS)
 | 3 | **Chequeo completo del sistema post-rediseño** | 🔍 Dispatcher + DEV | Después de que UI implemente el rediseño, hacer auditoría: landing, frontend, monitor local, monitor cloud, admin. Verificar que todo funcione y se vea bien. |
 | 4 | **Publicar Post 2 en Facebook** (caso testimonial) | 🧑 HUMANO | Post 1 fue 11/7 → Post 2 toca ~18/7. Copy + imagen ya listos. |
 | 5 | **Crear `.env` real con tokens** | 🖥 DEV | Los tokens (`TUSTOCK_TOKEN`, `TUSTOCK_ADMIN_TOKEN`) no deberían estar como defaults en config.py. Crear `.env` en el server y `.gitignore` para que el security audit no rompa nada de nuevo. |
+| 6 | **Dominio para Monitor Cloud** | 🖥 DEV + 🧑 HUMANO | `monitor.tustocksoft.com.ar` apuntando a Railway. Configurar custom domain en Railway + CNAME en Cloudflare. Actualizar agente local y admin. La clienta usa una URL profesional en vez de `tustock.up.railway.app`. |
 
 ### Prioridades actuales (Julio 2026)
 
