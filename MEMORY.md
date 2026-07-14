@@ -382,6 +382,13 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] PROGRAMA DESPEGUE: Análisis completo del Programa Despegue de ML — $45K ARS garantía (recuperable 100%), $45K publicidad gratis, reputación verde claro. Documentado en `obsidian/02-Ventas/Programa Despegue ML.md`. Pendiente activar. (2026-07-12)
 - [feature] DOMINIO Y DNS: tustocksoft.com.ar comprado en nic.ar. DNS delegado a Cloudflare (free). Landing page servida en dominio propio con HTTPS via GitHub Pages. CNAME configurado via API. (2026-07-13)
 - [feature] UI REDESIGN FASES 0-2: design tokens, layout responsive con hamburger menu, sidebar agrupada, y componentes UI reutilizables (Modal, DataTable, Button, Card, Badge, EmptyState, Skeleton) (2026-07-14)
+- [feature] RATE LIMITING + AUDIT LOG: Rate limiting en memoria para login (5/15min) y register (3/30min) con HTTP 429. Audit log en JSONL para 9 eventos sensibles (login, register, push, license sync/validate, subscriptions, account deletion). cloud/audit.py nuevo. (2026-07-14)
+- [feature] LANDING STITCH: Landing page reconciliada desde Google Stitch (code.html + DESIGN.md). CSS inline puro, Stitch design system (dark theme, glass effects, gradient hero), SVG inline, responsive, Inter font. 44KB. (2026-07-14)
+- [feature] MONITOR STITCH: Dashboard + login del Monitor Premium rediseñados con Stitch design system. Dark theme #10131a, glass cards, backdrop-filter blur, KPI cards, progress bars en stock, fade-in animations, auto-refresh 30s, responsive. dashboard.html 21KB, LOGIN_HTML en app.py actualizado. (2026-07-14)
+- [feature] MONITOR CLOUD STITCH: Dashboard del Monitor Cloud (cloud/dashboard.html) rediseñado con Stitch dark theme. Glass cards, KPI grid, progress bars, topbar con indicador de último push, login/register con tabs. (2026-07-14)
+- [feature] ADMIN STITCH: Dashboard de administración (admin/src/Admin.tsx) rediseñado con Stitch dark theme. Inputs dark, cards glass, botones #4d8eff, tags translúcidos. Solo cambios de estilo, 0 cambios en lógica. (2026-07-14)
+- [fix] EULA MODAL DEADLOCK: 4 bugs corregidos — (1) refresh() no retornaba promise, (2) handleAccept no awaited refresh, (3) submitting nunca se reseteaba en éxito, (4) si POST aceptaba pero refresh fallaba, usuario quedaba en deadlock. Backend ahora retorna 200 si ya aceptó. (2026-07-14)
+- [fix] EULA MODAL DEADLOCK: Modal de ToS bloqueaba frontend indefinidamente. 4 bugs: (1) refresh() no retornaba promise, no se podía awaiting; (2) handleAccept no awaiting refresh post-POST; (3) submitting nunca se reseteaba en éxito; (4) si POST aceptaba pero refresh fallaba, usuario quedaba en deadlock permanente. Backend: accept_eula() retorna dict con {ok, already}, caso "ya aceptado" retorna 200 en vez de 400. Frontend: refresh() retorna promise, handleAccept awaits refresh, maneja "already" como éxito, muestra error message al usuario. (2026-07-14)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
@@ -452,6 +459,9 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-12 | **PROGRAMA DESPEGUE ANALIZADO**: Programa para nuevos vendedores de ML. Garantía $45K ARS (recuperable 100%), $45K publicidad gratis, reputación verde claro, 365 días. Riesgo bajo para producto digital. Pendiente activar por el humano. | 🧑 HUMANO + Dispatcher |
 | 2026-07-13 | **DOMINIO CONFIGURADO**: tustocksoft.com.ar comprado en nic.ar. DNS delegado a Cloudflare (free). Landing page servida con HTTPS via GitHub Pages. CNAME configurado via API. 19 URLs actualizadas en docs/marketing + obsidian. | 🧑 HUMANO + 🖥 DEV |
 | 2026-07-14 | **Agente UX/UI creado**: Agente especializado en interfaz de usuario — landing page, frontend React, dashboard local. Dark theme, mobile-first, copy argentino. Archivo `.opencode/agent/ui.md`. Reglas en MEMORY.md actualizadas. | 🧑 HUMANO + Dispatcher |
+| 2026-07-14 | **Seguridad Cloud API**: Rate limiting en memoria (login 5/15min, register 3/30min, HTTP 429) + audit log JSONL para 9 eventos sensibles. `cloud/audit.py` nuevo, `cloud/api.py` modificado. | 🖥 DEV |
+| 2026-07-14 | **Stitch Design System aplicado a TODO**: Landing, Monitor Premium, Monitor Cloud y Admin Dashboard rediseñados con dark theme #10131a, glass effects, Inter font. Unificación visual completa del ecosistema TUSTOCK. | 🎨 UI |
+| 2026-07-14 | **EULA deadlock fix**: 4 bugs encadenados causaban deadlock permanente del modal de ToS. refresh() no retornaba promise, handleAccept no awaited refresh, submitting no se reseteaba, backend retornaba 400 si ya aceptabas. Todo corregido. | 🖥 DEV |
 
 ---
 ## 13. EQUIPO LEGAL
