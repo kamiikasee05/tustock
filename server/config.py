@@ -12,8 +12,8 @@ API_PORT = int(os.getenv("TUSTOCK_PORT", "8090"))
 
 WEB_DIR = BASE_DIR / "web" / "dist"
 
-TUSTOCK_TOKEN = os.getenv("TUSTOCK_TOKEN", "tustock-local-token")
-TUSTOCK_ADMIN_TOKEN = os.getenv("TUSTOCK_ADMIN_TOKEN", "150588-reg")
+TUSTOCK_TOKEN = os.getenv("TUSTOCK_TOKEN", "")
+TUSTOCK_ADMIN_TOKEN = os.getenv("TUSTOCK_ADMIN_TOKEN", "")
 TUSTOCK_CLOUD_URL = os.getenv("TUSTOCK_CLOUD_URL", "https://tustock.up.railway.app")
 TUSTOCK_CLOUD_CACHE_DAYS = 7
 

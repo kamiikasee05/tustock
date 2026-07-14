@@ -21,8 +21,8 @@
 > **Cuentas de MP y ML dedicadas al proyecto (Julio 2026):** TUSTOCK tiene cuenta propia de Mercado Pago y Mercado Libre. Antes se usaba la cuenta personal del humano. Las apps de MP (Checkout Pro y Suscripciones) deben crearse desde la cuenta nueva del proyecto para tener tokens exclusivos. La cuenta personal ya no se usa para TUSTOCK.
 >
 > **Apps MP del proyecto (Julio 2026):**
-> - **Checkout Pro** (pagos únicos Básico/Pro): Token `APP_USR-5761868084474454-070920-2303c082ae331b797c821f5982d85907-3533000902`
-> - **Suscripciones** (plan $8K/mes): Token `APP_USR-8662621767820459-070920-3e8974088c26d7a8adf2ee59b5ff1a33-3533000902`
+> - **Checkout Pro** (pagos únicos Básico/Pro): Token → env var `TUSTOCK_MP_TOKEN` (verificar en dashboard de MP)
+> - **Suscripciones** (plan $8K/mes): Token → env var `TUSTOCK_MP_SUBS_TOKEN` (verificar en dashboard de MP)
 > - **Webhook URL:** `https://tustock.up.railway.app/api/payments/webhook`
 > - **Back URLs:** `https://tustock.up.railway.app`
 > - **Railway configurado:** ✅ `TUSTOCK_MP_TOKEN` (Checkout Pro) + `TUSTOCK_MP_SUBS_TOKEN` (Suscripciones) — Julio 2026
@@ -437,7 +437,7 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-09 | **Guía registro AAIP**: Dispatcher elaboró guía paso a paso en `obsidian/TU STOCK/03-Legal/Registro AAIP.md` para que el humano registre la base de datos del Monitor Cloud ante el RNBDP (AAIP). | Dispatcher |
 | 2026-07-09 | **Agente Marketing**: Creado en opencode.json. Crea contenido y campañas para salida al mercado. Trabaja con Ventas. No toca código ni precios. | Dispatcher |
 | 2026-07-09 | **Dominio tustock.com.ar**: Prioridad 🔥 1. Humano consigue capital ($8.500). Marketing prepara campaña para cuando el dominio esté activo. | 🧑 HUMANO + 📢 MARKETING |
-| 2026-07-09 | **Cuentas MP y ML dedicadas al proyecto**: Creadas cuentas nuevas de Mercado Pago y Mercado Libre exclusivas para TUSTOCK. Se deja de usar la cuenta personal del humano. Las apps de MP (Checkout Pro y Suscripciones) deben crearse desde la cuenta nueva para tokens exclusivos. Tokens: Checkout Pro `APP_USR-5761...0902`, Suscripciones `APP_USR-8662...0902`. | 🧑 HUMANO |
+| 2026-07-09 | **Cuentas MP y ML dedicadas al proyecto**: Creadas cuentas nuevas de Mercado Pago y Mercado Libre exclusivas para TUSTOCK. Se deja de usar la cuenta personal del humano. Las apps de MP (Checkout Pro y Suscripciones) deben crearse desde la cuenta nueva para tokens exclusivos. Tokens: ver env vars `TUSTOCK_MP_TOKEN` y `TUSTOCK_MP_SUBS_TOKEN`. | 🧑 HUMANO |
 | 2026-07-09 | **Grupos de Facebook activos**: Humano se agregó a grupos de kiosqueros/almaceneros para publicitar TUSTOCK. Marketing crea copies para publicación. | 🧑 HUMANO + 📢 MARKETING |
 | 2026-07-09 | **Dual MP tokens**: Código actualizado para soportar dos tokens de MP (Checkout Pro + Suscripciones). Env vars: TUSTOCK_MP_TOKEN y TUSTOCK_MP_SUBS_TOKEN. Fallback automático. | 🖥 DEV |
 | 2026-07-09 | **TELENOTAS creado**: Bot de Telegram para capturar ideas. Transcribe audios, guarda en inbox/, clasifica por proyecto con Groq LLM. Servicio 24/7. | 🧑 HUMANO + 🖥 DEV |
