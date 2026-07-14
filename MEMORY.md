@@ -1,6 +1,6 @@
 # MEMORY — TUSTOCK
 
-> Este archivo es la fuente de verdad compartida entre el **Agente de Ventas**, el **Agente de Desarrollo (DEV)**, el **Agente Legal** y el **Agente de Marketing**. Lo leo al inicio de cada sesión para saber el estado actual.
+> Este archivo es la fuente de verdad compartida entre el **Agente de Ventas**, el **Agente de Desarrollo (DEV)**, el **Agente Legal**, el **Agente de Marketing** y el **Agente UX/UI**. Lo leo al inicio de cada sesión para saber el estado actual.
 >
 > **Rol de Ventas (YO):** Conozco el producto, el mercado, los precios. Organizo, coordino y le asigno tareas humanas al usuario para vender.
 >
@@ -9,6 +9,8 @@
 > **Rol de Legal (abogado especialista en servicios digitales):** Asesora exclusivamente en cumplimiento normativo (Ley 24.240, Ley 25.326, Ley 11.723 y demás leyes argentinas aplicables). Redacta y revisa documentación legal (términos, privacidad, reembolso). Emite directivas vinculantes para DEV, Ventas y Marketing cuando detecta incumplimientos legales. **NO toca código, NO toca el dashboard de Obsidian, NO desarrolla features.** Su única herramienta es el dictamen legal y la orden directa a DEV.
 >
 > **Rol de Marketing (creativo publicitario):** Crea contenido y campañas para salir al mercado. Diseña posts, volantes, secuencias de WhatsApp, anuncios. Trabaja en coordinación con Ventas. Sus entregables van en `docs/marketing/` y `obsidian/TU STOCK/06-Marketing/`. **NO toca código, NO modifica precios, NO toca temas legales sin consultar a Legal.**
+>
+> **Rol de UX/UI (diseñador de interfaz):** Diseña y desarrolla la interfaz de usuario — landing page, dashboard, componentes React, estilos inline. Experto en UX/UI para SaaS argentinos. Trabaja en `docs/index.html` (landing), `web/src/` (frontend React) y `monitor/dashboard.html` (dashboard local). **NO toca lógica de negocio, NO modifica precios, NO toca backend, NO crea contenido de marketing.** Dark theme, mobile-first, copy argentino.
 >
 > **Rol del Dispatcher (🧑‍💻 YO):** Coordino los agentes, actualizo MEMORY.md, sincronizo Obsidian, y soy el **único propietario de TELENOTAS** (`E:\TELENOTAS\`). Reviso el inbox al inicio de cada sesión y decido qué ideas procesar. Ni DEV, ni Ventas, ni Legal, ni Marketing tocan TELENOTAS.
 >
@@ -100,9 +102,8 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 - **Dashboard admin de licencias:** App independiente en `admin/` (Vite+React standalone, puerto 5174). Generar keys, ver licencias, revocar/activar, stats por plan, ingresos estimados, trials por vencer. Panel de Suscripciones MP con link compartido y vinculación de suscripciones entrantes a licencias. Scripts: `scripts/start-admin.bat`, `scripts/stop-admin.bat`.
 - **Validación cloud de licencias:** Cada 7 días el sistema local valida la key contra la API cloud. Si no hay internet, sigue funcionando con cache de hasta 14 días. Trial no requiere validación cloud. Admin sync-keys al generar.
 - **Bloqueo por licencia:** Middleware que bloquea todas las APIs cuando el trial vence o no hay licencia activa. Solo deja pasar health, license/status y license/activate.
-- **Landing page:** `docs/index.html` — página estática dark theme responsive servida via GitHub Pages (`kamiikasee05.github.io/tustock`). Incluye hero, features, planes, caso real, FAQ, WhatsApp CTA.
+- **Landing page:** `docs/index.html` — página estática dark theme responsive servida via GitHub Pages (`tustocksoft.com.ar`). Incluye hero, features, planes, caso real, FAQ, WhatsApp CTA.
 - **Mercado Pago:** Integración con dos apps (Checkout Pro para pagos únicos Básico/Pro, Suscripciones vía Plan compartido). Crear preferencias, webhook, verificar status. Admin tiene botón "Cobrar MP" y columna estado de pago. Suscripciones: Plan único `preapproval_plan` ($8K/mes) con link compartido, webhook registra nuevas suscripciones, admin las vincula a licencias desde el panel. Requiere `TUSTOCK_MP_TOKEN` configurado.
-- **MCP Mercado Pago (oficial):** Configurado en `opencode.json` como server remoto (`https://mcp.mercadopago.com/mcp`). Herramientas: búsqueda de docs MP, gestión de apps/credenciales (OAuth), configuración de webhooks, creación de test users, quality measurement de integración. **NO reemplaza** `cloud/payments.py` (que maneja pagos reales vía REST API). El MCP es para desarrollo, testing y validación. Conexión via OAuth automática de OpenCode. Docs: https://www.mercadopago.com.ar/developers/es/docs/mcp-server/connection
 - **Guía de Usuario PDF** generada automáticamente
 - **Documentación legal:** Términos y Condiciones de Uso + EULA, Política de Privacidad, Política de Reembolso y Cancelación (`legal/`). Links en footer de landing page y referenciados desde el registro cloud.
 - **EULA clickwrap:** Modal en primera ejecución que obliga a aceptar términos. Endpoints para servir documentos legales (`/api/license/terms`, `/api/license/privacy`, `/api/license/refund`).
@@ -118,12 +119,10 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 | Backup en la nube | Pro (planeado) | ❌ No existe | El flag `backup_enabled: True` está en el modelo pero el feature no se construyó. No prometer. |
 | Multi-PC / multi-sucursal | Pro (planeado) | ❌ No existe | No prometer |
 | Múltiples perfiles de cajero | Pro (planeado) | ❌ No existe | No prometer |
-| Monitor Cloud (push-based, URL fija) | Pro (planeado) | ✅ Construido y desplegado | `tustock.up.railway.app`. API cloud push-based, agente local, dashboard responsive, login multiusuario JWT. URL fija. |
 | Sistema de licencias | Mencionado | ✅ Construido | `server/models/license.py`, `server/services/license_service.py`, `server/routes/license.py`. Frontend: `useLicense.ts`, `Settings.tsx`, `TrialBanner.tsx`, `Upgrade.tsx` |
 | Trial mode | Mencionado | ✅ Construido | 30 días o 100 productos. Banner visible. Se auto-crea en primer arranque. |
 | Feature gating (tiers) | Mencionado | ✅ Construido | Backend: límite de productos en create, informes y export gateados con 403. Frontend: `UpgradeBlock` en Reports, `TrialBanner` global. |
 | Integración de pagos | Mencionado | ✅ Construido | Mercado Pago vía REST API en `cloud/payments.py`. Crear preferencias, webhook, verificar status. Admin muestra botón "Cobrar MP" y estado de pago. Requiere `TUSTOCK_MP_TOKEN` en Railway. |
-| Validación cloud de licencias | — | ✅ Construido | Cada 7d valida key contra cloud. Offline fallback 14d. Admin sync keys al generar. Trial no requiere validación. |
 | Tests automatizados | — | ❌ No existe | Postergado (Fase 4) |
 | Docker / CI/CD | — | ❌ No existe | Postergado (Fase 4) |
 | i18n (inglés) | — | ❌ No existe | No está en roadmap |
@@ -171,15 +170,6 @@ PC del cliente                          Cloud (Railway/VPS)
 | Iniciar | `scripts\launcher.py` | Lanza con pythonw, fondo (desde menú o `--quick`) |
 | Tunnel | `scripts\launcher.py --tunnel` | Descarga cloudflared automáticamente si falta y expone a internet |
 
-### Componentes del Monitor Cloud (en desarrollo — Fase 5)
-
-| Componente | Rol | Estado |
-|------------|-----|:------:|
-| `cloud/api.py` | API FastAPI cloud, recibe push, sirve dashboard, login multiusuario | ✅ Desplegado en Railway |
-| `cloud/dashboard.html` | Dashboard responsive (adaptado del local) | ✅ En producción |
-| `cloud/agent.py` | Agente local en PC del cliente, pushea datos cada 30s | ✅ Funcionando |
-| Despliegue | Railway (tier gratis) | ✅ `tustock.up.railway.app` |
-
 ### Endpoints del Monitor Local (actual)
 
 | Método | Ruta | Auth | Descripción |
@@ -205,22 +195,6 @@ PC del cliente                          Cloud (Railway/VPS)
 | GET | `/api/plan/subscription` | No | Info del plan de suscripción + suscripciones sin vincular |
 | POST | `/api/plan/update-webhook` | No | Configura notification_url en el plan de MP |
 | POST | `/api/plan/link-subscription` | No | Vincula una suscripción entrante a una license_key |
-
-### Cloudflare Tunnel (actual — a reemplazar)
-
-1. Ejecutar `scripts\launcher.py --tunnel` (o TUSTOCK.bat opción 5)
-2. Si falta `cloudflared.exe`, lo descarga automáticamente de GitHub
-3. Cloudflare genera una URL pública `https://xxx.trycloudflare.com`
-4. La clienta abre esa URL desde el celular e ingresa con sus credenciales
-
-**Nota:** Este approach es temporario. Se reemplazará por Monitor Cloud (URL fija) en Fase 5.
-
-**Seguridad (tunnel actual):**
-- El tunnel apunta SOLO al puerto 8091 (monitor read-only), NUNCA al 8090 (admin)
-- El monitor tiene su propio login (usuario/contraseña) independiente del token del admin
-- Sin endpoints de escritura (POST/PUT/DELETE) expuestos
-- Cloudflare Tunnel no requiere abrir puertos en el router
-- La sesión expira a los 7 días, requiere re-login
 
 ---
 
@@ -248,20 +222,24 @@ PC del cliente                          Cloud (Railway/VPS)
 - ✅ **Launcher unificado**: TUSTOCK.bat 8 opciones, auto-start con --quick, cloud agent auto-start
 - ✅ **Validación cloud**: sync de keys al cloud, validate contra API cloud, cache 7d offline, bloqueo por licencia
 - ✅ **Landing page**: `docs/index.html` servida via GitHub Pages
+- ✅ **Dominio comprado: tustocksoft.com.ar** — Presencia profesional. Landing page con dominio propio.
 - ✅ **Mercado Pago**: integración REST completa. Dos apps con tokens exclusivos (Checkout Pro + Suscripciones). Plan de suscripción `27a1162efe9e47e68cd1349307b02eb2` creado desde cuenta TUSTOCK. Webhook configurable. Flujo MP 100% operativo con dual tokens.
-- ✅ **MCP Mercado Pago**: Server remoto oficial conectado en opencode.json. Para dev/testing/quality check.
 - ✅ **Cuentas dedicadas**: MP y ML con cuenta propia del proyecto (no más cuenta personal).
 - ✅ **Marketing**: Copies para Facebook Groups + guía de publicación en ML creados en `docs/marketing/`.
 - ✅ **Dual tokens MP**: `TUSTOCK_MP_TOKEN` (Checkout Pro) + `TUSTOCK_MP_SUBS_TOKEN` (Suscripciones) configurados en Railway.
-
+- ✅ **Primer post de Facebook publicado** (11/7): Post 1 ("¿Cuánto stock tenés AHORA?") en 3 grupos de 30k+ miembros. Copy+lienzo auditado por Legal+Marketing.
+- ✅ **Mercado Libre publicado** (12/7): MLA3596381120 / MLAU4283798573. Título, categoría, precio ($80K), 5 imágenes, descripción plain text, envío, pagos, envío gratis. Verificado contra HTML descargado.
+- ✅ **Programa Despegue ML analizado**: $45K ARS garantía (recuperable 100%), $45K en publicidad gratis, reputación verde claro. Riesgo bajo para producto digital. Pendiente activar por el humano.
 ### Prioridades actuales (Julio 2026)
 
 | Prioridad | Tarea | Quién | Por qué es crítica |
 |:---------:|-------|:-----:|-------------------|
-| 🔥 1 | **Comprar dominio tustock.com.ar** ($8.500) | 🧑 HUMANO | Presencia profesional. Landing page con dominio propio antes de publicitar. |
+| ✅ | **Dominio comprado: tustocksoft.com.ar** | 🧑 HUMANO | Presencia profesional. Landing page con dominio propio. |
+| ✅ | **DNS + GitHub Pages configurados** | 🧑 HUMANO + 🖥 DEV | Cloudflare (free) como DNS provider. Landing accesible en tustocksoft.com.ar con HTTPS. |
 | ✅ | **Post 1 publicado en 3 grupos de Facebook** (30k+ miembros c/u) | 🧑 HUMANO | Hecho 11/7. Post 2: dentro de 1 semana. Post 3: 1 sem después. |
 | 🟢 2 | **Publicar Post 2 en Facebook Groups** (caso real testimonial) | 🧑 HUMANO | 1 sem después del Post 1. Copy + imagen lista. |
-| 🔥 3 | **Publicar en Mercado Libre** | 🧑 HUMANO | Guía + prompts + imágenes generadas. Solo falta publicar. |
+| ✅ | **Mercado Libre publicado** (MLA3596381120) | 🧑 HUMANO | Hecho 12/7. Título, categoría, precio ($80K), 5 imágenes, descripción. Verificado. Pendiente: activar Programa Despegue. |
+| 🟡 3 | **Activar Programa Despegue ML** ($45K garantía recuperable) | 🧑 HUMANO | Reputación verde claro + $45K publicidad gratis. Riesgo bajo. Ver `obsidian/02-Ventas/Programa Despegue ML.md`. |
 | 🟡 4 | **Pasar Railway a Hobby cuando se acaben los créditos gratis** | 🧑 HUMANO | $5/mes. El crédito free trial se usa primero, después se paga. |
 | 🟡 5 | **Registrar bases de datos en AAIP** (PASO 1 + 2) | 🧑 HUMANO | Obligación legal (Ley 25.326 art. 21). Guía en `obsidian/TU STOCK/03-Legal/Registro AAIP.md`. |
 | 🟢 6 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
@@ -289,10 +267,13 @@ PC del cliente                          Cloud (Railway/VPS)
     - DEV: `-Title "✅ TUSTOCK" -Message "Tarea completada" -Priority 4 -Tags "white_check_mark"`
     - Ventas: `-Title "✅ TUSTOCK Ventas" -Message "Material generado" -Priority 3 -Tags "memo"`
     - Legal: `-Title "⚖️ TUSTOCK Legal" -Message "Documentación actualizada" -Priority 3 -Tags "balance_scale"`
+    - UI: `-Title "🎨 TUSTOCK UI" -Message "Diseño actualizado" -Priority 3 -Tags "art"`
     - Dispatcher: `-Title "🔄 TUSTOCK" -Message "Revisión completada" -Priority 3 -Tags "arrows_counterclockwise"`
     Esto aplica a TODOS los agentes, sin excepción.
 15. **Legal NO toca código ni el dashboard de Obsidian:** El agente Legal se limita a leer archivos, redactar documentos legales (`.html` en `legal/`), y emitir directivas por escrito. Cualquier modificación a código fuente, archivos de configuración, Markdown de Obsidian o infraestructura debe ser ejecutada por DEV o el Dispatcher. Legal que viola esta regla debe ser reportado inmediatamente.
 16. **Marketing NO toca código ni precios:** El agente Marketing crea contenido publicitario en `docs/marketing/` y `obsidian/TU STOCK/06-Marketing/`. NO modifica el producto ni los precios. Cualquier afirmación sobre features debe ser verificada contra la sección 3 (Qué está construido). Si menciona algo que no existe, es publicidad engañosa (Ley 24.240 art. 8-9).
+18. **UI NO toca lógica de negocio, backend ni precios:** El agente UX/UI diseña la interfaz — landing page (`docs/index.html`), frontend React (`web/src/`), dashboard local (`monitor/dashboard.html`). NO modifica lógica de negocio, NO crea endpoints, NO cambia precios, NO genera contenido de marketing. Dark theme, mobile-first, copy argentino. Para cambios en features o lógica, coordina con DEV a través del Dispatcher.
+17. **SIN MCPs — Regla permanente:** A partir de 12/7/2026, **NO se usan MCPs** (Model Context Protocol) en el proyecto. Ningún agente debe configurar, agregar ni invocar MCPs en opencode.json. Si se necesita información de APIs externas (Mercado Pago, Canva, etc.), se consulta la documentación web directamente o se usa la integración REST ya existente en el código. Excepción: solo el Humano puede autorizar reintroducir un MCP si es estrictamente necesario y no hay alternativa.
 
 ### Stack que NO se cambia
 
@@ -340,58 +321,10 @@ PC del cliente                          Cloud (Railway/VPS)
 |-------|:-----:|:---------:|
 | WhatsApp directo a comerciantes locales | 🟢 Activo | 🔥 Alta |
 | Boca a boca / referidos de clienta actual | 🟢 Activo | 🔥 Alta |
-| Facebook Groups (kiosqueros, almaceneros) | 🟢 Activo (cuenta unida a grupos) | 🔥 Alta |
-| Mercado Libre | 🟢 Activo (cuenta TUSTOCK creada) | 🔥 Alta |
+| Facebook Groups (kiosqueros, almaceneros) | 🟢 Activo — Post 1 publicado (11/7) | 🔥 Alta |
+| Mercado Libre | 🟢 Activo — Publicado MLA3596381120 (12/7) | 🔥 Alta |
 | Proveedores mayoristas (comisión) | 🔴 Futuro | 🟢 Baja |
 | Mercado de apps Tiendanube/Empretienda | 🔴 Futuro | 🟢 Baja |
-
----
-
-## 9.5 MCP MERCADO PAGO — Herramienta de Desarrollo
-
-> **Configurado:** `opencode.json` → `mcp.mercadopago` (server remoto, OAuth automático)
-> **URL:** `https://mcp.mercadopago.com/mcp`
-> **Docs:** https://www.mercadopago.com.ar/developers/es/docs/mcp-server/connection
-
-### Qué hace el MCP
-
-El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
-
-| Herramienta | Uso para TUSTOCK |
-|---|---|
-| `search_documentation` | Buscar docs de la API MP desde el IDE |
-| `get_documentation_page` | Traer páginas específicas (ej: webhooks, suscripciones) |
-| `get_credentials` | Verificar credenciales de la app MP |
-| `create_application` | Crear apps nuevas (solo OAuth) |
-| `application_list` | Listar apps existentes |
-| Webhook tools | Configurar/monitorear webhooks |
-| Test users | Crear usuarios de prueba con fondos ficticios |
-| Quality check | Evaluar calidad de nuestra integración MP |
-
-### Qué NO hace el MCP
-
-**NO reemplaza `cloud/payments.py`**. El MCP no tiene herramientas para:
-- Crear preferencias de pago (Checkout Pro)
-- Consultar pagos por ID
-- Crear/cancelar suscripciones (preapproval)
-- Procesar reembolsos
-- Manejar customers
-
-### Estrategia de uso
-
-| Capa | Herramienta | Para qué |
-|------|-------------|----------|
-| **Producción** | `cloud/payments.py` (REST urllib) | Pagos reales, webhooks, suscripciones |
-| **Desarrollo** | MCP | Buscar docs, test users, quality check |
-| **Testing** | MCP test users → `payments.py` | Probar flujo completo sin gastar plata |
-| **Validación** | MCP quality check | Antes de escalar a más clientes |
-
-### Para DEV: Cómo usar el MCP
-
-1. **Duda sobre un endpoint de MP:** Preguntarle al MCP con `search_documentation`
-2. **Probar un flujo de pago:** Crear test user con MCP → usar `payments.py` con ese user
-3. **Verificar webhook:** Usar webhook tools del MCP
-4. **Quality check:** Correr quality measurement antes de cada release mayor
 
 ---
 
@@ -425,7 +358,7 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 - [feature] DASHBOARD ADMIN: Panel de administración de licencias en `/admin`, token separado. Generar keys, ver/revocar/activar licencias, stats por plan, ingresos estimados, trials por vencer. (2026-06-30)
 - [feature] MERCADO PAGO: Integración REST en `cloud/payments.py`. Crear preferencias de pago, webhook notification, verificar status. Admin tiene botón "Cobrar MP" y columna de estado de pago. (2026-07-02)
 - [feature] VALIDACION CLOUD: Sync de keys al cloud, validate contra API cloud, cache 7d con fallback offline 14d. Middleware bloquea APIs si licencia expirada o inválida. Trial no requiere validación. (2026-07-02)
-- [feature] LANDING PAGE: `docs/index.html` — página estática dark theme responsive, GitHub Pages (`kamiikasee05.github.io/tustock`). Hero, features, planes, caso real, FAQ, WhatsApp CTA. (2026-07-02)
+- [feature] LANDING PAGE: `docs/index.html` — página estática dark theme responsive, GitHub Pages (`tustocksoft.com.ar`). Hero, features, planes, caso real, FAQ, WhatsApp CTA. (2026-07-02)
 - [feature] BLOQUEO TRIAL: Middleware bloquea todas las APIs cuando trial vence o no hay licencia. Solo health + license/status + license/activate pasan. (2026-07-02)
 - [feature] SUSCRIPCION MP RECURRENTE: `cloud/payments.py` con `create_subscription()` (preapproval), `get_subscription()`, `cancel_subscription()`. Modelo `Subscription` en cloud. Endpoint `POST /api/payments/subscribe` para Suscripcion $8K/mes con cobro recurrente automático. Webhook maneja `topic=preapproval` y `topic=payment`. Admin muestra botón "Suscribir MP" (púrpura) y estado de suscripción (Activa/Cancelada/Pendiente). (2026-07-04)
 - [feature] GRACE PERIOD SUSCRIPCION: 7 días de gracia ante pago rechazado de suscripción MP. Webhook `topic=authorized_payment` actualiza `grace_period_end` en cloud. Validate devuelve `subscription_grace_days_left` y `subscription_suspended`. Banner progresivo en frontend (día 0/3/7+). Sistema nunca se bloquea, solo pierde updates + soporte. (2026-07-04)
@@ -439,20 +372,16 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 - [feature] CORS CLOUD API: Agregado CORSMiddleware con allow_origins=["*"] en cloud/api.py para permitir llamadas desde el admin panel (localhost:5174) a la cloud API (tustock.up.railway.app). (2026-07-07)
 - [feature] FIX PUBLICIDAD ENGAÑOSA: Eliminado "Backup en la nube" de notIncluded del plan Pro en Upgrade.tsx (Ley 24.240 art. 8-9). (2026-07-08)
 - [feature] FIX EMAIL PRIVACIDAD: Reemplazado [completar email] por tustock.administracion@gmail.com en sección 13 de politica-de-privacidad.html. (2026-07-08)
-- [feature] MCP MERCADO PAGO: Server remoto oficial de MP configurado en opencode.json (https://mcp.mercadopago.com/mcp). Conexión via OAuth. Herramientas: docs, test users, webhooks, quality check. NO reemplaza payments.py (producción). Para dev/testing. (2026-07-09)
 - [feature] DUAL MP TOKENS: cloud/config.py exporta MP_ACCESS_TOKEN (Checkout Pro) y MP_SUBS_TOKEN (Suscripciones). cloud/api.py usa el token correcto según operación. Fallback a MP_ACCESS_TOKEN si no hay segundo token. Fix webhook: topic=payment usa MP_SUBS_TOKEN. (2026-07-09)
-- [feature] DUAL MP TOKENS: cloud/config.py exporta MP_ACCESS_TOKEN (Checkout Pro) y MP_SUBS_TOKEN (Suscripciones). cloud/api.py usa el token correcto según operación. Fallback a MP_ACCESS_TOKEN si no hay segundo token. (2026-07-09)
 - [feature] TELENOTAS: Bot de Telegram para capturar ideas vía texto/audio. Transcribe audios con Whisper, guarda en inbox/ diario, clasifica por proyecto usando Groq LLM. Servicio 24/7 en Windows. (2026-07-09)
-- [feature] CANVA MCP: Server remoto oficial de Canva configurado en opencode.json (https://mcp.canva.com/mcp). Crear diseños, editar, exportar PNG/JPG/PDF. Para generar imágenes de Facebook y Mercado Libre. (2026-07-10)
-- [feature] DISEÑOS FACEBOOK POST 1: "¿Cuánto stock tenés AHORA?" — diseño 1080x1350px dark theme con paleta TUSTOCK. Creado en Canva, exportado PNG. Para publicar en grupos de Facebook. (2026-07-10)
-- [feature] DISEÑOS FACEBOOK POST 2: "Desde casa veo las ventas del día" — diseño testimonial con caso real de clienta premium. Creado en Canva, exportado PNG. (2026-07-10)
-- [feature] DISEÑOS FACEBOOK POST 3: "¿Por qué TUSTOCK cuesta $80.000 y no $500.000?" — diseño comparativo precio vs competencia. Creado en Canva, exportado PNG. (2026-07-10)
-- [feature] NANO BANANA MCP: MCP de Google Nano Banana (Gemini 3.1 Flash Image) configurado en opencode.json como `@maheidem/nanobanana-mcp`. Generación de imágenes hiperrealistas para Facebook/ML usando el modelo de imagen de Google. Requiere GEMINI_API_KEY seteada como env var. (2026-07-10)
-- [feature] NANO BANANA MCP ELIMINADO: Eliminado de opencode.json por rate-limit de API free tier. El usuario genera imágenes directamente con los prompts documentados. (2026-07-10)
 - [feature] ARGENTINIZACIÓN DE PROMPTS: Los 3 prompts de imagen para Facebook Groups reescritos con ambientación argentina auténtica (kiosco con persianas, mosaico, alfajores, yerba, lotería; librería con cuadernos Rayita, cartelito de "abierto"; mate en la escena de precio). Actualizado en Dashboard.md, Tareas Humanas.md, Campaña Salida al Mercado.md y plan-imagenes-fb.md. (2026-07-10)
 - [feature] PRIMER POST EN FACEBOOK: Publicado Post 1 ("¿Cuánto stock tenés AHORA?") en 3 grupos de Facebook de 30k+ miembros c/u. Copy auditado por Legal+Marketing. (2026-07-11)
 - [feature] GUIA ML EN OBSIDIAN: Copiada `docs/marketing/guia-mercadolibre.md` a obsidian/02-Ventas/ con prompts para 4 imágenes ML (1200x1200), instrucciones de captura de screenshots y prompts para Gemini mockups. (2026-07-11)
 - [feature] ML IMAGES LISTAS: Las 4 imágenes de Mercado Libre generadas via Gemini en Chrome usando prompts con mockups de laptop sobre fondo oscuro TUSTOCK. Listas para publicar. (2026-07-11)
+- [feature] ML PUBLICADO: Listing MLA3596381120 / MLAU4283798573 publicado en Mercado Libre con título, categoría, precio $80K, 5 imágenes, descripción plain text, envío, pagos, envío gratis. Verificado contra HTML descargado. (2026-07-12)
+- [feature] PROGRAMA DESPEGUE: Análisis completo del Programa Despegue de ML — $45K ARS garantía (recuperable 100%), $45K publicidad gratis, reputación verde claro. Documentado en `obsidian/02-Ventas/Programa Despegue ML.md`. Pendiente activar. (2026-07-12)
+- [feature] DOMINIO Y DNS: tustocksoft.com.ar comprado en nic.ar. DNS delegado a Cloudflare (free). Landing page servida en dominio propio con HTTPS via GitHub Pages. CNAME configurado via API. (2026-07-13)
+- [feature] UI REDESIGN FASES 0-2: design tokens, layout responsive con hamburger menu, sidebar agrupada, y componentes UI reutilizables (Modal, DataTable, Button, Card, Badge, EmptyState, Skeleton) (2026-07-14)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
@@ -508,21 +437,21 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 | 2026-07-09 | **Guía registro AAIP**: Dispatcher elaboró guía paso a paso en `obsidian/TU STOCK/03-Legal/Registro AAIP.md` para que el humano registre la base de datos del Monitor Cloud ante el RNBDP (AAIP). | Dispatcher |
 | 2026-07-09 | **Agente Marketing**: Creado en opencode.json. Crea contenido y campañas para salida al mercado. Trabaja con Ventas. No toca código ni precios. | Dispatcher |
 | 2026-07-09 | **Dominio tustock.com.ar**: Prioridad 🔥 1. Humano consigue capital ($8.500). Marketing prepara campaña para cuando el dominio esté activo. | 🧑 HUMANO + 📢 MARKETING |
-| 2026-07-09 | **MCP Mercado Pago conectado**: Server remoto oficial (`https://mcp.mercadopago.com/mcp`) configurado en `opencode.json`. Conexión via OAuth automática. Herramientas: docs, test users, webhooks, quality check. **NO reemplaza** `payments.py` (producción). El MCP es para dev/testing/quality. | 🧑 HUMANO + 🖥 DEV |
 | 2026-07-09 | **Cuentas MP y ML dedicadas al proyecto**: Creadas cuentas nuevas de Mercado Pago y Mercado Libre exclusivas para TUSTOCK. Se deja de usar la cuenta personal del humano. Las apps de MP (Checkout Pro y Suscripciones) deben crearse desde la cuenta nueva para tokens exclusivos. Tokens: Checkout Pro `APP_USR-5761...0902`, Suscripciones `APP_USR-8662...0902`. | 🧑 HUMANO |
 | 2026-07-09 | **Grupos de Facebook activos**: Humano se agregó a grupos de kiosqueros/almaceneros para publicitar TUSTOCK. Marketing crea copies para publicación. | 🧑 HUMANO + 📢 MARKETING |
 | 2026-07-09 | **Dual MP tokens**: Código actualizado para soportar dos tokens de MP (Checkout Pro + Suscripciones). Env vars: TUSTOCK_MP_TOKEN y TUSTOCK_MP_SUBS_TOKEN. Fallback automático. | 🖥 DEV |
 | 2026-07-09 | **TELENOTAS creado**: Bot de Telegram para capturar ideas. Transcribe audios, guarda en inbox/, clasifica por proyecto con Groq LLM. Servicio 24/7. | 🧑 HUMANO + 🖥 DEV |
-| 2026-07-10 | **Canva MCP conectado**: Server remoto oficial de Canva (`https://mcp.canva.com/mcp`) configurado en `opencode.json`. Crear diseños, editar, exportar. Para imágenes de Facebook y ML. | 🧑 HUMANO + 🖥 DEV |
 | 2026-07-10 | **NO a farmacia multi-sucursal**: Se rechaza oportunidad de farmacia con 3 sucursales ($15M/mes facturación). No estamos preparados técnica ni comercialmente. El gap es abismal: falta AFIP, ANMAT, obras sociales, multi-sucursal, lotes/vencimiento, multi-usuario. Requeriría 10-15 meses de desarrollo y $6.5M-9.75M ARS. Nos mantenemos en mercado original (kioscos, librerías, almacenes). | 🧑 HUMANO + Dispatcher |
-| 2026-07-10 | **Nano Banana MCP conectado**: Google Gemini 3.1 Flash Image MCP (`@maheidem/nanobanana-mcp`) configurado en opencode.json con GEMINI_API_KEY seteada. Generación de imágenes hiperrealistas para Facebook/ML. Reemplaza a Canva para contenido visual de marketing. | 🖥 DEV + 🧑 HUMANO |
-| 2026-07-10 | **Nano Banana MCP eliminado**: Eliminado de opencode.json por rate-limit de API free tier. El usuario genera imágenes directamente con los prompts documentados. | 🧑 HUMANO + Dispatcher |
 | 2026-07-10 | **Auditoría legal de prompts y copies**: Marketing + Legal revisaron los 3 prompts de imagen y 3 copies de Facebook. Legal emitió 4 directivas vinculantes (D1-D4) corregidas: "3 segundos" → "al instante", "30 días gratis" → con aclaración "(hasta 100 productos)", "$300.000+" → "cientos de miles", "Sus empleados" → "Tomá pedidos". También se corrigió "Hace 2 semanas" → "Hace unas semanas". Dictamen en `docs/legal/dictamen-prompts-imagenes.md`. | ⚖️ Legal + 📢 Marketing |
-| 2026-07-10 | **Nano Banana MCP eliminado por rate-limit**: Ambas API keys (personal y nueva) rate-limited por cuota diaria free tier de Google. El usuario genera imágenes directamente. Se actualizó opencode.json. | 🧑 HUMANO + Dispatcher |
+| 2026-07-10 | **TODOS LOS MCPs DESACTIVADOS**: Se eliminaron todos los MCPs de opencode.json (Mercado Pago, Canva, Nano Banana, Browser). Regla permanente: NO se usan MCPs. Si se necesita info de APIs, se consulta documentación web o se usa integración REST existente. Excepción: solo el Humano puede autorizar reintroducir un MCP si es estrictamente necesario. | 🧑 HUMANO + Dispatcher |
 | 2026-07-10 | **ARGENTINIZACIÓN DE PROMPTS**: Los 3 prompts de imagen reescritos con ambientación argentina auténtica. Post 1: kiosco argentino con persianas, mosaico, lotería, alfajores. Post 2: librería con cuadernos Rayita, cartelito de "abierto". Post 3: mate en mostrador. Actualizados en todos los archivos de Marketing y Ventas. | 🧑 HUMANO + Dispatcher |
 | 2026-07-11 | **PRIMER POST EN FACEBOOK PUBLICADO**: Post 1 ("¿Cuánto stock tenés AHORA?") publicado en 3 grupos de Facebook de 30k+ miembros c/u. Copy+lienzo auditado por Legal+Marketing. | 🧑 HUMANO + Dispatcher |
 | 2026-07-11 | **GUIA ML EN OBSIDIAN**: Guía de Mercado Libre movida a `obsidian/02-Ventas/` con prompts para 4 imágenes ML + instrucciones de captura + prompts Gemini. | 🧑 HUMANO + Dispatcher |
 | 2026-07-11 | **IMÁGENES ML GENERADAS**: Las 4 imágenes de Mercado Libre listas (portada, dashboard mockup, POS mockup, checklist) generadas vía Gemini en Chrome. Pendiente publicar en ML. | 🧑 HUMANO |
+| 2026-07-12 | **ML PUBLICADO**: Listing MLA3596381120 / MLAU4283798573 publicado en Mercado Libre. Título "Sistema Gestión Stock Ventas Kiosco Almacén PC", categoría Software, $80.000, 5 imágenes, envío gratis, pagos transferencia/MB/efectivo. Verificado contra HTML descargado. | 🧑 HUMANO + Dispatcher |
+| 2026-07-12 | **PROGRAMA DESPEGUE ANALIZADO**: Programa para nuevos vendedores de ML. Garantía $45K ARS (recuperable 100%), $45K publicidad gratis, reputación verde claro, 365 días. Riesgo bajo para producto digital. Pendiente activar por el humano. | 🧑 HUMANO + Dispatcher |
+| 2026-07-13 | **DOMINIO CONFIGURADO**: tustocksoft.com.ar comprado en nic.ar. DNS delegado a Cloudflare (free). Landing page servida con HTTPS via GitHub Pages. CNAME configurado via API. 19 URLs actualizadas en docs/marketing + obsidian. | 🧑 HUMANO + 🖥 DEV |
+| 2026-07-14 | **Agente UX/UI creado**: Agente especializado en interfaz de usuario — landing page, frontend React, dashboard local. Dark theme, mobile-first, copy argentino. Archivo `.opencode/agent/ui.md`. Reglas en MEMORY.md actualizadas. | 🧑 HUMANO + Dispatcher |
 
 ---
 ## 13. EQUIPO LEGAL
@@ -596,4 +525,4 @@ El MCP oficial de Mercado Pago es una capa de herramientas para AI que permite:
 
 ---
 
-*Última actualización: 11 de Julio de 2026*
+*Última actualización: 12 de Julio de 2026*

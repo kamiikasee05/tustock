@@ -82,7 +82,7 @@ Probá 30 días gratis sin compromiso. Cargá hasta 100 productos y ves si te si
 
 CONTACTO:
 WhatsApp: +54 9 3826 403110
-Web: https://kamiikasee05.github.io/tustock
+Web: https://tustocksoft.com.ar
 ```
 
 ---
@@ -203,4 +203,4 @@ Incluir en la descripción y tags:
 - [ ] Envío: acordar con vendedor / digital
 - [ ] Preguntas frecuentes preparadas
 - [ ] Disponibilidad para responder WhatsApp rápido
-- [ ] Link de la landing page verificado: https://kamiikasee05.github.io/tustock
+- [ ] Link de la landing page verificado: https://tustocksoft.com.ar

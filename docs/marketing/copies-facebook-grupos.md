@@ -29,7 +29,7 @@ Probá 30 días gratis (hasta 100 productos) sin poner un peso:
 
 https://wa.me/5493826403110?text=Hola!%20Quiero%20probar%20TUSTOCK
 
-Más info: https://kamiikasee05.github.io/tustock
+Más info: https://tustocksoft.com.ar
 
 ---
 
@@ -90,7 +90,7 @@ Probá 30 días gratis (hasta 100 productos) antes de decidir:
 
 https://wa.me/5493826403110?text=Hola!%20Quiero%20info%20de%20TUSTOCK
 
-Más info: https://kamiikasee05.github.io/tustock
+Más info: https://tustocksoft.com.ar
 
 TUSTOCK — Ricardo Godoy | CUIT 20-33489288-4
 

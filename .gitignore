@@ -59,3 +59,6 @@ cloud/*.db
 
 # Cloudflare Tunnel binary (auto-downloaded)
 scripts/cloudflared.exe
+
+# Obsidian vault (contiene secrets del proyecto - tokens MP, etc)
+obsidian/

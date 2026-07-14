@@ -67,7 +67,7 @@ Social media post 1080x1350px, dark blue gradient background. Split screen visua
 
 - [ ] Verificar que la cuenta de Facebook está unida a los grupos de kiosqueros/almaceneros
 - [ ] Tener el link de WhatsApp Business configurado: `https://wa.me/5493826403110`
-- [ ] Tener la landing page verificada: `https://kamiikasee05.github.io/tustock`
+- [ ] Tener la landing page verificada: `https://tustocksoft.com.ar`
 
 ### Post 1 — Copy 1 + Imagen "¿Cuánto stock tenés AHORA?"
 
