@@ -7,6 +7,7 @@ y los sirve via dashboard web con login JWT.
 import hashlib
 import secrets
 import json
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -18,11 +19,24 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
+from audit import log_event
 from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR, MP_ACCESS_TOKEN, MP_SUBS_TOKEN
 from payments import SUBSCRIPTION_PLAN_ID, SUBSCRIPTION_PLAN_PRICE, SUBSCRIPTION_PLAN_URL, update_plan_notification_url, get_subscription_plan
 from models import init_db, get_db, Business, MetricsPush, Payment, AuthorizedKey, KeyActivation, Subscription
 
 init_db()
+
+_rate_limit_store: dict[str, list[datetime]] = defaultdict(list)
+
+
+def _check_rate_limit(ip: str, max_attempts: int = 5, window_minutes: int = 15) -> bool:
+    now = datetime.utcnow()
+    cutoff = now - timedelta(minutes=window_minutes)
+    _rate_limit_store[ip] = [t for t in _rate_limit_store[ip] if t > cutoff]
+    if len(_rate_limit_store[ip]) >= max_attempts:
+        return False
+    _rate_limit_store[ip].append(now)
+    return True
 
 def _legal_page(title: str, content: str) -> HTMLResponse:
     return HTMLResponse(f"""<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
@@ -157,7 +171,8 @@ def legal_refund():
 
 
 @app.post("/api/register")
-def register(data: dict, db: Session = Depends(get_db)):
+def register(data: dict, request: Request, db: Session = Depends(get_db)):
+    ip = request.client.host if request.client else ""
     name = data.get("name", "").strip()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
@@ -167,6 +182,9 @@ def register(data: dict, db: Session = Depends(get_db)):
         raise HTTPException(400, "Faltan campos: name, email, password")
     if len(password) < 6:
         raise HTTPException(400, "La contraseña debe tener al menos 6 caracteres")
+    if not _check_rate_limit(f"register:{ip}", max_attempts=3, window_minutes=30):
+        log_event("register_rate_limited", {"email": email}, ip)
+        raise HTTPException(429, "Demasiados intentos. Intentá de nuevo en unos minutos.")
     if db.query(Business).filter(Business.email == email).first():
         raise HTTPException(409, "El email ya está registrado")
     if not accepts_terms:
@@ -184,6 +202,7 @@ def register(data: dict, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(biz)
 
+    log_event("register", {"email": email, "business_id": biz.id}, ip)
     return {
         "ok": True,
         "business_id": biz.id,
@@ -193,18 +212,25 @@ def register(data: dict, db: Session = Depends(get_db)):
 
 
 @app.post("/api/login")
-def login(data: dict, db: Session = Depends(get_db)):
+def login(data: dict, request: Request, db: Session = Depends(get_db)):
+    ip = request.client.host if request.client else ""
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
 
     if not email or not password:
         raise HTTPException(400, "Faltan email o contraseña")
 
+    if not _check_rate_limit(f"login:{ip}", max_attempts=5, window_minutes=15):
+        log_event("login_rate_limited", {"email": email}, ip)
+        raise HTTPException(429, "Demasiados intentos. Intentá de nuevo en unos minutos.")
+
     biz = db.query(Business).filter(Business.email == email, Business.is_active == True).first()
     if not biz or not _verify_password(password, biz.password_hash):
+        log_event("login_failed", {"email": email, "reason": "wrong_password"}, ip)
         raise HTTPException(401, "Email o contraseña incorrectos")
 
     token = _create_token(biz.id, biz.email)
+    log_event("login_success", {"email": email, "business_id": biz.id}, ip)
     return {"ok": True, "token": token, "business_name": biz.name}
 
 
@@ -222,6 +248,7 @@ def push(data: dict, request: Request, db: Session = Depends(get_db)):
     db.add(push)
     db.commit()
 
+    log_event("push_metrics", {"api_key": api_key[:8], "business_id": biz.id})
     return {"ok": True, "pushed_at": datetime.now(timezone.utc).isoformat()}
 
 
@@ -283,6 +310,7 @@ def delete_account(data: dict, business: Business = Depends(_get_current_busines
     business.is_active = False
     db.commit()
 
+    log_event("account_deleted", {"email": email, "business_id": business.id})
     return {"ok": True, "message": "Cuenta eliminada correctamente"}
 
 
@@ -348,6 +376,7 @@ def create_subscription(data: dict, db: Session = Depends(get_db)):
     db.add(sub)
     db.commit()
 
+    log_event("subscription_created", {"plan_id": result.get("preapproval_id"), "license_key": license_key, "email": email})
     return {
         "ok": True,
         "preapproval_id": result.get("preapproval_id"),
@@ -416,6 +445,7 @@ def link_subscription_to_license(data: dict, db: Session = Depends(get_db)):
     sub.license_key = license_key
     db.commit()
 
+    log_event("subscription_linked", {"license_key": license_key, "subscription_id": preapproval_id})
     return {"ok": True, "preapproval_id": preapproval_id, "license_key": license_key}
 
 
@@ -611,6 +641,8 @@ def sync_license(data: dict, db: Session = Depends(get_db)):
         ak = AuthorizedKey(license_key=key, plan=plan, customer_name=customer_name)
         db.add(ak)
     db.commit()
+
+    log_event("license_sync", {"license_key": key, "plan": plan})
     return {"ok": True, "key": key}
 
 
@@ -625,8 +657,10 @@ def validate_license(data: dict, db: Session = Depends(get_db)):
 
     ak = db.query(AuthorizedKey).filter(AuthorizedKey.license_key == key).first()
     if not ak:
+        log_event("license_validate", {"license_key": key, "result": "invalid_key"}, "")
         return {"ok": False, "error": "invalid_key", "message": "Clave de licencia inválida"}
     if not ak.is_active:
+        log_event("license_validate", {"license_key": key, "result": "revoked"}, "")
         return {"ok": False, "error": "revoked", "message": "La licencia fue revocada"}
 
     if machine_id:
@@ -668,6 +702,7 @@ def validate_license(data: dict, db: Session = Depends(get_db)):
             else:
                 subscription_suspended = True
 
+    log_event("license_validate", {"license_key": key, "result": "valid", "plan": ak.plan})
     return {
         "ok": True,
         "plan": ak.plan,
