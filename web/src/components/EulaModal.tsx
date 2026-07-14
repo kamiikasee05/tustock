@@ -6,17 +6,30 @@ export default function EulaModal() {
   const { status, refresh } = useLicense()
   const [accepted, setAccepted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   if (status.eula_accepted) return null
 
   const handleAccept = async () => {
     setSubmitting(true)
+    setError('')
     try {
       await api.post('/license/accept-eula', {})
-      refresh()
-    } catch {
+    } catch (err: any) {
+      const msg = err?.message || ''
+      if (msg.includes('Ya aceptaste')) {
+        await refresh().catch(() => {})
+        setSubmitting(false)
+        return
+      }
       setSubmitting(false)
+      setError('Error al guardar. Verificá que el servidor esté corriendo.')
+      return
     }
+    try {
+      await refresh()
+    } catch {}
+    setSubmitting(false)
   }
 
   return (
@@ -73,6 +86,9 @@ export default function EulaModal() {
           </p>
         </div>
         <div style={{ padding: '16px 24px 24px', borderTop: '1px solid var(--border)', marginTop: 16 }}>
+          {error && (
+            <p style={{ fontSize: 13, color: 'var(--danger)', marginBottom: 12 }}>{error}</p>
+          )}
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, cursor: 'pointer', marginBottom: 16 }}>
             <input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)}
               style={{ width: 18, height: 18, accentColor: 'var(--primary)' }} />

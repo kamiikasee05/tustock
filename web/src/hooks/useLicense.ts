@@ -50,7 +50,7 @@ export function useLicense() {
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(() => {
-    api.get<LicenseStatus>('/license/status')
+    return api.get<LicenseStatus>('/license/status')
       .then(setStatus)
       .catch(() => {})
       .finally(() => setLoading(false))

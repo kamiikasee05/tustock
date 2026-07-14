@@ -44,9 +44,9 @@ def check_can_add_product(db: Session = Depends(get_db)):
 
 @router.post("/accept-eula")
 def accept_eula_route(db: Session = Depends(get_db)):
-    ok = accept_eula(db)
-    if not ok:
-        raise HTTPException(400, "Ya aceptaste los términos anteriormente")
+    result = accept_eula(db)
+    if not result["ok"]:
+        raise HTTPException(400, result["error"])
     return {"ok": True, "message": "Términos aceptados"}
 
 

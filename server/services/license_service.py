@@ -161,14 +161,19 @@ def activate_license(db: Session, key: str, customer_name: str = "") -> dict:
     return {"ok": True, "plan": lic.plan}
 
 
-def accept_eula(db: Session) -> bool:
+def accept_eula(db: Session) -> dict:
     lic = get_license(db)
-    if not lic or lic.eula_accepted:
-        return False
+    if not lic:
+        init_license(db)
+        lic = get_license(db)
+    if not lic:
+        return {"ok": False, "error": "no_license"}
+    if lic.eula_accepted:
+        return {"ok": True, "already": True}
     lic.eula_accepted = True
     lic.eula_accepted_at = datetime.utcnow()
     db.commit()
-    return True
+    return {"ok": True}
 
 
 def can_add_product(db: Session) -> tuple[bool, str]:

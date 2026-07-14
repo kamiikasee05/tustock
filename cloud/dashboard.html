@@ -2,284 +2,361 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TUSTOCK Monitor Cloud</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TUSTOCK Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f2f5;color:#1a1a2e;padding-bottom:80px}
-.header{background:#1a1a2e;color:#fff;padding:16px 20px;position:sticky;top:0;z-index:10}
-.header h1{font-size:18px;font-weight:700}
-.header .sub{font-size:12px;color:#94a3b8;margin-top:2px}
-.header .refresh{float:right;font-size:12px;color:#94a3b8}
-.header .logout{float:right;font-size:12px;color:#94a3b8;margin-right:16px;cursor:pointer;text-decoration:underline}
-.container{padding:12px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#10131a;--surface:#1d2027;--surface-high:#252830;--surface-highest:#2e3138;--primary:#adc6ff;--primary-container:#4d8eff;--on-surface:#e1e2ec;--on-surface-variant:#8b95a5;--outline:rgba(255,255,255,0.12);--glass:rgba(30,41,59,0.7);--glass-blur:blur(12px);--radius-sm:8px;--radius-md:12px;--radius-lg:16px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--on-surface);min-height:100vh;-webkit-font-smoothing:antialiased}
+input,select,button{font-family:'Inter',sans-serif}
+a{color:var(--primary-container);text-decoration:none}
 
-.row{display:flex;gap:10px;margin-bottom:10px}
-.col{flex:1}
-.card{background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:10px}
-.card-title{font-size:11px;font-weight:600;text-transform:uppercase;color:#6b7280;margin-bottom:6px;letter-spacing:.5px}
-.card .big{font-size:28px;font-weight:800;line-height:1.2}
-.card .big.green{color:#059669}
-.card .big.blue{color:#2563eb}
-.card .big.orange{color:#d97706}
-.card .big.red{color:#dc2626}
-.card .label{font-size:12px;color:#6b7280;margin-top:2px}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{width:100%;max-width:380px;background:var(--glass);backdrop-filter:var(--glass-blur);border:1px solid var(--outline);border-radius:var(--radius-lg);padding:40px 32px}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.login-logo svg{width:32px;height:32px}
+.login-logo span{font-size:20px;font-weight:700;color:var(--on-surface)}
+.login-sub{font-size:13px;color:var(--on-surface-variant);margin-bottom:28px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--on-surface-variant);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
+.form-group input{width:100%;padding:10px 14px;background:#0b0e15;border:1px solid var(--outline);border-radius:var(--radius-sm);color:var(--on-surface);font-size:14px;outline:none;transition:border .2s}
+.form-group input:focus{border-color:var(--primary-container)}
+.form-group input::placeholder{color:var(--on-surface-variant)}
+.btn{width:100%;padding:11px;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.btn-primary{background:var(--primary-container);color:#fff}
+.btn-primary:hover{opacity:.88}
+.btn-ghost{background:transparent;color:var(--primary);border:1px solid var(--outline);margin-top:8px}
+.btn-ghost:hover{background:rgba(255,255,255,0.04)}
+.error{color:#f87171;font-size:13px;margin-bottom:12px}
+.tab-bar{display:flex;gap:0;margin-bottom:20px;background:var(--surface);border-radius:var(--radius-sm);padding:3px}
+.tab-btn{flex:1;padding:8px;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;background:transparent;color:var(--on-surface-variant);transition:all .2s}
+.tab-btn.active{background:var(--primary-container);color:#fff}
 
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:6px 4px;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;border-bottom:1px solid #e5e7eb}
-td{padding:8px 4px;border-bottom:1px solid #f3f4f6}
-tr:last-child td{border-bottom:none}
-.text-right{text-align:right}
-.text-center{text-align:center}
-.text-muted{color:#6b7280}
-.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
-.tag.green{background:#d1fae5;color:#065f46}
-.tag.yellow{background:#fef3c7;color:#92400e}
-.tag.red{background:#fee2e2;color:#991b1b}
-.tag.blue{background:#dbeafe;color:#1e40af}
-.tag.gray{background:#f3f4f6;color:#374151}
+.dashboard{min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--outline);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;backdrop-filter:var(--glass-blur)}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-left svg{width:24px;height:24px}
+.topbar-left span{font-size:16px;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-right .last-push{font-size:11px;color:var(--on-surface-variant)}
+.btn-sm{padding:6px 14px;border:1px solid var(--outline);border-radius:6px;background:transparent;color:var(--on-surface-variant);font-size:12px;cursor:pointer;transition:all .2s}
+.btn-sm:hover{border-color:var(--primary);color:var(--on-surface)}
+.btn-danger-sm{padding:6px 14px;border:none;border-radius:6px;background:rgba(248,113,113,0.15);color:#f87171;font-size:12px;cursor:pointer}
+.btn-danger-sm:hover{background:rgba(248,113,113,0.25)}
 
-.empty{text-align:center;padding:24px;color:#9ca3af;font-size:13px}
+.content{max-width:900px;margin:0 auto;padding:20px}
+.no-data{text-align:center;padding:60px 20px;color:var(--on-surface-variant)}
+.no-data svg{width:48px;height:48px;margin-bottom:16px;opacity:.4}
+.no-data p{font-size:14px;margin-bottom:4px}
+.no-data .ts{font-size:12px;opacity:.6}
 
-.login-container{display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
-.login-card{background:#fff;border-radius:16px;padding:40px;width:100%;max-width:380px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
-.login-card h1{font-size:22px;margin-bottom:4px;color:#1a1a2e}
-.login-card p{font-size:13px;color:#6b7280;margin-bottom:24px}
-.login-card label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px}
-.login-card input{width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-bottom:16px}
-.login-card button{width:100%;padding:12px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer}
-.login-card button:hover{background:#1d4ed8}
-.login-card .error{color:#dc2626;font-size:13px;margin-bottom:12px;display:none}
-.login-card .register-link{text-align:center;margin-top:16px;font-size:13px;color:#6b7280}
-.login-card .register-link a{color:#2563eb;cursor:pointer;text-decoration:underline}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.kpi{background:var(--glass);backdrop-filter:var(--glass-blur);border:1px solid var(--outline);border-radius:var(--radius-md);padding:18px 20px}
+.kpi-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--on-surface-variant);margin-bottom:6px}
+.kpi-value{font-size:28px;font-weight:800;color:var(--on-surface)}
+.kpi-sub{font-size:12px;color:var(--on-surface-variant);margin-top:4px}
+
+.section{background:var(--glass);backdrop-filter:var(--glass-blur);border:1px solid var(--outline);border-radius:var(--radius-md);padding:20px;margin-bottom:16px}
+.section-title{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section-title svg{width:16px;height:16px;color:var(--primary-container)}
+
+.list-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--outline)}
+.list-item:last-child{border-bottom:none}
+.list-item-left{flex:1;min-width:0}
+.list-item-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-item-meta{font-size:12px;color:var(--on-surface-variant);margin-top:2px}
+.list-item-right{font-size:15px;font-weight:700;white-space:nowrap;margin-left:12px}
+
+.stock-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--outline)}
+.stock-item:last-child{border-bottom:none}
+.stock-info{flex:1}
+.stock-name{font-size:14px;font-weight:500}
+.stock-detail{font-size:12px;color:var(--on-surface-variant);margin-top:2px}
+.stock-bar-wrap{width:80px;height:6px;background:var(--surface-highest);border-radius:3px;overflow:hidden}
+.stock-bar{height:100%;border-radius:3px;transition:width .4s}
+.stock-bar.red{background:#f87171}
+.stock-bar.amber{background:#fbbf24}
+.stock-val{font-size:14px;font-weight:700;min-width:40px;text-align:right}
+
+.debtor-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--outline)}
+.debtor-item:last-child{border-bottom:none}
+.debtor-avatar{width:32px;height:32px;border-radius:50%;background:var(--primary-container);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;margin-right:10px;flex-shrink:0}
+.debtor-info{flex:1}
+.debtor-name{font-size:14px;font-weight:500}
+.debtor-bal{font-size:15px;font-weight:700;color:#fbbf24}
+
+.empty{text-align:center;padding:24px;color:var(--on-surface-variant);font-size:13px}
+.refresh-indicator{display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.delete-section{margin-top:20px;padding-top:20px;border-top:1px solid var(--outline)}
+.delete-section p{font-size:12px;color:var(--on-surface-variant);margin-bottom:8px}
+.btn-delete{padding:8px 16px;border:none;border-radius:var(--radius-sm);background:rgba(248,113,113,0.12);color:#f87171;font-size:13px;cursor:pointer;font-weight:500}
+.btn-delete:hover{background:rgba(248,113,113,0.2)}
 
 @media(max-width:480px){
-.header{padding:12px 14px}
-.container{padding:8px}
-.row{flex-direction:column;gap:6px}
-.card{padding:12px;border-radius:10px}
-.card .big{font-size:24px}
+.content{padding:14px}
+.grid{grid-template-columns:1fr 1fr}
+.kpi-value{font-size:22px}
+.topbar{padding:12px 14px}
 }
 </style>
 </head>
 <body>
 <div id="app"></div>
-
 <script>
-const TOKEN_KEY = 'tustock_cloud_token';
-const API = '/api';
+const API = window.location.origin;
+let state = {view:'login',token:localStorage.getItem('tm_token')||'',email:'',password:'',name:'',data:null,lastPush:'',error:'',loading:false,tab:'register',refreshTimer:null};
+const $ = s => document.getElementById(s);
+const h = t => {const d=document.createElement('div');d.textContent=t;return d.innerHTML};
 
-function fmt(n){return Number(n).toLocaleString('es-AR',{minimumFractionDigits:0})}
-function fmtMoney(n){return '$'+Number(n).toLocaleString('es-AR',{minimumFractionDigits:0})}
-
-function showLogin(){
-document.getElementById('app').innerHTML=`
-<div class="login-container">
-<div class="login-card">
-<h1>TUSTOCK Monitor</h1>
-<p>Accedé al panel de tu negocio</p>
-<div id="login-error" class="error"></div>
-<label>Email</label>
-<input type="email" id="login-email" autofocus>
-<label>Contraseña</label>
-<input type="password" id="login-pass" onkeydown="if(event.key==='Enter')doLogin()">
-<button onclick="doLogin()">Ingresar</button>
-<div class="register-link">¿No tenés cuenta? <a onclick="showRegister()">Registrate</a></div>
-</div>
-</div>`;
+function api(path,opts={}){
+  const headers={'Content-Type':'application/json'};
+  if(state.token) headers['Authorization']='Bearer '+state.token;
+  return fetch(API+path,{...opts,headers:{...headers,...(opts.headers||{})}}).then(r=>r.json());
 }
 
-function showRegister(){
-document.getElementById('app').innerHTML=`
-<div class="login-container">
-<div class="login-card">
-<h1>Crear cuenta</h1>
-<p>Registrá tu negocio en el Monitor Cloud</p>
-<div id="reg-error" class="error"></div>
-<label>Nombre del negocio</label>
-<input type="text" id="reg-name" autofocus>
-<label>Email</label>
-<input type="email" id="reg-email">
-<label>Contraseña</label>
-<input type="password" id="reg-pass">
-<label style="display:flex;align-items:flex-start;gap:8px;margin-top:4px;font-size:12px;font-weight:400;cursor:pointer">
-<input type="checkbox" id="reg-terms" style="margin-top:2px;width:16px;height:16px">
-<span>Acepto los <a href="/api/licenses/terms" target="_blank" style="color:#2563eb;text-decoration:underline">Términos y Condiciones</a> y la <a href="/api/licenses/privacy" target="_blank" style="color:#2563eb;text-decoration:underline">Política de Privacidad</a></span>
-</label>
-<button id="reg-btn" onclick="doRegister()" disabled style="opacity:0.5;cursor:not-allowed">Crear cuenta</button>
-<div class="register-link">¿Ya tenés cuenta? <a onclick="showLogin()">Iniciar sesión</a></div>
-</div>
-</div>`;
-document.getElementById('reg-terms').addEventListener('change', function(){
-const btn=document.getElementById('reg-btn');
-const ok=this.checked;
-btn.disabled=!ok;
-btn.style.opacity=ok?'1':'0.5';
-btn.style.cursor=ok?'pointer':'not-allowed';
-});
+function render(){
+  const app = $('app');
+  if(state.view==='login') renderLogin(app);
+  else renderDashboard(app);
 }
 
-async function doLogin(){
-const email=document.getElementById('login-email').value.trim();
-const pass=document.getElementById('login-pass').value;
-if(!email||!pass)return;
-try{
-const r=await fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
-if(!r.ok){const e=await r.json();document.getElementById('login-error').style.display='block';document.getElementById('login-error').textContent=e.detail||'Error';return}
-const d=await r.json();
-localStorage.setItem(TOKEN_KEY,d.token);
-showDashboard();
-}catch(e){document.getElementById('login-error').style.display='block';document.getElementById('login-error').textContent='Error de conexión'}
+function renderLogin(app){
+  app.innerHTML = `
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#4d8eff"/><path d="M9 12h14M9 16h10M9 20h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>TUSTOCK</span>
+      </div>
+      <div class="login-sub">Monitor de tu negocio</div>
+      <div class="tab-bar">
+        <button class="tab-btn ${state.tab==='register'?'active':''}" onclick="state.tab='register';render()">Crear cuenta</button>
+        <button class="tab-btn ${state.tab==='login'?'active':''}" onclick="state.tab='login';render()">Ingresar</button>
+      </div>
+      ${state.error?'<div class="error">'+h(state.error)+'</div>':''}
+      ${state.tab==='register'?`
+        <div class="form-group"><label>Email</label><input id="re" type="email" placeholder="tu@email.com" value="${h(state.email)}" /></div>
+        <div class="form-group"><label>Nombre del negocio</label><input id="rn" placeholder="Mi Kiosco" value="${h(state.name)}" /></div>
+        <div class="form-group"><label>Contraseña</label><input id="rp" type="password" placeholder="Mínimo 6 caracteres" value="${h(state.password)}" /></div>
+        <button class="btn btn-primary" onclick="doRegister()">Crear cuenta</button>
+      `:`
+        <div class="form-group"><label>Email</label><input id="le" type="email" placeholder="tu@email.com" value="${h(state.email)}" /></div>
+        <div class="form-group"><label>Contraseña</label><input id="lp" type="password" placeholder="Contraseña" value="${h(state.password)}" /></div>
+        <button class="btn btn-primary" onclick="doLogin()">Ingresar</button>
+      `}
+    </div>
+  </div>`;
+  const firstInput = state.tab==='register' ? $('re') : $('le');
+  if(firstInput) firstInput.focus();
+  document.querySelectorAll('.login-card input').forEach(inp => {
+    inp.addEventListener('keydown', e => { if(e.key==='Enter'){ state.tab==='register'?doRegister():doLogin(); }});
+  });
 }
 
-async function doRegister(){
-const name=document.getElementById('reg-name').value.trim();
-const email=document.getElementById('reg-email').value.trim();
-const pass=document.getElementById('reg-pass').value;
-const terms=document.getElementById('reg-terms').checked;
-if(!name||!email||!pass||!terms)return;
-try{
-const r=await fetch(API+'/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password:pass,accepts_terms:true})});
-if(!r.ok){const e=await r.json();document.getElementById('reg-error').style.display='block';document.getElementById('reg-error').textContent=e.detail||'Error';return}
-const d=await r.json();
-alert('Cuenta creada! Tu API key es: '+d.api_key+'\n\nGuardala para configurar el agente local.');
-showLogin();
-}catch(e){document.getElementById('reg-error').style.display='block';document.getElementById('reg-error').textContent='Error de conexión'}
+function doLogin(){
+  state.email = ($('le')||{}).value||'';
+  state.password = ($('lp')||{}).value||'';
+  if(!state.email||!state.password){state.error='Completá email y contraseña';render();return;}
+  state.error='';state.loading=true;render();
+  fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:state.email,password:state.password})})
+  .then(r=>r.json()).then(d=>{
+    if(d.token){state.token=d.token;state.view='dashboard';localStorage.setItem('tm_token',d.token);state.email='';state.password='';fetchData();state.refreshTimer=setInterval(fetchData,30000);}
+    else{state.error=d.detail||'Credenciales inválidas';}
+    state.loading=false;render();
+  }).catch(()=>{state.error='Error de conexión';state.loading=false;render();});
+}
+
+function doRegister(){
+  state.email = ($('re')||{}).value||'';
+  state.name = ($('rn')||{}).value||'';
+  state.password = ($('rp')||{}).value||'';
+  if(!state.email||!state.password||!state.name){state.error='Completá todos los campos';render();return;}
+  if(state.password.length<6){state.error='La contraseña debe tener al menos 6 caracteres';render();return;}
+  state.error='';state.loading=true;render();
+  fetch(API+'/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:state.email,password:state.password,name:state.name})})
+  .then(r=>r.json()).then(d=>{
+    if(d.ok){
+      fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:state.email,password:state.password})})
+      .then(r=>r.json()).then(d2=>{
+        if(d2.token){state.token=d2.token;state.view='dashboard';localStorage.setItem('tm_token',d2.token);state.email='';state.password='';state.name='';fetchData();state.refreshTimer=setInterval(fetchData,30000);}
+        state.loading=false;render();
+      });
+    } else {state.error=d.detail||'Error al crear cuenta';state.loading=false;render();}
+  }).catch(()=>{state.error='Error de conexión';state.loading=false;render();});
 }
 
 function logout(){
-localStorage.removeItem(TOKEN_KEY);
-showLogin();
+  clearInterval(state.refreshTimer);
+  state.token='';state.view='dashboard';state.data=null;
+  localStorage.removeItem('tm_token');render();
 }
 
-let deleting=false;
-function showDeleteSection(){
-const existing=document.getElementById('delete-section');
-if(existing)existing.style.display=existing.style.display==='none'?'block':'none';
-return;
-}
-async function doDeleteAccount(){
-if(deleting)return;
-const email=document.getElementById('delete-email').value.trim();
-if(!email){alert('Ingresá tu email para confirmar');return}
-if(!confirm('Esta acción eliminará todos tus datos del Monitor Cloud de forma permanente. ¿Estás seguro?'))return;
-deleting=true;
-const btn=document.getElementById('delete-btn');
-if(btn){btn.disabled=true;btn.textContent='Eliminando...'}
-try{
-const token=localStorage.getItem(TOKEN_KEY);
-const r=await fetch(API+'/business/delete-account',{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({confirm:true,email})});
-if(!r.ok){const e=await r.json();alert(e.detail||'Error al eliminar cuenta');deleting=false;if(btn){btn.disabled=false;btn.textContent='Eliminar mi cuenta'};return}
-alert('Cuenta eliminada correctamente. Tus datos han sido borrados.');
-logout();
-}catch(e){alert('Error de conexión');deleting=false;if(btn){btn.disabled=false;btn.textContent='Eliminar mi cuenta'}}
+function fetchData(){
+  if(!state.token||state.view!=='dashboard') return;
+  api('/api/metrics').then(d=>{
+    if(d.detail==='Not authenticated'){logout();return;}
+    state.data=d;
+    state.lastPush=d.last_push||'';
+    render();
+  }).catch(()=>{});
 }
 
-async function loadMetrics(){
-const token=localStorage.getItem(TOKEN_KEY);
-if(!token){showLogin();return}
-try{
-const r=await fetch(API+'/metrics',{headers:{'Authorization':'Bearer '+token}});
-if(r.status===401){logout();return}
-const d=await r.json();
-renderMetrics(d);
-}catch(e){document.getElementById('dash-content').innerHTML='<div class="empty" style="padding:60px">Error de conexión. Reintentando...</div>'}
+function fmt$(n){return '$'+Number(n||0).toLocaleString('es-AR');}
+function fmtTime(iso){
+  if(!iso)return '';
+  try{const d=new Date(iso);return d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});}
+  catch{return iso;}
 }
 
-function renderMetrics(d){
-const c=document.getElementById('dash-content');
-if(!d.has_data){
-c.innerHTML='<div class="card"><div class="empty" style="padding:40px"><strong>Sin datos aún</strong><br><br>Configurá el agente local en tu PC para comenzar a recibir métricas.<br><br>Tu API key es: <code style="background:#f3f4f6;padding:4px 8px;border-radius:4px;font-size:12px">'+localStorage.getItem('tustock_api_key')+'</code></div></div>';
-return;
-}
-const data=d.data;
-const s=data.sales_today||{};
-let html='';
-
-html+=`<div class="row">`;
-html+=`<div class="col"><div class="card"><div class="card-title">Ventas Hoy</div><div class="big green">${fmtMoney(s.total||0)}</div><div class="label">${s.count||0} transacciones · ${s.items_sold||0} items</div></div></div>`;
-html+=`<div class="col"><div class="card"><div class="card-title">Ticket Prom.</div><div class="big blue">${fmtMoney((s.count||0)>0?s.total/s.count:0)}</div><div class="label">por venta</div></div></div>`;
-html+=`</div>`;
-
-if(data.by_method&&data.by_method.length){
-html+=`<div class="card"><div class="card-title">Métodos de Pago Hoy</div><table><tr><th>Método</th><th class="text-center">Ventas</th><th class="text-right">Total</th></tr>`;
-for(const m of data.by_method){
-const tag=m.method==='efectivo'?'green':m.method==='tarjeta'?'blue':m.method==='transferencia'?'yellow':m.method==='fiado'?'red':'gray';
-html+=`<tr><td><span class="tag ${tag}">${m.method||'sin método'}</span></td><td class="text-center">${m.count}</td><td class="text-right">${fmtMoney(m.total)}</td></tr>`;
-}
-html+=`</table></div>`;
+function deleteAccount(){
+  if(!confirm('¿Eliminar tu cuenta y todos tus datos? Esta acción no se puede deshacer.')) return;
+  const pass = prompt('Escribí tu contraseña para confirmar:');
+  if(!pass) return;
+  api('/api/business/delete-account',{method:'POST',body:JSON.stringify({password:pass})})
+  .then(d=>{if(d.ok){logout();}else{alert(d.detail||'Error al eliminar');}})
+  .catch(()=>alert('Error de conexión'));
 }
 
-if(data.low_stock&&data.low_stock.length){
-html+=`<div class="card"><div class="card-title">⚠️ Stock Bajo</div><table><tr><th>Producto</th><th class="text-center">Actual</th><th class="text-center">Mín</th></tr>`;
-for(const l of data.low_stock){
-const cls=l.current===0?'red':l.current<=l.min_stock?'orange':'';
-html+=`<tr><td>${l.name}</td><td class="text-center"><strong class="${cls}">${l.current}</strong></td><td class="text-center text-muted">${l.min_stock}</td></tr>`;
-}
-html+=`</table></div>`;
+function renderDashboard(app){
+  const d = state.data;
+  let content = '';
+
+  if(!d || !d.has_data){
+    content = `
+    <div class="content">
+      <div class="no-data">
+        <svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="20" stroke="#8b95a5" stroke-width="2" stroke-dasharray="4 4"/><path d="M18 24h12M24 18v12" stroke="#8b95a5" stroke-width="2" stroke-linecap="round"/></svg>
+        <p>Sin datos aún</p>
+        <p class="ts">${d && d.last_push ? 'Último push: '+fmtTime(d.last_push) : 'Esperando primer push del sistema local...'}</p>
+      </div>
+    </div>`;
+  } else {
+    const sales = d.data.sales_today||{};
+    const methods = d.data.by_method||[];
+    const top = d.data.top_products||[];
+    const low = d.data.low_stock||[];
+    const debtors = d.data.debtors||[];
+    const avg = sales.count>0 ? Math.round(sales.total/sales.count) : 0;
+
+    content = `
+    <div class="content">
+      <div class="grid">
+        <div class="kpi">
+          <div class="kpi-label">Ventas Hoy</div>
+          <div class="kpi-value">${sales.count||0}</div>
+          <div class="kpi-sub">${fmt$(sales.total)} facturados</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Ticket Promedio</div>
+          <div class="kpi-value">${fmt$(avg)}</div>
+          <div class="kpi-sub">${sales.items_sold||0} productos vendidos</div>
+        </div>
+      </div>
+
+      ${methods.length>0 ? `
+      <div class="section">
+        <div class="section-title">
+          <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M1 6h14" stroke="currentColor" stroke-width="1.5"/></svg>
+          Métodos de Pago
+        </div>
+        ${methods.map(m=>`
+          <div class="list-item">
+            <div class="list-item-left">
+              <div class="list-item-name">${h(m.method)}</div>
+              <div class="list-item-meta">${m.count} venta${m.count!==1?'s':''}</div>
+            </div>
+            <div class="list-item-right">${fmt$(m.total)}</div>
+          </div>
+        `).join('')}
+      </div>`:''}
+
+      ${top.length>0 ? `
+      <div class="section">
+        <div class="section-title">
+          <svg viewBox="0 0 16 16" fill="none"><path d="M3 12V7l5-4 5 4v5a1 1 0 01-1 1H4a1 1 0 01-1-1z" stroke="currentColor" stroke-width="1.5"/><path d="M6 13V9h4v4" stroke="currentColor" stroke-width="1.5"/></svg>
+          Top Productos
+        </div>
+        ${top.map(p=>`
+          <div class="list-item">
+            <div class="list-item-left">
+              <div class="list-item-name">${h(p.name)}</div>
+              <div class="list-item-meta">${p.quantity} unidades</div>
+            </div>
+            <div class="list-item-right">${fmt$(p.total)}</div>
+          </div>
+        `).join('')}
+      </div>`:''}
+
+      ${low.length>0 ? `
+      <div class="section">
+        <div class="section-title">
+          <svg viewBox="0 0 16 16" fill="none"><path d="M8 1v10M4 8l4 4 4-4" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 14h12" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Stock Bajo
+        </div>
+        ${low.map(p=>{
+          const pct = p.min_stock>0 ? Math.min(100,Math.round((p.current/p.min_stock)*100)) : 0;
+          return `
+          <div class="stock-item">
+            <div class="stock-info">
+              <div class="stock-name">${h(p.name)}</div>
+              <div class="stock-detail">${p.current} / ${p.min_stock} ${h(p.unit||'un')}</div>
+            </div>
+            <div class="stock-bar-wrap"><div class="stock-bar ${pct<30?'red':'amber'}" style="width:${pct}%"></div></div>
+            <div class="stock-val">${p.current}</div>
+          </div>`;
+        }).join('')}
+      </div>`:''}
+
+      ${debtors.length>0 ? `
+      <div class="section">
+        <div class="section-title">
+          <svg viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M1 14c0-3 2-5 5-5s5 2 5 5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="5" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M12 9c2 0 3.5 1.5 3.5 4" stroke="currentColor" stroke-width="1.2"/></svg>
+          Deudores
+        </div>
+        ${debtors.map(d=>`
+          <div class="debtor-item">
+            <div class="debtor-avatar">${h((d.name||'?')[0])}</div>
+            <div class="debtor-info"><div class="debtor-name">${h(d.name)}</div></div>
+            <div class="debtor-bal">${fmt$(d.balance)}</div>
+          </div>
+        `).join('')}
+      </div>`:''}
+    </div>`;
+  }
+
+  app.innerHTML = `
+  <div class="dashboard">
+    <div class="topbar">
+      <div class="topbar-left">
+        <svg viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#4d8eff"/><path d="M7 9h10M7 12h7M7 15h10" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>TUSTOCK</span>
+      </div>
+      <div class="topbar-right">
+        <span class="last-push">${state.lastPush?'<span class="refresh-indicator"></span>'+fmtTime(state.lastPush):''}</span>
+        <button class="btn-sm" onclick="fetchData()">Actualizar</button>
+        <button class="btn-danger-sm" onclick="logout()">Salir</button>
+      </div>
+    </div>
+    ${content}
+    <div class="content">
+      <div class="delete-section">
+        <p>¿Querés eliminar tu cuenta y todos tus datos del monitor?</p>
+        <button class="btn-delete" onclick="deleteAccount()">Eliminar mi cuenta</button>
+      </div>
+    </div>
+  </div>`;
 }
 
-if(data.top_products&&data.top_products.length){
-html+=`<div class="card"><div class="card-title">🏆 Más Vendidos (7 días)</div><table><tr><th>Producto</th><th class="text-center">Cant.</th><th class="text-right">Total</th></tr>`;
-for(const t of data.top_products){
-html+=`<tr><td>${t.name}</td><td class="text-center">${t.quantity}</td><td class="text-right">${fmtMoney(t.total)}</td></tr>`;
+if(state.token && state.view==='login'){
+  state.view='dashboard';
+  fetchData();
+  state.refreshTimer=setInterval(fetchData,30000);
 }
-html+=`</table></div>`;
-}
-
-if(data.debtors&&data.debtors.length){
-html+=`<div class="card"><div class="card-title">💰 Clientes con Deuda</div><table><tr><th>Cliente</th><th class="text-right">Saldo</th></tr>`;
-for(const c of data.debtors){
-html+=`<tr><td>${c.name}</td><td class="text-right" style="color:#dc2626;font-weight:600">${fmtMoney(c.balance)}</td></tr>`;
-}
-html+=`</table></div>`;
-}
-
-if((!data.low_stock||!data.low_stock.length)&&(!data.top_products||!data.top_products.length)&&(!data.debtors||!data.debtors.length)&&(!data.by_method||!data.by_method.length)){
-html+=`<div class="empty">Sin novedades para mostrar</div>`;
-}
-
-html+=`<div class="card" style="text-align:center;font-size:11px;color:#9ca3af">Última actualización: ${d.last_push ? new Date(d.last_push).toLocaleString('es-AR') : '-'}</div>`;
-c.innerHTML=html;
-}
-
-function showDashboard(){
-const token=localStorage.getItem(TOKEN_KEY);
-if(!token){showLogin();return}
-document.getElementById('app').innerHTML=`
-<div class="header">
-<div class="refresh" id="timer">actualizando en 30s</div>
-<span class="logout" onclick="logout()">Salir</span>
-<h1>TUSTOCK</h1>
-<div class="sub" id="subtitle">Monitor Cloud — Conectando...</div>
-</div>
-<div class="container" id="dash-content">
-<div style="text-align:center;padding:40px;color:#9ca3af;font-size:14px">Cargando...</div>
-</div>
-<div class="container" style="margin-top:4px">
-<div class="card" style="border:1px solid #fca5a5">
-<div class="card-title" style="color:#dc2626">Eliminar mi cuenta</div>
-<p style="font-size:12px;color:#6b7280;margin-bottom:10px">Esta acción eliminará permanentemente todos tus datos del Monitor Cloud. No se puede deshacer.</p>
-<div id="delete-section">
-<label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">Escribí tu email para confirmar</label>
-<input type="email" id="delete-email" placeholder="tu@email.com" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;margin-bottom:8px">
-<button id="delete-btn" onclick="doDeleteAccount()" style="padding:8px 18px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">Eliminar mi cuenta</button>
-</div>
-</div>
-</div>`;
-loadMetrics();
-let countdown=30;
-if(window._timer)clearInterval(window._timer);
-window._timer=setInterval(()=>{
-countdown--;
-const t=document.getElementById('timer');
-if(t)t.textContent='actualizando en '+countdown+'s';
-if(countdown<=0){countdown=30;loadMetrics()}
-},1000);
-}
-
-const token=localStorage.getItem(TOKEN_KEY);
-if(token){showDashboard();}else{showLogin();}
+render();
 </script>
 </body>
 </html>
