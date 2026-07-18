@@ -95,11 +95,40 @@ img{max-width:100%;display:block}
 .mockup-wrapper{position:relative;max-width:800px;margin:0 auto}
 .mockup-glow{position:absolute;inset:-40px;background:radial-gradient(ellipse,rgba(77,142,255,.12) 0%,transparent 70%);filter:blur(40px);pointer-events:none}
 .mockup-box{position:relative;border-radius:var(--radius);background:var(--surface);border:1px solid var(--outline-variant);overflow:hidden;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center}
-.mockup-box-inner{padding:48px;text-align:center}
-.mockup-box-inner .mockup-icon{width:72px;height:72px;margin:0 auto 20px;border-radius:var(--radius);background:rgba(77,142,255,.1);border:1px solid rgba(77,142,255,.2);display:flex;align-items:center;justify-content:center}
-.mockup-box-inner .mockup-icon svg{width:36px;height:36px;stroke:var(--primary);fill:none;stroke-width:1.5}
-.mockup-box-inner h3{font-size:22px;font-weight:700;margin-bottom:8px}
-.mockup-box-inner p{font-size:15px;color:var(--on-surface-variant)}
+.mockup-dash{width:100%;height:100%;display:flex;flex-direction:column;background:linear-gradient(145deg,#10131a,#151821);padding:0;position:relative}
+.mockup-titlebar{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid rgba(66,71,84,.3);flex-shrink:0}
+.mockup-dots{display:flex;gap:6px;flex-shrink:0}
+.mockup-dot{width:10px;height:10px;border-radius:50%}
+.mockup-titlebar-text{font-size:11px;color:var(--outline);font-weight:600;margin-left:12px;letter-spacing:.3px}
+.mockup-body{flex:1;padding:12px 16px 14px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.mockup-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mockup-kpi{padding:10px 12px;border-radius:10px;background:rgba(29,32,39,.8);border:1px solid rgba(66,71,84,.5)}
+.mockup-kpi-label{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--outline);font-weight:600;margin-bottom:3px}
+.mockup-kpi-value{font-size:16px;font-weight:800;color:var(--on-surface);font-family:monospace}
+.mockup-kpi-sub{font-size:9px;color:var(--on-surface-variant);margin-top:1px}
+.mockup-kpi.accent{border-color:rgba(77,142,255,.3);background:rgba(77,142,255,.06)}
+.mockup-content{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;min-height:0}
+.mockup-left{display:flex;flex-direction:column;gap:8px}
+.mockup-right{display:flex;flex-direction:column;gap:8px}
+.mockup-table-header{font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--outline);font-weight:600;margin-bottom:3px;padding:0 4px}
+.mockup-table{background:rgba(29,32,39,.8);border:1px solid rgba(66,71,84,.5);border-radius:10px;overflow:hidden;flex:1}
+.mockup-table-row{display:grid;grid-template-columns:1fr 70px 70px;padding:5px 10px;font-size:10px;border-bottom:1px solid rgba(66,71,84,.15);align-items:center}
+.mockup-table-row:last-child{border:none}
+.mockup-table-row .name{font-weight:600;color:var(--on-surface)}
+.mockup-table-row .amount{text-align:right;font-weight:700;font-family:monospace;color:var(--primary)}
+.mockup-table-row .method{text-align:right;color:var(--on-surface-variant);font-size:9px}
+.mockup-table-row.header-row{font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--outline);font-weight:700;padding:5px 10px;background:rgba(66,71,84,.1)}
+.mockup-chart{background:rgba(29,32,39,.8);border:1px solid rgba(66,71,84,.5);border-radius:10px;padding:10px 10px 8px;flex:1;display:flex;flex-direction:column}
+.mockup-chart-title{font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--outline);font-weight:600;margin-bottom:6px}
+.mockup-bars{display:flex;align-items:end;gap:4px;flex:1;padding-bottom:2px}
+.mockup-bar{flex:1;border-radius:3px 3px 0 0;min-height:4px;background:linear-gradient(180deg,rgba(77,142,255,.7),rgba(77,142,255,.3));transition:height .3s}
+.mockup-bar.high{background:linear-gradient(180deg,rgba(34,197,94,.7),rgba(34,197,94,.3))}
+.mockup-bar.med{background:linear-gradient(180deg,rgba(255,183,134,.7),rgba(255,183,134,.3))}
+.mockup-bar-labels{display:flex;gap:4px;margin-top:4px}
+.mockup-bar-labels span{flex:1;text-align:center;font-size:7px;color:var(--outline);font-weight:500}
+.mockup-tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:8px;font-weight:600;background:rgba(239,68,68,.15);color:var(--danger)}
+.mockup-tag.efectivo{background:rgba(34,197,94,.12);color:var(--success)}
+.mockup-tag.transferencia{background:rgba(77,142,255,.12);color:var(--primary)}
 .mockup-label{margin-top:16px;font-size:13px;color:var(--outline)}
 
 .mockup-features{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
@@ -316,12 +345,83 @@ footer{background:var(--surface-lowest);border-top:1px solid rgba(66,71,84,.2);p
     <div class="mockup-wrapper reveal">
       <div class="mockup-glow"></div>
       <div class="mockup-box">
-        <div class="mockup-box-inner">
-          <div class="mockup-icon">
-            <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <div class="mockup-dash">
+          <div class="mockup-titlebar">
+            <div class="mockup-dots">
+              <div class="mockup-dot" style="background:#ef4444"></div>
+              <div class="mockup-dot" style="background:#eab308"></div>
+              <div class="mockup-dot" style="background:#22c55e"></div>
+            </div>
+            <span class="mockup-titlebar-text">TUSTOCK Dashboard</span>
           </div>
-          <h3>TUSTOCK Dashboard</h3>
-          <p>Ventas, stock, clientes y más — todo en un solo lugar</p>
+          <div class="mockup-body">
+            <div class="mockup-kpis">
+              <div class="mockup-kpi accent">
+                <div class="mockup-kpi-label">Ventas hoy</div>
+                <div class="mockup-kpi-value" style="color:var(--primary)">$45.200</div>
+                <div class="mockup-kpi-sub">3 transacciones</div>
+              </div>
+              <div class="mockup-kpi">
+                <div class="mockup-kpi-label">Stock bajo</div>
+                <div class="mockup-kpi-value" style="color:var(--danger)">3</div>
+                <div class="mockup-kpi-sub">productos críticos</div>
+              </div>
+              <div class="mockup-kpi">
+                <div class="mockup-kpi-label">Productos</div>
+                <div class="mockup-kpi-value" style="color:var(--success)">127</div>
+                <div class="mockup-kpi-sub">activos en sistema</div>
+              </div>
+            </div>
+            <div class="mockup-content">
+              <div class="mockup-left">
+                <div class="mockup-table-header">Ultimas ventas</div>
+                <div class="mockup-table">
+                  <div class="mockup-table-row header-row">
+                    <span>Producto</span>
+                    <span style="text-align:right">Monto</span>
+                    <span style="text-align:right">Pago</span>
+                  </div>
+                  <div class="mockup-table-row">
+                    <span class="name">Alfajor Milka x6</span>
+                    <span class="amount">$4.200</span>
+                    <span class="method"><span class="mockup-tag efectivo">Efect.</span></span>
+                  </div>
+                  <div class="mockup-table-row">
+                    <span class="name">Coca Cola 2.25L</span>
+                    <span class="amount">$2.800</span>
+                    <span class="method"><span class="mockup-tag transferencia">Transf.</span></span>
+                  </div>
+                  <div class="mockup-table-row">
+                    <span class="name">Yerba Playadito 1kg</span>
+                    <span class="amount">$5.400</span>
+                    <span class="method"><span class="mockup-tag efectivo">Efect.</span></span>
+                  </div>
+                  <div class="mockup-table-row">
+                    <span class="name">Pan lactal Bimbo 590g</span>
+                    <span class="amount">$2.300</span>
+                    <span class="method"><span class="mockup-tag">Debito</span></span>
+                  </div>
+                </div>
+              </div>
+              <div class="mockup-right">
+                <div class="mockup-chart">
+                  <div class="mockup-chart-title">Ventas de la semana</div>
+                  <div class="mockup-bars">
+                    <div class="mockup-bar" style="height:28px"></div>
+                    <div class="mockup-bar" style="height:40px"></div>
+                    <div class="mockup-bar high" style="height:62px"></div>
+                    <div class="mockup-bar med" style="height:48px"></div>
+                    <div class="mockup-bar" style="height:35px"></div>
+                    <div class="mockup-bar high" style="height:55px"></div>
+                    <div class="mockup-bar med" style="height:50px"></div>
+                  </div>
+                  <div class="mockup-bar-labels">
+                    <span>Lun</span><span>Mar</span><span>Mie</span><span>Jue</span><span>Vie</span><span>Sab</span><span>Dom</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -411,6 +411,7 @@ PC del cliente                          Cloud (Railway/VPS)
 - [fix] LEGAL CLOUD FIXES: Email `kamiikasee05@gmail.com` → `tustock.administracion@gmail.com`, marca `Kamiikaze Desarrollos` → `TUSTOCK`, URLs dominio actualizado, checkbox consentimiento agregado, deudores anonimizados. (2026-07-15)
 - [fix] LIMPIEZA UI: 14 componentes UI no utilizados eliminados (GlassPanel, KPICard, MiniBarChart, QuickAction, Toggle, CustomerDrawer, Modal, DataTable, Button, Card, Badge, EmptyState, Skeleton, index.ts). recharts y lucide-react desinstalados. Build -30KB. (2026-07-15)
 - [feature] TERCER POST EN FACEBOOK: Post 3 (cierre de secuencia — "¿Y si el mes que viene arrancás con todo bajo control?") publicado en grupos de Facebook. Copy listo en `docs/marketing/post3-facebook.md`. (2026-07-15)
+- [fix] LANDING MOCKUP: Placeholder SVG genérico reemplazado por dashboard mockup realista — titlebar con dots macOS, 3 KPI cards, tabla de últimas ventas con productos argentinos, gráfico de barras semanal CSS puro. (2026-07-15)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
