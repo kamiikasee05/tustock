@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { api } from '../api/client'
 import { useLicense, LicenseStatus } from '../hooks/useLicense'
 import { useToast } from '../components/Toast'
+import MaterialIcon from '../components/ui/MaterialIcon'
 
 export default function Settings() {
   const { status, refresh } = useLicense()
@@ -28,106 +29,125 @@ export default function Settings() {
   }
 
   return (
-    <div>
-      <h2 style={{ marginBottom: 4 }}>Ajustes</h2>
-      <p style={{ color: 'var(--text-muted)', marginBottom: 24 }}>Configuración del sistema y licencia</p>
+    <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+      <div style={{ marginBottom: 'var(--space-xl)' }}>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', color: 'var(--outline)', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 'var(--space-xs)' }}>
+          <span>CONFIGURACIÓN</span>
+          <MaterialIcon name="chevron_right" size={12} />
+          <span style={{ color: 'var(--primary-fixed-dim)' }}>AJUSTES</span>
+        </nav>
+        <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 40, lineHeight: '48px', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--on-surface)' }}>
+          Ajustes
+        </h2>
+        <p style={{ color: 'var(--on-surface-variant)', marginTop: 4 }}>
+          Configuración del sistema y licencia
+        </p>
+      </div>
 
-      {/* Información de licencia actual */}
       <div style={{
-        background: 'var(--surface)',
-        borderRadius: 12,
-        border: '1px solid var(--border)',
-        padding: 20,
-        marginBottom: 24,
+        background: 'var(--surface-container)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid rgba(66,71,84,0.5)',
+        padding: 'var(--space-lg)',
+        marginBottom: 'var(--space-lg)',
         maxWidth: 500,
       }}>
-        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Licencia actual</h3>
+        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <MaterialIcon name="key" size={20} />
+          Licencia actual
+        </h3>
         {status.plan ? (
-          <div style={{ fontSize: 14, lineHeight: 1.8 }}>
-            <div><strong>Plan:</strong> {status.plan_name}</div>
-            <div><strong>Clave:</strong> <code style={{ fontSize: 12 }}>{status.key}</code></div>
-            <div><strong>Productos:</strong> {status.products_used}/{status.products_max}</div>
-            {status.expires_at && <div><strong>Vence:</strong> {status.expires_at}</div>}
-            {status.days_left > 0 && status.trial && (
-              <div><strong>Días restantes:</strong> {status.days_left}</div>
+          <div style={{ fontSize: 14, lineHeight: 2 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--on-surface-variant)' }}>Plan:</span>
+              <span style={{ fontWeight: 600 }}>{status.plan_name}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--on-surface-variant)' }}>Clave:</span>
+              <code style={{ fontSize: 12 }}>{status.key}</code>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: 'var(--on-surface-variant)' }}>Productos:</span>
+              <span>{status.products_used}/{status.products_max}</span>
+            </div>
+            {status.expires_at && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--on-surface-variant)' }}>Vence:</span>
+                <span>{status.expires_at}</span>
+              </div>
             )}
-            <div style={{ marginTop: 8 }}>
+            {status.days_left > 0 && status.trial && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--on-surface-variant)' }}>Días restantes:</span>
+                <span>{status.days_left}</span>
+              </div>
+            )}
+            <div style={{ marginTop: 12 }}>
               <span style={{
-                display: 'inline-block',
-                padding: '2px 10px',
-                borderRadius: 12,
-                fontSize: 12,
-                fontWeight: 600,
-                background: status.active ? 'var(--success)' : 'var(--danger)',
-                color: '#fff',
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
+                background: status.active ? 'rgba(80,216,144,0.1)' : 'rgba(255,180,171,0.1)',
+                color: status.active ? 'var(--success)' : 'var(--error)',
               }}>
+                <MaterialIcon name={status.active ? 'check_circle' : 'cancel'} size={16} />
                 {status.active ? 'Activa' : 'Inactiva'}
               </span>
             </div>
           </div>
         ) : (
-          <div style={{ color: 'var(--text-muted)' }}>Sin licencia activa</div>
+          <div style={{ color: 'var(--on-surface-variant)' }}>Sin licencia activa</div>
         )}
       </div>
 
-      {/* Activar licencia */}
       <div style={{
-        background: 'var(--surface)',
-        borderRadius: 12,
-        border: '1px solid var(--border)',
-        padding: 20,
+        background: 'var(--surface-container)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid rgba(66,71,84,0.5)',
+        padding: 'var(--space-lg)',
         maxWidth: 500,
       }}>
-        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Activar licencia</h3>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <MaterialIcon name="vpn_key" size={20} />
+          Activar licencia
+        </h3>
+        <p style={{ fontSize: 13, color: 'var(--on-surface-variant)', marginBottom: 16 }}>
           Ingresá la clave de licencia que recibiste al adquirir el sistema.
         </p>
-        <input
-          value={keyInput}
-          onChange={e => setKeyInput(e.target.value)}
-          placeholder="TST-XXXX-XXXX-XXXX-XXXX"
-          style={{
-            width: '100%',
-            padding: '10px 14px',
-            borderRadius: 8,
-            border: '1px solid var(--border)',
-            background: 'var(--bg)',
-            color: 'var(--text)',
-            fontSize: 14,
-            fontFamily: 'monospace',
-            marginBottom: 12,
-          }}
-        />
-        <input
-          value={nameInput}
-          onChange={e => setNameInput(e.target.value)}
-          placeholder="Tu nombre o negocio (opcional)"
-          style={{
-            width: '100%',
-            padding: '10px 14px',
-            borderRadius: 8,
-            border: '1px solid var(--border)',
-            background: 'var(--bg)',
-            color: 'var(--text)',
-            fontSize: 14,
-            marginBottom: 16,
-          }}
-        />
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ fontSize: 12, color: 'var(--on-surface-variant)', display: 'block', marginBottom: 4 }}>Clave de licencia</label>
+          <input
+            value={keyInput}
+            onChange={e => setKeyInput(e.target.value)}
+            placeholder="TST-XXXX-XXXX-XXXX-XXXX"
+            style={{
+              width: '100%', padding: '10px 14px', boxSizing: 'border-box',
+              fontFamily: 'monospace', fontSize: 14, letterSpacing: '0.05em',
+            }}
+          />
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontSize: 12, color: 'var(--on-surface-variant)', display: 'block', marginBottom: 4 }}>Nombre o negocio</label>
+          <input
+            value={nameInput}
+            onChange={e => setNameInput(e.target.value)}
+            placeholder="Tu nombre o negocio (opcional)"
+            style={{ width: '100%', padding: '10px 14px', boxSizing: 'border-box' }}
+          />
+        </div>
         <button
           onClick={handleActivate}
           disabled={submitting || !keyInput.trim()}
           style={{
+            display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
             padding: '10px 24px',
-            background: 'var(--primary)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 8,
-            fontSize: 14,
-            fontWeight: 600,
+            background: submitting || !keyInput.trim() ? 'var(--surface-container-highest)' : 'var(--primary-container)',
+            color: submitting || !keyInput.trim() ? 'var(--on-surface-variant)' : 'var(--on-primary-container)',
+            border: 'none', borderRadius: 'var(--radius)',
+            fontSize: 14, fontWeight: 700,
             cursor: submitting || !keyInput.trim() ? 'not-allowed' : 'pointer',
-            opacity: submitting || !keyInput.trim() ? 0.6 : 1,
           }}
         >
+          <MaterialIcon name={submitting ? 'sync' : 'vpn_key'} size={20} />
           {submitting ? 'Activando...' : 'Activar licencia'}
         </button>
       </div>

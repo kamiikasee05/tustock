@@ -142,6 +142,10 @@ function renderLogin(app){
         <div class="form-group"><label>Email</label><input id="re" type="email" placeholder="tu@email.com" value="${h(state.email)}" /></div>
         <div class="form-group"><label>Nombre del negocio</label><input id="rn" placeholder="Mi Kiosco" value="${h(state.name)}" /></div>
         <div class="form-group"><label>Contraseña</label><input id="rp" type="password" placeholder="Mínimo 6 caracteres" value="${h(state.password)}" /></div>
+        <div style="margin-bottom:16px;display:flex;align-items:flex-start;gap:8px">
+          <input id="rt" type="checkbox" style="margin-top:3px;accent-color:#4d8eff" />
+          <label for="rt" style="font-size:12px;color:#8b95a5;line-height:1.5;cursor:pointer">Acepto los <a href="/api/licenses/terms" target="_blank">Términos y Condiciones</a> y la <a href="/api/licenses/privacy" target="_blank">Política de Privacidad</a></label>
+        </div>
         <button class="btn btn-primary" onclick="doRegister()">Crear cuenta</button>
       `:`
         <div class="form-group"><label>Email</label><input id="le" type="email" placeholder="tu@email.com" value="${h(state.email)}" /></div>
@@ -174,10 +178,12 @@ function doRegister(){
   state.email = ($('re')||{}).value||'';
   state.name = ($('rn')||{}).value||'';
   state.password = ($('rp')||{}).value||'';
+  const acceptsTerms = ($('rt')||{}).checked||false;
   if(!state.email||!state.password||!state.name){state.error='Completá todos los campos';render();return;}
   if(state.password.length<6){state.error='La contraseña debe tener al menos 6 caracteres';render();return;}
+  if(!acceptsTerms){state.error='Debés aceptar los Términos y Condiciones y la Política de Privacidad';render();return;}
   state.error='';state.loading=true;render();
-  fetch(API+'/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:state.email,password:state.password,name:state.name})})
+  fetch(API+'/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:state.email,password:state.password,name:state.name,accepts_terms:true})})
   .then(r=>r.json()).then(d=>{
     if(d.ok){
       fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:state.email,password:state.password})})
@@ -317,13 +323,16 @@ function renderDashboard(app){
           <svg viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M1 14c0-3 2-5 5-5s5 2 5 5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="5" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M12 9c2 0 3.5 1.5 3.5 4" stroke="currentColor" stroke-width="1.2"/></svg>
           Deudores
         </div>
-        ${debtors.map(d=>`
+        ${debtors.map(d=>{
+          const parts = (d.name||'').split(' ');
+          const anonymized = parts.length > 1 ? parts[0] + ' ' + parts[parts.length-1][0] + '.' : d.name||'?';
+          return `
           <div class="debtor-item">
             <div class="debtor-avatar">${h((d.name||'?')[0])}</div>
-            <div class="debtor-info"><div class="debtor-name">${h(d.name)}</div></div>
+            <div class="debtor-info"><div class="debtor-name">${h(anonymized)}</div></div>
             <div class="debtor-bal">${fmt$(d.balance)}</div>
-          </div>
-        `).join('')}
+          </div>`;
+        }).join('')}
       </div>`:''}
     </div>`;
   }

@@ -11,4 +11,4 @@ MONITOR_PORT = int(os.getenv("TUSTOCK_MONITOR_PORT", "8091"))
 MONITOR_USER = os.getenv("TUSTOCK_MONITOR_USER", "admin")
 MONITOR_PASS = os.getenv("TUSTOCK_MONITOR_PASS", "")
 
-DATABASE_URL = os.getenv("TUSTOCK_DB", f"sqlite:///{BASE_DIR / 'tustock.db'}")
+DATABASE_URL = os.getenv("TUSTOCK_DB") or f"sqlite:///{BASE_DIR / 'tustock.db'}"

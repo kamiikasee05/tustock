@@ -53,7 +53,7 @@ footer{{margin-top:48px;padding-top:24px;border-top:1px solid #334155;font-size:
 </style></head><body><div class="container">
 <h1>{title}</h1>
 {content}
-<footer>TUSTOCK &copy; 2026 &mdash; <a href="https://kamiikasee05.github.io/tustock">Volver al inicio</a></footer>
+<footer>TUSTOCK &copy; 2026 &mdash; <a href="https://tustocksoft.com.ar">Volver al inicio</a></footer>
 </div></body></html>""")
 
 app = FastAPI(title="TUSTOCK Cloud Monitor", version="1.0.0")
@@ -116,7 +116,7 @@ def health():
 @app.get("/api/licenses/terms")
 def legal_terms():
     return _legal_page("Términos y Condiciones de Uso + EULA", """
-<p>TUSTOCK es un sistema de gestión de stock y ventas para comercios argentinos, desarrollado por <strong>Kamiikaze Desarrollos</strong>.</p>
+<p>TUSTOCK es un sistema de gestión de stock y ventas para comercios argentinos.</p>
 <h2>Licencia de Uso</h2>
 <p>El software se concede en licencia, no se vende. El usuario acepta no modificar, descompilar, distribuir ni realizar ingeniería inversa del producto.</p>
 <h2>Planes</h2>
@@ -126,10 +126,10 @@ def legal_terms():
 <h2>Derecho de Arrepentimiento</h2>
 <p>Conforme al art. 34 de la Ley 24.240, el usuario dispone de 10 días hábiles desde la activación para solicitar el reembolso total. Transcurrido ese plazo, no se realizan reembolsos.</p>
 <h2>Propiedad Intelectual</h2>
-<p>Todos los derechos de propiedad intelectual pertenecen a Kamiikaze Desarrollos. El uso no autorizado constituye infracción a la Ley 11.723.</p>
+<p>Todos los derechos de propiedad intelectual pertenecen a TUSTOCK. El uso no autorizado constituye infracción a la Ley 11.723.</p>
 <h2>Jurisdicción</h2>
 <p>Las partes se someten a los Tribunales de la Ciudad Autónoma de Buenos Aires (CABA).</p>
-<p><a href="https://kamiikasee05.github.io/tustock/legal/terminos-y-condiciones.html">Ver documento completo →</a></p>
+<p><a href="https://tustocksoft.com.ar/legal/terminos-y-condiciones.html">Ver documento completo →</a></p>
 """)
 
 
@@ -146,10 +146,10 @@ def legal_privacy():
 <h2>Transferencia Internacional</h2>
 <p>Los datos del Monitor Cloud se almacenan en servidores de Railway (Estados Unidos). Al registrarse, el usuario consiente esta transferencia.</p>
 <h2>Derechos ARCO</h2>
-<p>El usuario puede solicitar acceso, rectificación, cancelación u oposición escribiendo a <a href="mailto:kamiikasee05@gmail.com">kamiikasee05@gmail.com</a>.</p>
+<p>El usuario puede solicitar acceso, rectificación, cancelación u oposición escribiendo a <a href="mailto:tustock.administracion@gmail.com">tustock.administracion@gmail.com</a>.</p>
 <h2>Registro AAIP</h2>
 <p>Pendiente de inscripción en la Agencia de Acceso a la Información Pública conforme al art. 21 de la Ley 25.326.</p>
-<p><a href="https://kamiikasee05.github.io/tustock/legal/politica-de-privacidad.html">Ver documento completo →</a></p>
+<p><a href="https://tustocksoft.com.ar/legal/politica-de-privacidad.html">Ver documento completo →</a></p>
 """)
 
 
@@ -165,8 +165,8 @@ def legal_refund():
 <h2>Grace Period</h2>
 <p>Ante un pago rechazado de suscripción, el usuario dispone de 7 días de gracia durante los cuales el sistema sigue funcionando, perdiendo únicamente updates y soporte prioritario.</p>
 <h2>Cómo Solicitar</h2>
-<p>Escribir a <a href="mailto:kamiikasee05@gmail.com">kamiikasee05@gmail.com</a> con el asunto "Reembolso" y el número de licencia. Se responderá en un máximo de 72 horas hábiles.</p>
-<p><a href="https://kamiikasee05.github.io/tustock/legal/politica-de-reembolso.html">Ver documento completo →</a></p>
+<p>Escribir a <a href="mailto:tustock.administracion@gmail.com">tustock.administracion@gmail.com</a> con el asunto "Reembolso" y el número de licencia. Se responderá en un máximo de 72 horas hábiles.</p>
+<p><a href="https://tustocksoft.com.ar/legal/politica-de-reembolso.html">Ver documento completo →</a></p>
 """)
 
 

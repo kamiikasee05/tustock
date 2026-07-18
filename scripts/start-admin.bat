@@ -1,5 +1,5 @@
 @echo off
-cd /d "%~dp0..\admin"
+cd /d "E:\TUSTOCK_ADMIN"
 title Admin TUSTOCK
 echo ============================================
 echo   Admin TUSTOCK — Panel de Administracion

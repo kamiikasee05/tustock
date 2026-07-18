@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api, Sale, Product, StockItem, CustomerBrief } from '../api/client'
 import { useToast } from '../components/Toast'
+import MaterialIcon from '../components/ui/MaterialIcon'
 
 interface CartItem {
   product_id: number
@@ -89,124 +90,277 @@ export default function Sales() {
     setCart(cart.filter(i => i.product_id !== productId))
   }
 
-  return (
-    <div>
-      <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 20 }}>Ventas</h2>
+  const payments = [
+    { value: 'efectivo', label: 'Efectivo', icon: 'payments' },
+    { value: 'debito', label: 'Débito', icon: 'credit_card' },
+    { value: 'credito', label: 'Crédito', icon: 'credit_score' },
+    { value: 'transferencia', label: 'Transferencia', icon: 'account_balance' },
+    { value: 'fiado', label: 'Fiado', icon: 'receipt_long' },
+    { value: 'otro', label: 'Otro', icon: 'more_horiz' },
+  ]
 
-      <div style={{ display: 'flex', gap: 2, marginBottom: 20 }}>
-        <button onClick={() => setTab('new')} style={tabBtn(tab === 'new')}>Nueva venta</button>
-        <button onClick={() => setTab('history')} style={tabBtn(tab === 'history')}>Historial</button>
+  return (
+    <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 'var(--space-xl)' }}>
+        <button onClick={() => setTab('new')} style={{
+          padding: '6px 12px',
+          background: tab === 'new' ? 'var(--primary-container)' : 'var(--surface-container)',
+          color: tab === 'new' ? 'var(--on-primary-container)' : 'var(--on-surface-variant)',
+          borderRadius: 'var(--radius) var(--radius) 0 0',
+          fontWeight: 700, fontSize: 14, letterSpacing: '0.01em',
+          border: tab === 'new' ? 'none' : '1px solid rgba(66,71,84,0.3)',
+          borderBottom: tab === 'new' ? '2px solid var(--primary-container)' : '1px solid rgba(66,71,84,0.3)',
+          transition: 'all var(--transition)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+            <MaterialIcon name="add_shopping_cart" size={16} />
+            <span>Nueva venta</span>
+          </div>
+        </button>
+        <button onClick={() => setTab('history')} style={{
+          padding: '6px 12px',
+          background: tab === 'history' ? 'var(--primary-container)' : 'var(--surface-container)',
+          color: tab === 'history' ? 'var(--on-primary-container)' : 'var(--on-surface-variant)',
+          borderRadius: 'var(--radius) var(--radius) 0 0',
+          fontWeight: 700, fontSize: 14, letterSpacing: '0.01em',
+          border: tab === 'history' ? 'none' : '1px solid rgba(66,71,84,0.3)',
+          borderBottom: tab === 'history' ? '2px solid var(--primary-container)' : '1px solid rgba(66,71,84,0.3)',
+          transition: 'all var(--transition)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+            <MaterialIcon name="history" size={16} />
+            <span>Historial</span>
+          </div>
+        </button>
       </div>
 
       {tab === 'new' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 20 }}>
-          <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-              <input
-                placeholder="Escanear o escribir código de producto..."
-                value={inputCode}
-                onChange={e => setInputCode(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') addToCart(inputCode) }}
-                style={{ flex: 1, padding: '12px 16px', fontSize: 16 }}
-                autoFocus
-              />
-              <button onClick={() => addToCart(inputCode)} style={{ padding: '12px 24px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600, fontSize: 14 }}>
-                Agregar
-              </button>
+        <div style={{ display: 'flex', gap: 'var(--space-lg)', flexDirection: window.innerWidth < 768 ? 'column' : 'row' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+            <div style={{
+              background: 'var(--surface-container)',
+              padding: 16,
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid rgba(66,71,84,0.3)',
+            }}>
+              <label style={{
+                display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em',
+                textTransform: 'uppercase', color: 'var(--on-surface-variant)',
+                marginBottom: 8,
+              }}>
+                Escaneá o ingresá el código
+              </label>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <MaterialIcon name="barcode_scanner" size={20} color="var(--primary)" style={{
+                    position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+                  }} />
+                  <input
+                    placeholder="Código de barras, SKU o nombre..."
+                    value={inputCode}
+                    onChange={e => setInputCode(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') addToCart(inputCode) }}
+                    style={{
+                      width: '100%', background: 'var(--surface)',
+                      border: '2px solid var(--outline-variant)',
+                      borderRadius: 'var(--radius)',
+                      paddingLeft: 44, paddingRight: 12,
+                      paddingTop: 12, paddingBottom: 12,
+                      fontFamily: 'var(--font-data)', fontSize: 14,
+                      fontWeight: 500, color: 'var(--on-surface)',
+                      outline: 'none',
+                      transition: 'border-color var(--transition), box-shadow var(--transition)',
+                    }}
+                    autoFocus
+                  />
+                  <kbd style={{
+                    position: 'absolute', right: 'var(--space-md)', top: '50%', transform: 'translateY(-50%)',
+                    background: 'var(--surface-container-highest)',
+                    paddingLeft: 'var(--space-sm)', paddingRight: 'var(--space-sm)',
+                    paddingTop: 4, paddingBottom: 4,
+                    borderRadius: 'var(--radius-sm)', fontSize: 12,
+                    fontFamily: 'var(--font-data)', fontWeight: 500,
+                    color: 'var(--outline)', border: '1px solid rgba(66,71,84,0.3)',
+                  }}>Enter</kbd>
+                </div>
+              </div>
             </div>
 
-            <div style={{ background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                    <th style={{ ...thSty, textAlign: 'left' }}>Producto</th>
-                    <th style={{ ...thSty, textAlign: 'right' }}>Precio</th>
-                    <th style={{ ...thSty, textAlign: 'center' }}>Cant.</th>
-                    <th style={{ ...thSty, textAlign: 'right' }}>Subtotal</th>
-                    <th style={{ ...thSty }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cart.map(item => (
-                    <tr key={item.product_id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={tdSty}>
-                        <div style={{ fontWeight: 500 }}>{item.name}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.code}</div>
-                      </td>
-                      <td style={{ ...tdSty, textAlign: 'right' }}>${item.unit_price.toFixed(2)}</td>
-                      <td style={{ ...tdSty, textAlign: 'center' }}>
-                        <input
-                          type="number"
-                          min={1}
-                          value={item.quantity}
-                          onChange={e => setCart(cart.map(i => i.product_id === item.product_id ? { ...i, quantity: +e.target.value } : i))}
-                          style={{ width: 60, textAlign: 'center', padding: '4px 6px' }}
-                        />
-                      </td>
-                      <td style={{ ...tdSty, textAlign: 'right', fontWeight: 600 }}>${(item.quantity * item.unit_price).toFixed(2)}</td>
-                      <td style={tdSty}>
-                        <button onClick={() => removeFromCart(item.product_id)} style={{ color: 'var(--danger)', background: 'none', border: 'none', fontSize: 18 }}>×</button>
-                      </td>
+            <div style={{
+              flex: 1, background: 'var(--surface-container)',
+              padding: 12,
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid rgba(66,71,84,0.3)',
+              display: 'flex', flexDirection: 'column', minHeight: 0,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <h3 style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 600, color: 'var(--on-surface)' }}>
+                  Carrito actual
+                </h3>
+                <span style={{ fontSize: 13, fontFamily: 'var(--font-body)', color: 'var(--on-surface-variant)' }}>
+                  {cart.length} items
+                </span>
+              </div>
+
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(66,71,84,0.5)' }}>
+                      <th style={cartTh}>Producto</th>
+                      <th style={{ ...cartTh, textAlign: 'center' }}>Cant.</th>
+                      <th style={{ ...cartTh, textAlign: 'right' }}>Precio</th>
+                      <th style={{ ...cartTh, textAlign: 'right' }}>Subtotal</th>
+                      <th style={{ ...cartTh, width: 48 }}></th>
                     </tr>
-                  ))}
-                  {cart.length === 0 && (
-                    <tr><td colSpan={5} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Carrito vacío - Escaneá o escribí un código</td></tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {cart.map(item => (
+                      <tr key={item.product_id} style={{ borderBottom: '1px solid rgba(66,71,84,0.2)', transition: 'background var(--transition)' }}>
+                        <td style={{ paddingTop: 6, paddingBottom: 6 }}>
+                          <span style={{ fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 600, color: 'var(--on-surface)' }}>{item.name}</span>
+                          <br />
+                          <span style={{ fontFamily: 'var(--font-data)', fontSize: 11, color: 'var(--outline)' }}>{item.code}</span>
+                        </td>
+                        <td style={{ paddingTop: 6, paddingBottom: 6, textAlign: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                            <button onClick={() => setCart(cart.map(i => i.product_id === item.product_id ? { ...i, quantity: Math.max(1, i.quantity - 1) } : i))} style={{
+                              width: 28, height: 28, borderRadius: 'var(--radius-full)',
+                              border: '1px solid var(--outline-variant)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: 'var(--on-surface)', transition: 'background var(--transition)',
+                            }}><MaterialIcon name="remove" size={16} /></button>
+                            <span style={{ fontFamily: 'var(--font-data)', fontSize: 13, fontWeight: 500, minWidth: 20, textAlign: 'center' }}>{item.quantity}</span>
+                            <button onClick={() => setCart(cart.map(i => i.product_id === item.product_id ? { ...i, quantity: i.quantity + 1 } : i))} style={{
+                              width: 28, height: 28, borderRadius: 'var(--radius-full)',
+                              border: '1px solid var(--outline-variant)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: 'var(--on-surface)', transition: 'background var(--transition)',
+                            }}><MaterialIcon name="add" size={16} /></button>
+                          </div>
+                        </td>
+                        <td style={{ paddingTop: 6, paddingBottom: 6, textAlign: 'right', fontFamily: 'var(--font-data)', fontSize: 13, fontWeight: 500 }}>
+                          ${item.unit_price.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td style={{ paddingTop: 6, paddingBottom: 6, textAlign: 'right', fontFamily: 'var(--font-data)', fontSize: 13, fontWeight: 500, color: 'var(--primary)' }}>
+                          ${(item.quantity * item.unit_price).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td style={{ paddingTop: 6, paddingBottom: 6, textAlign: 'right' }}>
+                          <button onClick={() => removeFromCart(item.product_id)} style={{ color: 'rgba(255,180,171,0.4)', padding: 'var(--space-sm)', transition: 'color var(--transition)' }}>
+                            <MaterialIcon name="delete" size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {cart.length === 0 && (
+                      <tr><td colSpan={5} style={{ padding: 24, textAlign: 'center', color: 'var(--on-surface-variant)', fontSize: 13 }}>
+                        <MaterialIcon name="shopping_cart" size={32} style={{ opacity: 0.3, display: 'block', margin: '0 auto 8px' }} />
+                        Carrito vacío — escaneá o escribí un código
+                      </td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
-          <div>
-            <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 20, border: '1px solid var(--border)' }}>
-              <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Resumen</h3>
+          <div style={{
+            width: window.innerWidth < 768 ? '100%' : 320,
+            background: 'var(--surface-container-high)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid rgba(66,71,84,0.3)',
+            padding: 14,
+            display: 'flex', flexDirection: 'column',
+            height: 'fit-content',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: 'var(--space-xs)', paddingBottom: 'var(--space-xs)' }}>
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600, color: 'var(--on-surface)' }}>TOTAL</span>
+              <span style={{ fontFamily: 'var(--font-data)', fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--primary-container)' }}>
+                ${total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14 }}>
-                <span style={{ color: 'var(--text-muted)' }}>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginTop: 8 }}>
+              <span style={{ fontSize: 14, color: 'var(--on-surface-variant)', flex: 1 }}>Descuento</span>
+              <div style={{
+                background: 'var(--surface)',
+                borderRadius: 'var(--radius)',
+                padding: 'var(--space-xs) var(--space-md)',
+                border: '1px solid rgba(66,71,84,0.3)',
+              }}>
+                <span style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>$</span>
+                <input type="number" value={discount} onChange={e => setDiscount(+e.target.value)}
+                  style={{ width: 80, background: 'transparent', border: 'none', color: 'var(--on-surface)', fontSize: 14, fontFamily: 'var(--font-data)', textAlign: 'right', outline: 'none', padding: 0 }} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14 }}>
-                <span style={{ color: 'var(--text-muted)' }}>Descuento</span>
-                <input type="number" value={discount} onChange={e => setDiscount(+e.target.value)} style={{ width: 100, textAlign: 'right', padding: '4px 8px' }} />
-              </div>
-              <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '12px 0' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 20, fontWeight: 700 }}>
-                <span>TOTAL</span>
-                <span style={{ color: 'var(--primary)' }}>${total.toFixed(2)}</span>
-              </div>
+            </div>
 
-              <div style={{ marginTop: 16 }}>
-                <label style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Método de pago</label>
-                <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ width: '100%', padding: '10px 12px' }}>
-                  <option value="efectivo">Efectivo</option>
-                  <option value="debito">Débito</option>
-                  <option value="credito">Crédito</option>
-                  <option value="transferencia">Transferencia</option>
-                  <option value="fiado">Fiado</option>
-                  <option value="otro">Otro</option>
+            <hr style={{ border: 'none', borderTop: '1px solid rgba(66,71,84,0.3)', margin: '10px 0' }} />
+
+            <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--on-surface-variant)', marginBottom: 'var(--space-sm)' }}>
+              Método de pago
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+              {payments.map(pm => (
+                <button
+                  key={pm.value}
+                  onClick={() => { setPaymentMethod(pm.value); if (pm.value !== 'fiado') setSelectedCustomer('') }}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    gap: 2,
+                    padding: '4px 8px',
+                    borderRadius: 'var(--radius-lg)',
+                    border: paymentMethod === pm.value ? '2px solid var(--primary)' : '2px solid var(--outline-variant)',
+                    background: paymentMethod === pm.value ? 'rgba(77,142,255,0.1)' : 'transparent',
+                    color: paymentMethod === pm.value ? 'var(--primary)' : 'var(--on-surface-variant)',
+                    transition: 'all var(--transition)',
+                    cursor: 'pointer',
+                  }}>
+                    <MaterialIcon name={pm.icon} size={18} />
+                    <span style={{ fontSize: 11, fontWeight: 600 }}>{pm.label}</span>
+                  </button>
+                ))}
+            </div>
+
+            {paymentMethod === 'fiado' && (
+              <div style={{ marginTop: 8 }}>
+                <label style={{ fontSize: 12, color: 'var(--on-surface-variant)', marginBottom: 4, display: 'block' }}>Cliente</label>
+                <select value={selectedCustomer} onChange={e => setSelectedCustomer(e.target.value ? +e.target.value : '')} style={{
+                  width: '100%', padding: '10px 12px',
+                  background: 'var(--surface)', border: '1px solid rgba(66,71,84,0.3)',
+                  borderRadius: 'var(--radius)', color: 'var(--on-surface)', fontSize: 14,
+                }}>
+                  <option value="">Seleccionar cliente...</option>
+                  {customers.map(c => <option key={c.id} value={c.id}>{c.name}{c.balance > 0 ? ` (adeuda $${c.balance.toLocaleString()})` : ''}</option>)}
                 </select>
-                {paymentMethod === 'fiado' && (
-                  <div style={{ marginTop: 8 }}>
-                    <label style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Cliente</label>
-                    <select value={selectedCustomer} onChange={e => setSelectedCustomer(e.target.value ? +e.target.value : '')} style={{ width: '100%', padding: '10px 12px' }}>
-                      <option value="">Seleccionar cliente...</option>
-                      {customers.map(c => <option key={c.id} value={c.id}>{c.name}{c.balance > 0 ? ` (adeuda $${c.balance.toLocaleString()})` : ''}</option>)}
-                    </select>
-                  </div>
-                )}
               </div>
+            )}
 
+            <div style={{ marginTop: 'auto', paddingTop: 10 }}>
+              <div style={{
+                marginBottom: 8,
+                padding: 'var(--space-sm) var(--space-md)',
+                background: 'var(--surface-container)',
+                borderRadius: 'var(--radius-lg)',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              }}>
+                <span style={{ fontSize: 14, color: 'var(--on-surface-variant)' }}>Items</span>
+                <span style={{ fontFamily: 'var(--font-data)', fontSize: 14, fontWeight: 600, color: 'var(--on-surface)' }}>{cart.length}</span>
+              </div>
               <button
                 onClick={completeSale}
                 disabled={cart.length === 0 || submitting}
                 style={{
-                  padding: '14px',
-                  background: cart.length === 0 || submitting ? 'var(--border)' : 'var(--success)',
-                  color: 'white', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700,
+                  width: '100%',
+                  padding: 10,
+                  background: cart.length === 0 || submitting ? 'var(--surface-container-highest)' : 'var(--primary-container)',
+                  color: cart.length === 0 || submitting ? 'var(--on-surface-variant)' : 'var(--on-primary-container)',
+                  borderRadius: 'var(--radius)',
+                  fontWeight: 700, fontSize: 14,
+                  boxShadow: cart.length === 0 ? 'none' : '0 4px 16px rgba(77,142,255,0.3)',
+                  transition: 'all var(--transition)',
                   cursor: cart.length === 0 || submitting ? 'not-allowed' : 'pointer',
                 }}
               >
-                {submitting ? 'Procesando...' : `Cobrar ${total.toFixed(2)}`}
+                {submitting ? 'Procesando...' : `Cobrar $${total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}
               </button>
             </div>
           </div>
@@ -214,35 +368,42 @@ export default function Sales() {
       )}
 
       {tab === 'history' && (
-        <div style={{ background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden' }}>
+        <div style={{
+          background: 'var(--surface-container)', borderRadius: 'var(--radius-lg)',
+          border: '1px solid rgba(66,71,84,0.5)', overflow: 'hidden',
+        }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={thSty}>#</th>
-                <th style={thSty}>Fecha</th>
-                <th style={{ ...thSty, textAlign: 'right' }}>Total</th>
-                <th style={{ ...thSty, textAlign: 'center' }}>Pago</th>
-                <th style={{ ...thSty, textAlign: 'center' }}>Cliente</th>
-                <th style={{ ...thSty, textAlign: 'center' }}>Ítems</th>
-                <th style={thSty}>Cajero</th>
+              <tr style={{ borderBottom: '1px solid rgba(66,71,84,0.5)', background: 'var(--surface-container-high)' }}>
+                <th style={th}>#</th>
+                <th style={th}>Fecha</th>
+                <th style={{ ...th, textAlign: 'right' }}>Total</th>
+                <th style={{ ...th, textAlign: 'center' }}>Pago</th>
+                <th style={{ ...th, textAlign: 'center' }}>Cliente</th>
+                <th style={{ ...th, textAlign: 'center' }}>Items</th>
+                <th style={th}>Cajero</th>
               </tr>
             </thead>
             <tbody>
               {sales.map(s => (
-                <tr key={s.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td style={tdSty}>#{s.id}</td>
-                  <td style={tdSty}>{s.sale_date}{s.created_at ? ' ' + s.created_at.split('T')[1]?.slice(0, 5) : ''}</td>
-                  <td style={{ ...tdSty, textAlign: 'right', fontWeight: 700, color: 'var(--success)' }}>${s.total.toLocaleString()}</td>
-                  <td style={{ ...tdSty, textAlign: 'center' }}>
+                <tr key={s.id} style={{ borderBottom: '1px solid rgba(66,71,84,0.2)', transition: 'background var(--transition)' }}>
+                  <td style={td}>#{s.id}</td>
+                  <td style={td}>{s.sale_date}{s.created_at ? ' ' + s.created_at.split('T')[1]?.slice(0, 5) : ''}</td>
+                  <td style={{ ...td, textAlign: 'right', fontFamily: 'var(--font-data)', fontWeight: 600, color: 'var(--success)' }}>
+                    ${s.total.toLocaleString()}
+                  </td>
+                  <td style={{ ...td, textAlign: 'center' }}>
                     <span style={{
-                      padding: '3px 8px', borderRadius: 20, fontSize: 11,
-                      background: s.payment_method === 'fiado' ? 'var(--warning)' : 'var(--bg)',
-                      color: s.payment_method === 'fiado' ? '#000' : 'inherit',
+                      paddingLeft: 'var(--space-sm)', paddingRight: 'var(--space-sm)',
+                      paddingTop: 'var(--space-xs)', paddingBottom: 'var(--space-xs)',
+                      borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700,
+                      background: s.payment_method === 'fiado' ? 'rgba(255,183,134,0.15)' : 'var(--surface-container-highest)',
+                      color: s.payment_method === 'fiado' ? 'var(--tertiary)' : 'var(--on-surface-variant)',
                     }}>{s.payment_method}</span>
                   </td>
-                  <td style={{ ...tdSty, textAlign: 'center', fontSize: 13 }}>{s.customer_name || '-'}</td>
-                  <td style={{ ...tdSty, textAlign: 'center' }}>{s.items_count ?? '-'}</td>
-                  <td style={tdSty}>{s.cashier || '-'}</td>
+                  <td style={{ ...td, textAlign: 'center', fontSize: 13 }}>{s.customer_name || '-'}</td>
+                  <td style={{ ...td, textAlign: 'center', fontFamily: 'var(--font-data)', fontSize: 14 }}>{s.items_count ?? '-'}</td>
+                  <td style={td}>{s.cashier || '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -253,16 +414,18 @@ export default function Sales() {
   )
 }
 
-const tabBtn = (active: boolean): React.CSSProperties => ({
-  padding: '10px 24px',
-  background: active ? 'var(--primary)' : 'var(--surface)',
-  color: active ? 'white' : 'var(--text)',
-  border: active ? 'none' : '1px solid var(--border)',
-  borderRadius: '8px 8px 0 0',
-  fontWeight: 600,
-  fontSize: 14,
-  cursor: 'pointer',
-})
-
-const thSty: React.CSSProperties = { textAlign: 'left', padding: '10px 14px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }
-const tdSty: React.CSSProperties = { padding: '12px 14px', fontSize: 14 }
+const cartTh: React.CSSProperties = {
+  paddingBottom: 8, fontSize: 11, fontWeight: 700,
+  letterSpacing: '0.05em', textTransform: 'uppercase',
+  color: 'var(--on-surface-variant)', textAlign: 'left',
+}
+const th: React.CSSProperties = {
+  paddingLeft: 10, paddingRight: 10,
+  paddingTop: 8, paddingBottom: 8,
+  fontSize: 11, fontWeight: 700, letterSpacing: '0.05em',
+  textTransform: 'uppercase', color: 'var(--outline)', textAlign: 'left',
+}
+const td: React.CSSProperties = {
+  padding: '8px 10px', fontSize: 13,
+  fontFamily: 'var(--font-body)', color: 'var(--on-surface)',
+}

@@ -97,9 +97,9 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 - Servidor con SPA fallback para frontend compilado
 - Esquemas Pydantic para validación de datos (schemas.py)
 - **Monitor Premium (Fase 4 adelantada):** Servicio independiente puerto 8091, login propio, dashboard mobile responsive, API read-only. Expuesto vía Cloudflare Tunnel para acceso remoto desde el celular. Solo esta clienta lo tiene.
-- **Monitor Cloud (Fase 5):** Desplegado en Railway (`tustock.up.railway.app`). API push-based, dashboard mobile responsive, login multiusuario JWT. Agente local (`cloud/agent.py`) pushea métricas cada 30s desde la PC del cliente. URL fija, sin tunnel.
+- **Monitor Cloud (Fase 5):** Desplegado en Railway. URL pública: `monitor.tustocksoft.com.ar` (custom domain via Cloudflare). API push-based, dashboard mobile responsive, login multiusuario JWT. Agente local (`cloud/agent.py`) pushea métricas cada 30s desde la PC del cliente. URL fija, sin tunnel. Puerto interno: 8080.
 - **Launcher unificado:** `scripts/launcher.py` — inicia servidor, monitor, tunnel y cloud agent desde un solo punto. `TUSTOCK.bat` con menú interactivo de 8 opciones.
-- **Dashboard admin de licencias:** App independiente en `admin/` (Vite+React standalone, puerto 5174). Generar keys, ver licencias, revocar/activar, stats por plan, ingresos estimados, trials por vencer. Panel de Suscripciones MP con link compartido y vinculación de suscripciones entrantes a licencias. Scripts: `scripts/start-admin.bat`, `scripts/stop-admin.bat`.
+- **Dashboard admin de licencias:** App independiente en `E:\TUSTOCK_ADMIN\` (Vite+React standalone, puerto 5174). Generar keys, ver licencias, revocar/activar, stats por plan, ingresos estimados, trials por vencer. Panel de Suscripciones MP con link compartido y vinculación de suscripciones entrantes a licencias. Scripts: `scripts/start-admin.bat`, `scripts/stop-admin.bat`.
 - **Validación cloud de licencias:** Cada 7 días el sistema local valida la key contra la API cloud. Si no hay internet, sigue funcionando con cache de hasta 14 días. Trial no requiere validación cloud. Admin sync-keys al generar.
 - **Bloqueo por licencia:** Middleware que bloquea todas las APIs cuando el trial vence o no hay licencia activa. Solo deja pasar health, license/status y license/activate.
 - **Landing page:** `docs/index.html` — página estática dark theme responsive servida via GitHub Pages (`tustocksoft.com.ar`). Incluye hero, features, planes, caso real, FAQ, WhatsApp CTA.
@@ -211,7 +211,7 @@ PC del cliente                          Cloud (Railway/VPS)
 - ✅ Secuencia de WhatsApp para preventa, seguimiento y cierre
 - ✅ **PRIMER CLIENTE: Librería. Pagó $60K entry + $6K/mes suscripción. Sin objeciones.**
 - ✅ **Monitor Premium (Fase 4 adelantada)** implementado y disponible para clienta premium
-- ✅ **Monitor Cloud** implementado, desplegado en Railway (`tustock.up.railway.app`) y funcionando con datos reales
+- ✅ **Monitor Cloud** implementado, desplegado en Railway (`monitor.tustocksoft.com.ar`) y funcionando con datos reales
 - ✅ **Validación de mercado COMPLETA** — hay disposición a pagar. Precio validado.
 - ✅ Esquemas Pydantic para validación de datos
 - ✅ Guía de Usuario PDF generada automáticamente
@@ -230,16 +230,17 @@ PC del cliente                          Cloud (Railway/VPS)
 - ✅ **Primer post de Facebook publicado** (11/7): Post 1 ("¿Cuánto stock tenés AHORA?") en 3 grupos de 30k+ miembros. Copy+lienzo auditado por Legal+Marketing.
 - ✅ **Mercado Libre publicado** (12/7): MLA3596381120 / MLAU4283798573. Título, categoría, precio ($80K), 5 imágenes, descripción plain text, envío, pagos, envío gratis. Verificado contra HTML descargado.
 - ✅ **Programa Despegue ML analizado**: $45K ARS garantía (recuperable 100%), $45K en publicidad gratis, reputación verde claro. Riesgo bajo para producto digital. Pendiente activar por el humano.
-### Agenda para mañana (15 de Julio 2026)
+### Agenda para hoy (15 de Julio 2026)
 
-| # | Tarea | Quién | Notas |
-|---|-------|:-----:|-------|
-| 1 | **Prompt Stitch para frontend TUSTOCK** (web/src/) | 🎨 UI | El usuario dijo que el rediseño actual es "muy sutil". UI genera un prompt como el de la landing, con el design system Stitch, para que Stitch rediseñe el frontend React completo (dashboard, POS, productos, etc). El Monitor Cloud le gustó — replicar ese nivel de cambio. |
-| 2 | **Mover Admin a carpeta separada + gitignore** | 🖥 DEV + Dispatcher | El admin (`admin/`) se muda a una carpeta fuera del repo (ej: `E:\TUSTOCK_ADMIN\`). `.gitignore` en el root para ignorar todo. El usuario es el ÚNICO que lo usa. NO debe estar en el repo. |
-| 3 | **Chequeo completo del sistema post-rediseño** | 🔍 Dispatcher + DEV | Después de que UI implemente el rediseño, hacer auditoría: landing, frontend, monitor local, monitor cloud, admin. Verificar que todo funcione y se vea bien. |
-| 4 | **Publicar Post 2 en Facebook** (caso testimonial) | 🧑 HUMANO | Post 1 fue 11/7 → Post 2 toca ~18/7. Copy + imagen ya listos. |
-| 5 | **Crear `.env` real con tokens** | 🖥 DEV | Los tokens (`TUSTOCK_TOKEN`, `TUSTOCK_ADMIN_TOKEN`) no deberían estar como defaults en config.py. Crear `.env` en el server y `.gitignore` para que el security audit no rompa nada de nuevo. |
-| 6 | **Dominio para Monitor Cloud** | 🖥 DEV + 🧑 HUMANO | `monitor.tustocksoft.com.ar` apuntando a Railway. Configurar custom domain en Railway + CNAME en Cloudflare. Actualizar agente local y admin. La clienta usa una URL profesional en vez de `tustock.up.railway.app`. |
+| # | Tarea | Quién | Estado |
+|---|-------|:-----:|:------:|
+| 1 | **Auditoría de código** completada — 1 bug crítico, 7 menores, 5 observaciones | 🔍 Dispatcher | ✅ |
+| 2 | **Revisión legal** completada — 4 faltas urgentes detectadas | ⚖️ Legal | ✅ |
+| 3 | **Corregir todo** (bugs DEV + faltas legales) | 🖥 DEV | ✅ Completado — Dashboard fix + Stitch + 4 faltas legales + limpieza |
+| 4 | **Publicar Post 3 en Facebook** | 🧑 HUMANO | ✅ Completado |
+| 5 | **Commit de cambios pendientes** (rediseño Stitch, fixes, .env) | 🧑 HUMANO | ⏳ Pendiente — después de las correcciones |
+| 6 | **Activar Programa Despegue ML** ($45K recuperable) | 🧑 HUMANO | ⏳ Pendiente |
+| 7 | **Registrar bases de datos AAIP** | 🧑 HUMANO | ⏳ Pendiente — guía en `obsidian/03-Legal/` |
 
 ### Prioridades actuales (Julio 2026)
 
@@ -247,15 +248,18 @@ PC del cliente                          Cloud (Railway/VPS)
 |:---------:|-------|:-----:|-------------------|
 | ✅ | **Dominio comprado: tustocksoft.com.ar** | 🧑 HUMANO | Presencia profesional. Landing page con dominio propio. |
 | ✅ | **DNS + GitHub Pages configurados** | 🧑 HUMANO + 🖥 DEV | Cloudflare (free) como DNS provider. Landing accesible en tustocksoft.com.ar con HTTPS. |
-| ✅ | **Post 1 publicado en 3 grupos de Facebook** (30k+ miembros c/u) | 🧑 HUMANO | Hecho 11/7. Post 2: dentro de 1 semana. Post 3: 1 sem después. |
-| 🟢 2 | **Publicar Post 2 en Facebook Groups** (caso real testimonial) | 🧑 HUMANO | 1 sem después del Post 1. Copy + imagen lista. |
+| ✅ | **Post 1 publicado en 3 grupos de Facebook** (30k+ miembros c/u) | 🧑 HUMANO | Hecho 11/7. |
+| ✅ | **Post 2 publicado en Facebook Groups** (caso testimonial) | 🧑 HUMANO | Hecho 14/7. |
+| ✅ | **Post 3 publicado en Facebook Groups** (cierre de secuencia) | 🧑 HUMANO | Hecho 15/7. Secuencia de 3 posts completada. |
 | ✅ | **Mercado Libre publicado** (MLA3596381120) | 🧑 HUMANO | Hecho 12/7. Título, categoría, precio ($80K), 5 imágenes, descripción. Verificado. Pendiente: activar Programa Despegue. |
 | 🟡 3 | **Activar Programa Despegue ML** ($45K garantía recuperable) | 🧑 HUMANO | Reputación verde claro + $45K publicidad gratis. Riesgo bajo. Ver `obsidian/02-Ventas/Programa Despegue ML.md`. |
 | 🟡 4 | **Pasar Railway a Hobby cuando se acaben los créditos gratis** | 🧑 HUMANO | $5/mes. El crédito free trial se usa primero, después se paga. |
 | 🟡 5 | **Registrar bases de datos en AAIP** (PASO 1 + 2) | 🧑 HUMANO | Obligación legal (Ley 25.326 art. 21). Guía en `obsidian/TU STOCK/03-Legal/Registro AAIP.md`. |
-| 🟢 6 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
-| 🟢 7 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
-| 🟢 8 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
+| 🟢 6 | **Implementar rediseño Stitch en frontend React** | 🎨 UI + 🖥 DEV | Prompt listo en `docs/stitch-frontend-prompt.md`. Pendiente de implementar. |
+| 🟢 7 | **Dominio para Monitor Cloud** | 🖥 DEV + 🧑 HUMANO | `monitor.tustocksoft.com.ar` → Railway. Custom domain + CNAME. |
+| 🟢 8 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
+| 🟢 9 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
+| 🟢 10 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
 
 ---
 
@@ -332,7 +336,7 @@ PC del cliente                          Cloud (Railway/VPS)
 |-------|:-----:|:---------:|
 | WhatsApp directo a comerciantes locales | 🟢 Activo | 🔥 Alta |
 | Boca a boca / referidos de clienta actual | 🟢 Activo | 🔥 Alta |
-| Facebook Groups (kiosqueros, almaceneros) | 🟢 Activo — Post 1 publicado (11/7) | 🔥 Alta |
+| Facebook Groups (kiosqueros, almaceneros) | 🟢 Activo — Posts 1, 2 y 3 publicados (11/7, 14/7, 15/7) | 🔥 Alta |
 | Mercado Libre | 🟢 Activo — Publicado MLA3596381120 (12/7) | 🔥 Alta |
 | Proveedores mayoristas (comisión) | 🔴 Futuro | 🟢 Baja |
 | Mercado de apps Tiendanube/Empretienda | 🔴 Futuro | 🟢 Baja |
@@ -365,7 +369,7 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] CONFIG OPENCODE: opencode.json con agentes dev y ventas, pipeline feature → sales material. (2026-06-30)
 - [feature] TIMESTAMPS: Todos los modelos SQLAlchemy now tienen created_at/updated_at. (2026-06-30)
 - [feature] LAUNCHER UNIFICADO: scripts/launcher.py reemplaza todos los .bat. Inicia servidor, monitor, tunnel, cloud agent. TUSTOCK.bat con menu de 8 opciones. (2026-06-30)
-- [feature] MONITOR CLOUD: API cloud con push del agente local, login multiusuario JWT, dashboard mobile responsive. Desplegado en Railway (`tustock.up.railway.app`). (2026-06-30)
+- [feature] MONITOR CLOUD: API cloud con push del agente local, login multiusuario JWT, dashboard mobile responsive. Desplegado en Railway (`monitor.tustocksoft.com.ar`). (2026-06-30)
 - [feature] DASHBOARD ADMIN: Panel de administración de licencias en `/admin`, token separado. Generar keys, ver/revocar/activar licencias, stats por plan, ingresos estimados, trials por vencer. (2026-06-30)
 - [feature] MERCADO PAGO: Integración REST en `cloud/payments.py`. Crear preferencias de pago, webhook notification, verificar status. Admin tiene botón "Cobrar MP" y columna de estado de pago. (2026-07-02)
 - [feature] VALIDACION CLOUD: Sync de keys al cloud, validate contra API cloud, cache 7d con fallback offline 14d. Middleware bloquea APIs si licencia expirada o inválida. Trial no requiere validación. (2026-07-02)
@@ -376,7 +380,7 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] EULA CLICKWRAP: Modal de aceptación de Términos y Condiciones en primera ejecución. Backend: modelo License con `eula_accepted`, endpoint `POST /api/license/accept-eula`. Frontend: componente EulaModal en Layout que bloquea toda interacción hasta aceptar. Endpoints para servir documentos legales: `/api/license/terms`, `/api/license/privacy`, `/api/license/refund`. (2026-07-04)
 - [feature] CONSENTIMIENTO REGISTRO CLOUD: Checkbox obligatorio de aceptación de Términos y Política de Privacidad en el formulario de registro del Monitor Cloud. Modelo Business con `terms_accepted`. Backend rechaza registro sin `accepts_terms: true`. (2026-07-04)
 - [feature] BAJA DE CUENTA CLOUD: Endpoint `POST /api/business/delete-account` con confirmación por email. Elimina MetricsPush y anonimiza datos del Business (soft-delete con is_active=False). UI en dashboard con botón "Eliminar mi cuenta" y confirmación. Endpoints cloud para docs legales: `/api/licenses/terms`, `/api/licenses/privacy`, `/api/licenses/refund`. (2026-07-04)
-- [feature] ADMIN SEPARADO: App independiente en `admin/` (Vite+React, puerto 5174). Removido del web/ principal. Scripts `start-admin.bat` y `stop-admin.bat`. Proxy `/api/admin` a localhost:8090. (2026-07-06)
+- [feature] ADMIN SEPARADO: App independiente en `admin/` (Vite+React, puerto 5174). Removido del web/ principal. Scripts `start-admin.bat` y `stop-admin.bat`. Proxy `/api/admin` a localhost:8090. (2026-07-06) → **Actualizado 2026-07-14:** movido a `E:\TUSTOCK_ADMIN\` fuera del repo.
 - [feature] SUBSCRIPTION BANNER: Componente SubscriptionBanner muestra banner progresivo de grace period para suscripciones (día 0/3/7+). Integrado en Layout debajo de TrialBanner. (2026-07-06)
 - [feature] DB LOCAL REPARADA: Columnas faltantes agregadas a `tustock.db` via ALTER TABLE: `subscription_grace_days_left`, `subscription_suspended`, `eula_accepted`, `eula_accepted_at`. (2026-07-06)
 - [feature] WEBHOOK MP FIX: update_plan_notification_url ahora consulta GET /preapproval_plan/{id} primero para verificar si notification_url ya está seteado. Solo hace PUT si es diferente, evitando error 400 "Properties to update are required". (2026-07-07)
@@ -400,6 +404,13 @@ PC del cliente                          Cloud (Railway/VPS)
 - [feature] ADMIN STITCH: Dashboard de administración (admin/src/Admin.tsx) rediseñado con Stitch dark theme. Inputs dark, cards glass, botones #4d8eff, tags translúcidos. Solo cambios de estilo, 0 cambios en lógica. (2026-07-14)
 - [fix] EULA MODAL DEADLOCK: 4 bugs corregidos — (1) refresh() no retornaba promise, (2) handleAccept no awaited refresh, (3) submitting nunca se reseteaba en éxito, (4) si POST aceptaba pero refresh fallaba, usuario quedaba en deadlock. Backend ahora retorna 200 si ya aceptó. (2026-07-14)
 - [fix] EULA MODAL DEADLOCK: Modal de ToS bloqueaba frontend indefinidamente. 4 bugs: (1) refresh() no retornaba promise, no se podía awaiting; (2) handleAccept no awaiting refresh post-POST; (3) submitting nunca se reseteaba en éxito; (4) si POST aceptaba pero refresh fallaba, usuario quedaba en deadlock permanente. Backend: accept_eula() retorna dict con {ok, already}, caso "ya aceptado" retorna 200 en vez de 400. Frontend: refresh() retorna promise, handleAccept awaits refresh, maneja "already" como éxito, muestra error message al usuario. (2026-07-14)
+- [feature] ADMIN EXTERNO: App admin movida de `admin/` (repo) a `E:\TUSTOCK_ADMIN\` (fuera del repo). `admin/` agregado a `.gitignore`. Scripts `start-admin.bat` y `stop-admin.bat` actualizados para apuntar a la nueva ubicación. Credentials y código admin ya no se commitean. (2026-07-14)
+- [feature] SECRETS VIA .ENV: `server/.env` creado con tokens reales. Defaults en `server/config.py` cambiados a `""`. Startup check con `sys.exit(1)` si falta TUSTOCK_TOKEN. `.gitignore` actualizado con `*.env` y `server/.env`. Tokens ya no hardcodeados en código fuente. (2026-07-14)
+- [fix] DASHBOARD LINKS: `<a href>` reemplazado por `<Link to>` de React Router en Dashboard.tsx. Corregía recarga completa de página en cada navegación. (2026-07-15)
+- [fix] DASHBOARD STITCH: Rediseño Stitch aplicado a Dashboard — dark theme, glass cards, KPI cards, Material Icons, Geist Mono, progress bars, fadeIn animations. (2026-07-15)
+- [fix] LEGAL CLOUD FIXES: Email `kamiikasee05@gmail.com` → `tustock.administracion@gmail.com`, marca `Kamiikaze Desarrollos` → `TUSTOCK`, URLs dominio actualizado, checkbox consentimiento agregado, deudores anonimizados. (2026-07-15)
+- [fix] LIMPIEZA UI: 14 componentes UI no utilizados eliminados (GlassPanel, KPICard, MiniBarChart, QuickAction, Toggle, CustomerDrawer, Modal, DataTable, Button, Card, Badge, EmptyState, Skeleton, index.ts). recharts y lucide-react desinstalados. Build -30KB. (2026-07-15)
+- [feature] TERCER POST EN FACEBOOK: Post 3 (cierre de secuencia — "¿Y si el mes que viene arrancás con todo bajo control?") publicado en grupos de Facebook. Copy listo en `docs/marketing/post3-facebook.md`. (2026-07-15)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
@@ -422,7 +433,7 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-06-30 | Fase 0 considerada COMPLETA (mercado validado con venta real) | Ventas |
 | 2026-06-30 | Transición a Fase 1: prioridad licencias + trial + feature gating | Ventas |
 | 2026-06-30 | **Monitor Cloud aprobado**: Arquitectura híbrida — agente local pushea datos a API cloud con URL fija. Reemplaza Cloudflare Tunnel. Login multiusuario. Desarrollo en Fase 5. | Ventas + Humano |
-| 2026-06-30 | **Monitor Cloud desplegado en Railway**: `tustock.up.railway.app`. API push-based, agente local funcionando con datos reales, dashboard multiusuario. Clienta premium configurada (`libreria@tustock.com`). | DEV + Humano |
+| 2026-06-30 | **Monitor Cloud desplegado en Railway**: `monitor.tustocksoft.com.ar` (custom domain via Cloudflare). API push-based, agente local funcionando con datos reales, dashboard multiusuario. Puerto interno: 8080. | DEV + Humano |
 | 2026-06-30 | **Propuesta de reforma de tiers**: refrashear alrededor de "pago único vs mensual". Matriz de gating simplificada (Trial/Básico/Suscripción/Pro) propuesta por DEV, pendiente de aprobación por Ventas. | DEV + Ventas |
 | 2026-06-30 | **Matriz de gating APROBADA** por Ventas. Export Excel va en todos los planes pagos. Diferencial: Monitor Cloud + soporte prioritario. Ajuste pendiente en código: `export_enabled: true` para Básico. | Ventas |
 | 2026-06-30 | **Auditoría completa**: revisión de admin routes, frontend, launcher, TUSTOCK.bat. Fixes aplicados: timing-safe token compare, stop.bat PID, autostart quick mode, favicon guard, duplicate query eliminado. | DEV |
@@ -464,6 +475,7 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-10 | **TODOS LOS MCPs DESACTIVADOS**: Se eliminaron todos los MCPs de opencode.json (Mercado Pago, Canva, Nano Banana, Browser). Regla permanente: NO se usan MCPs. Si se necesita info de APIs, se consulta documentación web o se usa integración REST existente. Excepción: solo el Humano puede autorizar reintroducir un MCP si es estrictamente necesario. | 🧑 HUMANO + Dispatcher |
 | 2026-07-10 | **ARGENTINIZACIÓN DE PROMPTS**: Los 3 prompts de imagen reescritos con ambientación argentina auténtica. Post 1: kiosco argentino con persianas, mosaico, lotería, alfajores. Post 2: librería con cuadernos Rayita, cartelito de "abierto". Post 3: mate en mostrador. Actualizados en todos los archivos de Marketing y Ventas. | 🧑 HUMANO + Dispatcher |
 | 2026-07-11 | **PRIMER POST EN FACEBOOK PUBLICADO**: Post 1 ("¿Cuánto stock tenés AHORA?") publicado en 3 grupos de Facebook de 30k+ miembros c/u. Copy+lienzo auditado por Legal+Marketing. | 🧑 HUMANO + Dispatcher |
+| 2026-07-14 | **SEGUNDO POST EN FACEBOOK PUBLICADO**: Post 2 (caso testimonial — clienta librería) publicado en grupos de Facebook. Copy+imagen lista. | 🧑 HUMANO |
 | 2026-07-11 | **GUIA ML EN OBSIDIAN**: Guía de Mercado Libre movida a `obsidian/02-Ventas/` con prompts para 4 imágenes ML + instrucciones de captura + prompts Gemini. | 🧑 HUMANO + Dispatcher |
 | 2026-07-11 | **IMÁGENES ML GENERADAS**: Las 4 imágenes de Mercado Libre listas (portada, dashboard mockup, POS mockup, checklist) generadas vía Gemini en Chrome. Pendiente publicar en ML. | 🧑 HUMANO |
 | 2026-07-12 | **ML PUBLICADO**: Listing MLA3596381120 / MLAU4283798573 publicado en Mercado Libre. Título "Sistema Gestión Stock Ventas Kiosco Almacén PC", categoría Software, $80.000, 5 imágenes, envío gratis, pagos transferencia/MB/efectivo. Verificado contra HTML descargado. | 🧑 HUMANO + Dispatcher |
@@ -475,6 +487,19 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-14 | **EULA deadlock fix**: 4 bugs encadenados causaban deadlock permanente del modal de ToS. refresh() no retornaba promise, handleAccept no awaited refresh, submitting no se reseteaba, backend retornaba 400 si ya aceptabas. Todo corregido. | 🖥 DEV |
 | 2026-07-14 | **Auth roto por security audit**: Commit 21b09bb cambió TUSTOCK_TOKEN default a "" pero nunca se creó .env. Frontend hardcodea "tustock-local-token". Resultado: 401 en todos los endpoints, sistema inutilizable. Default restaurado. | 🖥 DEV + Dispatcher |
 | 2026-07-14 | **Feedback de usuario**: Rediseño del frontend (React app principal) es "muy sutil". Monitor Cloud y Landing les gustó. Mañana UI genera prompt Stitch para rediseñar el frontend completo. | 🧑 HUMANO |
+| 2026-07-14 | **Prompt Stitch frontend**: Documento completo de especificación de diseño (`docs/stitch-frontend-prompt.md`) generado por UI. 20 secciones: tokens, componentes, páginas, animaciones, mobile-first, copy voseo. Listo para ser usado por Stitch o cualquier herramienta de código para rediseñar el frontend React completo. | 🎨 UI |
+| 2026-07-14 | **Admin movido a E:\TUSTOCK_ADMIN\**: App admin fuera del repo. `admin/` agregado a `.gitignore`. Scripts `start-admin.bat` y `stop-admin.bat` actualizados. Credentials y código admin ya no se commitean. | 🖥 DEV |
+| 2026-07-14 | **Secrets via .env**: `server/.env` creado con tokens reales. Defaults en `server/config.py` cambiados a `""`. Startup check con `sys.exit(1)` si falta TUSTOCK_TOKEN. `.gitignore` actualizado con `*.env` y `server/.env`. Tokens ya no hardcodeados en código fuente. | 🖥 DEV |
+| 2026-07-14 | **REDISEÑO STITCH COMPLETADO**: Frontend React rediseñado con Stitch design system — dark theme #10131a, glass effects, Material Icons, Geist Mono para datos, KPI cards, bento grid, animations. 25+ archivos modificados. Build exitoso. | 🎨 UI + 🖥 DEV |
+| 2026-07-14 | **FIX SIDEBAR OVERSIZED**: Sidebar corregida — nav flat sin group labels (~144px saved), alerts removidos (~100px saved), mobile width 260→240px, logo fontWeight 700→600, user card border-radius 24→12px. Total ~240px height reduction. | 🎨 UI + 🖥 DEV |
+| 2026-07-14 | **Sales POS compactado**: Total fontSize 40→22px, panel cobro 400→320px, botón cobrar padding/size reducido, tabs e íconos compactados, historial th/td paddings reducidos, método de pago grid más apretado. | 🖥 DEV |
+| 2026-07-14 | **Products tab REBUILD completo**: UI reconstruyó toda la página desde cero — th 11px/8px-12px, td 13px/8px-12px, nombre 13px bold, precio 13px data, stock 14px bold, badges 10px pill, acciones 16px icons/4px padding, barcode 48×32, paginación 13px/6px-14px, stats 18px. Row height ~40-44px consistente. | 🎨 UI |
+| 2026-07-14 | **Dashboard compactado**: Low stock table — header 11px uppercase, td 8px/12px, nombre 13px, código 11px, stock data 13px, badges 10px, icon 16px en 32×32 box. | 🖥 DEV |
+| 2026-07-14 | **Server fix**: Working directory incorrecto causaba ModuleNotFoundError al reiniciar. Servidor necesita correr desde `E:\TUSTOCK\server`, no `E:\TUSTOCK`. | 🖥 DEV + Dispatcher |
+| 2026-07-14 | **UI sizing iterativo lección**: No hacer fixes incrementales de UI — el usuario ve inconsistencia cuando cada fix cambia 1-2px. Mejor reconstruir desde cero con sizing consistente (como hizo UI con Products). | Dispatcher |
+| 2026-07-14 | **EULA flash fix**: Modal de ToS aparecía brevemente al navegar. Causa: `<a href="/route">` causaba recarga completa de página, reseteando `useLicense()`. Fix doble: (1) Layout.tsx `window.location.pathname` → `useNavigate()`, (2) EulaModal.tsx guard `if (loading) return null`, (3) TrialBanner/SubscriptionBanner/Reports: `<a href>` → `<Link to>` de React Router. | 🖥 DEV |
+| 2026-07-14 | **Subdominio Monitor Cloud**: `monitor.tustocksoft.com.ar` configurado via Railway CLI + Cloudflare DNS. Puerto interno: 8080. SSL automático via Let's Encrypt. Railway CLI (`railway status`, `railway domain`) confirma dominio ACTIVE. | 🧑 HUMANO + Dispatcher |
+| 2026-07-15 | **Auditoría + corrección completa**: DEV + Legal auditores en paralelo. 1 bug crítico (Dashboard links), 7 menores, 4 faltas legales urgentes (email incorrecto, marca inconsistente, checkbox consentimiento roto, PII visible). Todo corregido. Build verificado. -30KB. | 🖥 DEV + ⚖️ Legal + Dispatcher |
 
 ---
 ## 13. EQUIPO LEGAL
@@ -548,4 +573,4 @@ PC del cliente                          Cloud (Railway/VPS)
 
 ---
 
-*Última actualización: 12 de Julio de 2026*
+*Última actualización: 14 de Julio de 2026 (noche)*

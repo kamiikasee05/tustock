@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { api, LowStockItem } from '../api/client'
 
 export default function Dashboard() {
@@ -21,72 +22,83 @@ export default function Dashboard() {
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Cargando...</div>
 
   return (
-    <div>
-      <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>Dashboard</h2>
+    <div style={{ animation: 'fadeIn .3s ease' }}>
+      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
-        <StatCard label="Ventas hoy" value={`$${todaySummary?.total_sales?.toLocaleString() || '0'}`} color="var(--primary)" />
-        <StatCard label="Transacciones" value={todaySummary?.transaction_count || 0} color="var(--success)" />
-        <StatCard label="Artículos vendidos" value={todaySummary?.items_sold || 0} color="var(--warning)" />
-        <StatCard
-          label="Ticket promedio"
-          value={`$${todaySummary?.average_ticket?.toFixed(2) || '0.00'}`}
-          color="var(--text-muted)"
-        />
+      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20, fontFamily: "'Geist Mono', monospace" }}>Dashboard</h2>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
+        <KPICard label="Ventas hoy" value={`$${todaySummary?.total_sales?.toLocaleString() || '0'}`} sub={`${todaySummary?.transaction_count || 0} transacciones`} color="#4d8eff" />
+        <KPICard label="Artículos vendidos" value={todaySummary?.items_sold || 0} sub={`${todaySummary?.transaction_count || 0} ventas`} color="#4ade80" />
+        <KPICard label="Ticket promedio" value={`$${todaySummary?.average_ticket?.toFixed(0) || '0'}`} sub="por transacción" color="#fbbf24" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24 }}>
-        <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 24, border: '1px solid var(--border)' }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>
-            ⚠ Productos con stock bajo ({lowStock.length})
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+        <div style={{
+          background: 'rgba(30,41,59,0.7)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 12,
+          padding: 20,
+        }}>
+          <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: 'rgba(251,191,36,0.12)' }}>
+              <span className="material-icons" style={{ fontSize: 16, color: '#fbbf24' }}>warning</span>
+            </span>
+            Stock Bajo ({lowStock.length})
           </h3>
           {lowStock.length === 0 ? (
-            <p style={{ color: 'var(--success)', fontSize: 14 }}>Todos los productos tienen stock suficiente</p>
+            <p style={{ color: '#4ade80', fontSize: 13, padding: '12px 0' }}>Todos los productos tienen stock suficiente</p>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  <th style={{ textAlign: 'left', padding: '8px 0', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }}>Producto</th>
-                  <th style={{ textAlign: 'right', padding: '8px 0', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }}>Actual</th>
-                  <th style={{ textAlign: 'right', padding: '8px 0', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }}>Mínimo</th>
-                  <th style={{ textAlign: 'right', padding: '8px 0', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }}>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lowStock.map(item => (
-                  <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '10px 0', fontSize: 14 }}>
-                      <div style={{ fontWeight: 500 }}>{item.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.code}</div>
-                    </td>
-                    <td style={{ textAlign: 'right', padding: '10px 0', color: 'var(--danger)', fontWeight: 700, fontSize: 16 }}>{item.current}</td>
-                    <td style={{ textAlign: 'right', padding: '10px 0', fontSize: 14 }}>{item.min_stock}</td>
-                    <td style={{ textAlign: 'right', padding: '10px 0' }}>
-                      <span style={{
-                        background: item.current === 0 ? 'var(--danger)' : 'var(--warning)',
-                        color: 'white',
-                        padding: '3px 10px',
-                        borderRadius: 20,
-                        fontSize: 11,
-                        fontWeight: 600,
-                      }}>
-                        {item.current === 0 ? 'AGOTADO' : 'REPONER'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div>
+              {lowStock.map(item => (
+                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                    <div style={{ fontSize: 11, color: '#8b95a5', marginTop: 2, fontFamily: "'Geist Mono', monospace" }}>{item.code}</div>
+                  </div>
+                  <div style={{ width: 60, height: 4, background: '#2e3138', borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%',
+                      borderRadius: 2,
+                      width: `${item.min_stock > 0 ? Math.min(100, (item.current / item.min_stock) * 100) : 0}%`,
+                      background: item.current === 0 ? '#f87171' : '#fbbf24',
+                    }} />
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 700, fontFamily: "'Geist Mono', monospace", color: item.current === 0 ? '#f87171' : '#e1e2ec', minWidth: 32, textAlign: 'right' }}>{item.current}</span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 10,
+                    background: item.current === 0 ? 'rgba(248,113,113,0.15)' : 'rgba(251,191,36,0.15)',
+                    color: item.current === 0 ? '#f87171' : '#fbbf24',
+                  }}>
+                    {item.current === 0 ? 'AGOTADO' : 'REPONER'}
+                  </span>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
-        <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 24, border: '1px solid var(--border)' }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Acciones rápidas</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <QuickAction label="Nueva venta" href="/sales" color="var(--primary)" />
-            <QuickAction label="Agregar producto" href="/products" color="var(--success)" />
-            <QuickAction label="Iniciar auditoría" href="/audits" color="var(--warning)" />
-            <QuickAction label="Generar informe" href="/reports" color="var(--text-muted)" />
+        <div style={{
+          background: 'rgba(30,41,59,0.7)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 12,
+          padding: 20,
+        }}>
+          <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: 'rgba(77,142,255,0.12)' }}>
+              <span className="material-icons" style={{ fontSize: 16, color: '#4d8eff' }}>bolt</span>
+            </span>
+            Acciones rápidas
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <QuickLink to="/sales" icon="point_of_sale" label="Nueva venta" color="#4d8eff" />
+            <QuickLink to="/products" icon="inventory_2" label="Agregar producto" color="#4ade80" />
+            <QuickLink to="/audits" icon="fact_check" label="Iniciar auditoría" color="#fbbf24" />
+            <QuickLink to="/reports" icon="assessment" label="Generar informe" color="#8b95a5" />
           </div>
         </div>
       </div>
@@ -94,32 +106,46 @@ export default function Dashboard() {
   )
 }
 
-function StatCard({ label, value, color }: { label: string; value: string | number; color: string }) {
+function KPICard({ label, value, sub, color }: { label: string; value: string | number; sub: string; color: string }) {
   return (
-    <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 20, border: '1px solid var(--border)' }}>
-      <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 700, color }}>{value}</div>
+    <div style={{
+      background: 'rgba(30,41,59,0.7)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: 12,
+      padding: '18px 20px',
+    }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '.5px', color: '#8b95a5', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 26, fontWeight: 800, color: '#e1e2ec', fontFamily: "'Geist Mono', monospace" }}>{value}</div>
+      <div style={{ fontSize: 12, color: '#8b95a5', marginTop: 4 }}>{sub}</div>
     </div>
   )
 }
 
-function QuickAction({ label, href, color }: { label: string; href: string; color: string }) {
+function QuickLink({ to, icon, label, color }: { to: string; icon: string; label: string; color: string }) {
   return (
-    <a
-      href={href}
+    <Link
+      to={to}
       style={{
-        display: 'block',
-        padding: '12px 16px',
-        background: 'var(--bg)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '10px 14px',
+        background: 'rgba(255,255,255,0.03)',
         borderRadius: 8,
-        color,
+        color: '#e1e2ec',
         fontWeight: 500,
-        fontSize: 14,
+        fontSize: 13,
         textDecoration: 'none',
         borderLeft: `3px solid ${color}`,
+        transition: 'background .15s',
       }}
+      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+      onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
     >
-      {label} →
-    </a>
+      <span className="material-icons" style={{ fontSize: 18, color }}>{icon}</span>
+      {label}
+    </Link>
   )
 }

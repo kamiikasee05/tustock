@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { api } from '../api/client'
 import { useLicense } from '../hooks/useLicense'
+import MaterialIcon from './ui/MaterialIcon'
 
 export default function EulaModal() {
-  const { status, refresh } = useLicense()
+  const { status, refresh, loading } = useLicense()
   const [accepted, setAccepted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
+  if (loading) return null
   if (status.eula_accepted) return null
 
   const handleAccept = async () => {
@@ -35,27 +37,34 @@ export default function EulaModal() {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 99999,
-      background: 'rgba(0,0,0,0.85)',
+      background: 'rgba(0, 0, 0, 0.8)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: 20,
     }}>
       <div style={{
-        background: 'var(--surface)', borderRadius: 16,
+        background: 'var(--surface-container)',
+        borderRadius: 'var(--radius-lg)',
         maxWidth: 600, width: '100%', maxHeight: '90vh',
         display: 'flex', flexDirection: 'column',
-        border: '1px solid var(--border)',
+        border: '1px solid rgba(66, 71, 84, 0.5)',
+        boxShadow: 'var(--shadow-modal)',
       }}>
         <div style={{ padding: '24px 24px 0' }}>
-          <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>TUSTOCK</h2>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
+          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 24, lineHeight: '32px', fontWeight: 800, color: 'var(--primary)' }}>
+            TUSTOCK
+          </h2>
+          <p style={{ fontSize: 13, color: 'var(--on-surface-variant)', marginBottom: 16, marginTop: 4 }}>
             Antes de continuar, leé y aceptá los términos de uso
           </p>
         </div>
+
         <div style={{
           flex: 1, overflow: 'auto', padding: '0 24px',
-          fontSize: 13, lineHeight: 1.7, color: 'var(--text-muted)',
+          fontSize: 13, lineHeight: 1.7, color: 'var(--on-surface-variant)',
         }}>
-          <p><strong style={{ color: 'var(--text)' }}>Términos y Condiciones de Uso + Licencia de Software</strong></p>
+          <p><strong style={{ color: 'var(--on-surface)' }}>Términos y Condiciones de Uso + Licencia de Software</strong></p>
           <p>Al usar TUSTOCK aceptás los siguientes términos:</p>
           <ul style={{ paddingLeft: 16, marginBottom: 12 }}>
             <li style={{ marginBottom: 6 }}>Licencia de uso limitada, no exclusiva e intransferible para 1 PC.</li>
@@ -69,25 +78,26 @@ export default function EulaModal() {
           </ul>
           <p style={{ fontSize: 12 }}>
             Documentos completos:{' '}
-            <a href="/api/license/terms" target="_blank" rel="noopener noreferrer"
-              style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
+            <a href="/api/license/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
               Términos y Condiciones
             </a>
             {' · '}
-            <a href="/api/license/privacy" target="_blank" rel="noopener noreferrer"
-              style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
+            <a href="/api/license/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
               Política de Privacidad
             </a>
             {' · '}
-            <a href="/api/license/refund" target="_blank" rel="noopener noreferrer"
-              style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
+            <a href="/api/license/refund" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>
               Política de Reembolso
             </a>
           </p>
         </div>
-        <div style={{ padding: '16px 24px 24px', borderTop: '1px solid var(--border)', marginTop: 16 }}>
+
+        <div style={{ padding: '16px 24px 24px', borderTop: '1px solid rgba(66, 71, 84, 0.3)', marginTop: 16 }}>
           {error && (
-            <p style={{ fontSize: 13, color: 'var(--danger)', marginBottom: 12 }}>{error}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--error)', marginBottom: 12 }}>
+              <MaterialIcon name="error" size={18} />
+              {error}
+            </div>
           )}
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, cursor: 'pointer', marginBottom: 16 }}>
             <input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)}
@@ -96,11 +106,14 @@ export default function EulaModal() {
           </label>
           <button onClick={handleAccept} disabled={!accepted || submitting}
             style={{
-              width: '100%', padding: '12px', borderRadius: 8, border: 'none',
-              background: accepted ? 'var(--primary)' : 'var(--border)',
-              color: '#fff', fontSize: 15, fontWeight: 700,
+              width: '100%', padding: '12px', borderRadius: 'var(--radius)', border: 'none',
+              background: accepted ? 'var(--primary-container)' : 'var(--surface-container-highest)',
+              color: accepted ? 'var(--on-primary-container)' : 'var(--on-surface-variant)',
+              fontSize: 15, fontWeight: 700,
               cursor: accepted ? 'pointer' : 'not-allowed',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
+            <MaterialIcon name={submitting ? 'sync' : 'check_circle'} size={20} />
             {submitting ? 'Guardando...' : 'Aceptar y continuar'}
           </button>
         </div>

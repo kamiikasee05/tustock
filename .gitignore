@@ -18,7 +18,9 @@ env/
 # Node
 node_modules/
 build/
-admin/dist/
+
+# Admin (movido a E:\TUSTOCK_ADMIN, fuera del repo)
+admin/
 
 # Android
 *.apk
@@ -39,6 +41,8 @@ Thumbs.db
 # Env
 .env
 .env.local
+*.env
+server/.env
 
 # Respaldos de sesiones
 respaldos/

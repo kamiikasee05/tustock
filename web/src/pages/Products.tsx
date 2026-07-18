@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api, Product, StockItem } from '../api/client'
 import { useToast } from '../components/Toast'
+import MaterialIcon from '../components/ui/MaterialIcon'
 
 interface Category { id: number; name: string; parent_id: number | null }
 
@@ -67,8 +68,8 @@ export default function Products() {
 
   const handleDelete = async (p: Product) => {
     const msg = p.is_active
-      ? `¿Desactivar "${p.name}"?\n\nEl producto se ocultara de las listas pero se conservan sus ventas y movimientos de stock.`
-      : `¿Eliminar definitivamente "${p.name}"? Esta accion no se puede deshacer.`
+      ? `Desactivar "${p.name}"?\n\nEl producto se ocultara de las listas pero se conservan sus ventas y movimientos de stock.`
+      : `Eliminar definitivamente "${p.name}"? Esta accion no se puede deshacer.`
     if (!confirm(msg)) return
     await api.delete(`/products/${p.id}`)
     load()
@@ -80,256 +81,347 @@ export default function Products() {
   }
 
   const handleStockAdjust = async (productId: number, qty: number, type: string) => {
-    await api.post('/stock/adjust', { product_id: productId, quantity: Math.abs(qty), movement_type: type, notes: `Ajuste manual desde panel` })
+    await api.post('/stock/adjust', { product_id: productId, quantity: Math.abs(qty), movement_type: type, notes: 'Ajuste manual desde panel' })
     load()
   }
 
   const activeCount = products.filter(p => p.is_active).length
-  const inactiveCount = products.filter(p => !p.is_active).length
+  const outOfStockCount = products.filter(p => { const q = getStock(p.id); return q === 0 && p.is_active }).length
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    background: 'var(--surface)',
+    border: '1px solid var(--outline-variant)',
+    borderRadius: 'var(--radius)',
+    padding: '8px 12px',
+    color: 'var(--on-surface)',
+    fontSize: 13,
+    fontFamily: 'var(--font-body)',
+    lineHeight: '20px',
+    transition: 'border-color var(--transition), box-shadow var(--transition)',
+  }
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: 11,
+    fontWeight: 700,
+    color: 'var(--outline)',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+    display: 'block',
+    marginBottom: 6,
+  }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2 style={{ fontSize: 24, fontWeight: 700 }}>
-          Productos
-          {inactiveCount > 0 && showInactive && (
-            <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-muted)', marginLeft: 12 }}>
-              ({activeCount} activos, {inactiveCount} inactivos)
-            </span>
-          )}
-        </h2>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => { setShowInactive(!showInactive); setSearch('') }}
-            style={{
-              padding: '10px 16px',
-              background: showInactive ? 'var(--warning)' : 'var(--surface)',
-              color: showInactive ? '#000' : 'var(--text)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            {showInactive ? '✓ Inactivos' : '☠ Ver inactivos'}
-          </button>
+    <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+
+      {/* ── HEADER ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, marginBottom: 'var(--space-lg)' }}>
+        <div>
+          <nav style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--outline)', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 4 }}>
+            <span>INVENTARIO</span>
+            <MaterialIcon name="chevron_right" size={12} />
+            <span style={{ color: 'var(--primary-fixed-dim)' }}>PRODUCTOS</span>
+          </nav>
+          <h2 style={{ fontFamily: 'var(--font-body)', fontSize: 22, fontWeight: 700, color: 'var(--on-surface)' }}>
+            Gestión de Productos
+          </h2>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface-container-low)', padding: 4, borderRadius: 'var(--radius)', border: '1px solid rgba(66,71,84,0.3)' }}>
+            <span style={{ fontSize: 13, color: 'var(--on-surface-variant)', paddingLeft: 8 }}>Ver inactivos</span>
+            <button
+              onClick={() => { setShowInactive(!showInactive); setSearch('') }}
+              style={{
+                position: 'relative', display: 'inline-flex', height: 24, width: 44,
+                alignItems: 'center', borderRadius: 'var(--radius-full)',
+                background: showInactive ? 'var(--primary-container)' : 'var(--surface-container-highest)',
+                transition: 'background var(--transition)', border: 'none', cursor: 'pointer',
+              }}
+            >
+              <span style={{
+                display: 'inline-block', height: 16, width: 16,
+                borderRadius: 'var(--radius-full)',
+                background: showInactive ? 'var(--on-primary-container)' : 'var(--outline)',
+                transition: 'transform var(--transition), background var(--transition)',
+                transform: showInactive ? 'translateX(24px)' : 'translateX(4px)',
+              }} />
+            </button>
+          </div>
           <button
             onClick={() => { setEditing(null); setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '', barcode: '' }); setShowForm(!showForm) }}
-            style={{ padding: '10px 20px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600 }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'var(--primary-container)', color: 'var(--on-primary-container)',
+              padding: '8px 16px', borderRadius: 'var(--radius)', fontWeight: 700, fontSize: 13,
+              boxShadow: '0 2px 8px rgba(77,142,255,0.15)',
+              transition: 'all var(--transition)',
+            }}
           >
-            + Nuevo producto
+            <MaterialIcon name="add" size={18} />
+            <span>Nuevo producto</span>
           </button>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <input
-          placeholder="Buscar por nombre o código..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ flex: 1, padding: '10px 14px' }}
-        />
-        <select value={filterCat} onChange={e => setFilterCat(e.target.value ? +e.target.value : '')} style={{ padding: '10px 14px', minWidth: 150 }}>
-          <option value="">Todas las categorías</option>
-          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+      {/* ── FILTERS + STATS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--gutter)', marginBottom: 'var(--space-lg)' }}>
+        <div style={{
+          background: 'var(--surface-container)', border: '1px solid rgba(66,71,84,0.5)',
+          borderRadius: 'var(--radius-md)', padding: 12,
+          display: 'flex', gap: 8, alignItems: 'center',
+        }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <MaterialIcon name="search" size={18} color="var(--outline)" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
+            <input
+              placeholder="Filtrá por descripción, marca o EAN..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ ...inputStyle, paddingLeft: 40 }}
+            />
+          </div>
+          <select value={filterCat} onChange={e => setFilterCat(e.target.value ? +e.target.value : '')} style={{ ...inputStyle, width: 240, flexShrink: 0, appearance: 'none' as const, cursor: 'pointer' }}>
+            <option value="">Todas las categorías</option>
+            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <button style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            padding: '8px 12px', border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius)',
+            color: 'var(--secondary)', fontSize: 13, fontWeight: 500,
+            background: 'transparent', transition: 'background var(--transition)',
+          }}>
+            <MaterialIcon name="filter_list" size={18} />
+            <span>Más filtros</span>
+          </button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{
+            background: 'var(--surface-container)', border: '1px solid rgba(66,71,84,0.5)',
+            borderRadius: 'var(--radius-md)', padding: 'var(--space-md)',
+            display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          }}>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--outline)', marginBottom: 4 }}>TOTAL ITEMS</span>
+            <span style={{ fontFamily: 'var(--font-data)', fontSize: 18, fontWeight: 600, color: 'var(--on-surface)' }}>{activeCount}</span>
+          </div>
+          <div style={{
+            background: 'var(--surface-container)', border: '1px solid rgba(66,71,84,0.5)',
+            borderRadius: 'var(--radius-md)', padding: 'var(--space-md)',
+            display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          }}>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--error)', marginBottom: 4 }}>SIN STOCK</span>
+            <span style={{ fontFamily: 'var(--font-data)', fontSize: 18, fontWeight: 600, color: 'var(--error)' }}>{outOfStockCount}</span>
+          </div>
+        </div>
       </div>
 
+      {/* ── PRODUCT FORM ── */}
       {showForm && (
-        <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 24, marginBottom: 20, border: '1px solid var(--border)' }}>
-          <h3 style={{ marginBottom: 16 }}>{editing ? 'Editar producto' : 'Nuevo producto'}</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{
+          background: 'var(--surface-container)', borderRadius: 'var(--radius-md)',
+          padding: 20, marginBottom: 'var(--space-lg)',
+          border: '1px solid rgba(66,71,84,0.5)',
+        }}>
+          <h3 style={{ marginBottom: 16, color: 'var(--on-surface)', fontSize: 18, fontWeight: 600 }}>
+            {editing ? 'Editar producto' : 'Nuevo producto'}
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Codigo</label>
+              <label style={labelStyle}>Código</label>
               <div style={{ display: 'flex', gap: 6 }}>
-                <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} style={{ flex: 1 }} disabled={!!editing} />
+                <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} style={{ ...inputStyle, flex: 1 }} disabled={!!editing} />
                 {!editing && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const data = await api.get<{ code: string }>('/products/generate-code')
-                        setForm({ ...form, code: data.code })
-                      } catch (e) {}
-                    }}
-                    style={{ padding: '8px 14px', background: 'var(--surface-hover)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer' }}
-                  >
+                  <button type="button" onClick={async () => { try { const data = await api.get<{ code: string }>('/products/generate-code'); setForm({ ...form, code: data.code }) } catch (e) {} }}
+                    style={{ padding: '8px 14px', background: 'var(--surface-container-highest)', color: 'var(--on-surface)', border: '1px solid var(--outline-variant)', borderRadius: 6, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer' }}>
                     Generar
                   </button>
                 )}
               </div>
             </div>
             <div>
-              <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Codigo de barras</label>
+              <label style={labelStyle}>Código de barras</label>
               <div style={{ display: 'flex', gap: 6 }}>
-                <input value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} style={{ flex: 1 }} placeholder="Ej: 7791234567890" />
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const data = await api.get<{ barcode: string }>('/products/barcode/next')
-                      setForm({ ...form, barcode: data.barcode })
-                    } catch (e) {}
-                  }}
-                  style={{ padding: '8px 14px', background: 'var(--surface-hover)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer' }}
-                >
+                <input value={form.barcode} onChange={e => setForm({ ...form, barcode: e.target.value })} style={{ ...inputStyle, flex: 1 }} placeholder="Ej: 7791234567890" />
+                <button type="button" onClick={async () => { try { const data = await api.get<{ barcode: string }>('/products/barcode/next'); setForm({ ...form, barcode: data.barcode }) } catch (e) {} }}
+                  style={{ padding: '8px 14px', background: 'var(--surface-container-highest)', color: 'var(--on-surface)', border: '1px solid var(--outline-variant)', borderRadius: 6, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer' }}>
                   Generar
                 </button>
               </div>
             </div>
             <div>
-              <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Nombre</label>
-              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={{ width: '100%' }} />
+              <label style={labelStyle}>Nombre</label>
+              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Precio costo</label>
-              <input type="number" value={form.cost_price} onChange={e => setForm({ ...form, cost_price: +e.target.value })} style={{ width: '100%' }} />
+              <label style={labelStyle}>Precio costo</label>
+              <input type="number" value={form.cost_price} onChange={e => setForm({ ...form, cost_price: +e.target.value })} style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Precio venta</label>
-              <input type="number" value={form.selling_price} onChange={e => setForm({ ...form, selling_price: +e.target.value })} style={{ width: '100%' }} />
+              <label style={labelStyle}>Precio venta</label>
+              <input type="number" value={form.selling_price} onChange={e => setForm({ ...form, selling_price: +e.target.value })} style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Stock minimo</label>
-              <input type="number" value={form.min_stock} onChange={e => setForm({ ...form, min_stock: +e.target.value })} style={{ width: '100%' }} />
+              <label style={labelStyle}>Stock mínimo</label>
+              <input type="number" value={form.min_stock} onChange={e => setForm({ ...form, min_stock: +e.target.value })} style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Unidad</label>
-              <input value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} style={{ width: '100%' }} />
+              <label style={labelStyle}>Unidad</label>
+              <input value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} style={inputStyle} />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: 'var(--text-muted)' }}>Categoría</label>
-              <div style={{ display: 'flex', gap: 4 }}>
-                <select value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value ? +e.target.value : '' })} style={{ flex: 1, padding: '8px 10px' }}>
+              <label style={labelStyle}>Categoría</label>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <select value={form.category_id} onChange={e => setForm({ ...form, category_id: e.target.value ? +e.target.value : '' })} style={{ ...inputStyle, flex: 1, cursor: 'pointer' }}>
                   <option value="">Sin categoría</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const name = prompt('Nombre de la nueva categoría:')
-                    if (name) {
-                      await api.post('/products/categories', { name })
-                      const cats = await api.get<Category[]>('/products/categories')
-                      setCategories(cats)
-                    }
-                  }}
-                  style={{ padding: '8px 12px', background: 'var(--surface-hover)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-                >
+                <button type="button" onClick={async () => { const name = prompt('Nombre de la nueva categoría:'); if (name) { await api.post('/products/categories', { name }); const cats = await api.get<Category[]>('/products/categories'); setCategories(cats) } }}
+                  style={{ padding: '8px 12px', background: 'var(--surface-container-highest)', color: 'var(--on-surface)', border: '1px solid var(--outline-variant)', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                   + Nueva
                 </button>
               </div>
             </div>
           </div>
-          <div>
-            <label style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 12, display: 'block' }}>Descripcion</label>
-            <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ width: '100%', minHeight: 60 }} />
+          <div style={{ marginTop: 12 }}>
+            <label style={labelStyle}>Descripción</label>
+            <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} />
           </div>
           <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
-            <button onClick={handleSubmit} style={{ padding: '10px 24px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 8, fontWeight: 600 }}>
+            <button onClick={handleSubmit} style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'var(--primary-container)', color: 'var(--on-primary-container)',
+              padding: '8px 20px', borderRadius: 'var(--radius)', fontWeight: 700, fontSize: 13,
+              boxShadow: '0 2px 8px rgba(77,142,255,0.15)',
+            }}>
               {editing ? 'Guardar cambios' : 'Crear producto'}
             </button>
-            <button onClick={() => { setShowForm(false); setEditing(null) }} style={{ padding: '10px 24px', background: 'var(--surface-hover)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 8 }}>
+            <button onClick={() => { setShowForm(false); setEditing(null) }} style={{
+              padding: '8px 20px', borderRadius: 'var(--radius)', fontWeight: 500, fontSize: 13,
+              background: 'var(--surface-container-highest)', color: 'var(--on-surface)',
+              border: '1px solid var(--outline-variant)',
+            }}>
               Cancelar
             </button>
           </div>
         </div>
       )}
 
-      <div style={{ background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border)', overflow: 'hidden' }}>
+      {/* ── TABLE ── */}
+      <div style={{
+        background: 'var(--surface-container)', border: '1px solid rgba(66,71,84,0.5)',
+        borderRadius: 12, overflow: 'hidden',
+      }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg)' }}>
-              <th style={th}>Codigo</th>
-              <th style={th}>Codigo Barras</th>
-              <th style={th}>Nombre</th>
-              <th style={th}>Categoría</th>
-              <th style={{ ...th, textAlign: 'right' }}>P. Venta</th>
-              <th style={{ ...th, textAlign: 'center' }}>Stock</th>
-              <th style={{ ...th, textAlign: 'center' }}>Min</th>
-              <th style={{ ...th, textAlign: 'center' }}>Estado</th>
-              <th style={{ ...th, textAlign: 'center' }}>Acciones</th>
+            <tr style={{ borderBottom: '1px solid rgba(66,71,84,0.5)', background: 'var(--surface-container-high)' }}>
+              <th style={thStyle}>Barcode</th>
+              <th style={thStyle}>Producto / Descripción</th>
+              <th style={{ ...thStyle, textAlign: 'right' }}>Precio</th>
+              <th style={{ ...thStyle, textAlign: 'center' }}>Stock</th>
+              <th style={{ ...thStyle, textAlign: 'center' }}>Estado</th>
+              <th style={{ ...thStyle, textAlign: 'right' }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {products.map(p => {
               const qty = getStock(p.id)
-              const isLow = qty <= p.min_stock
+              const isLow = qty <= p.min_stock && qty > 0
               const isOut = qty === 0
               const inactive = !p.is_active
               return (
-                <tr key={p.id} style={{
-                  borderBottom: '1px solid var(--border)',
-                  opacity: inactive ? 0.5 : 1,
-                  background: inactive ? 'var(--bg)' : 'transparent',
-                }}>
-                  <td style={td}>{p.code}</td>
-                  <td style={{ ...td, fontSize: 12 }}>
-                    {p.barcode ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <img src={`/api/products/${p.id}/barcode.png`} alt={p.barcode} style={{ height: 60 }} />
-                        <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{p.barcode}</span>
-                      </div>
+                <tr
+                  key={p.id}
+                  style={{
+                    borderBottom: '1px solid rgba(66,71,84,0.2)',
+                    opacity: inactive ? 0.5 : 1,
+                    transition: 'background 0.15s ease',
+                  }}
+                  onMouseEnter={e => { if (!inactive) e.currentTarget.style.background = 'var(--surface-container-highest)' }}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent' }
+                >
+                  {/* Barcode */}
+                  <td style={tdStyle}>
+                    <div style={{ width: 48, height: 32, background: 'rgba(255,255,255,0.04)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(66,71,84,0.2)', overflow: 'hidden' }}>
+                      {p.barcode ? (
+                        <img src={`/api/products/${p.id}/barcode.png`} alt={p.barcode} style={{ height: '100%', objectFit: 'contain', mixBlendMode: 'screen', opacity: 0.8 }} />
+                      ) : (
+                        <button
+                          onClick={async () => { try { await api.post(`/products/${p.id}/barcode`); load() } catch (e) {} }}
+                          style={{ padding: '2px 6px', borderRadius: 4, background: 'var(--surface-container-highest)', color: 'var(--on-surface-variant)', fontSize: 9, fontWeight: 600, border: '1px solid var(--outline-variant)', cursor: 'pointer', lineHeight: 1 }}
+                        >
+                          Generar
+                        </button>
+                      )}
+                    </div>
+                  </td>
+
+                  {/* Product name + description */}
+                  <td style={{ ...tdStyle, maxWidth: 240 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <span style={{ color: 'var(--on-surface)', fontWeight: 600, fontSize: 13, lineHeight: '18px' }}>
+                        {p.name}
+                        {inactive && <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--error)' }}>INACTIVO</span>}
+                      </span>
+                      <span style={{ color: 'var(--outline)', fontSize: 11, lineHeight: '14px' }}>
+                        {(p as any).category_name || 'Sin categoría'} · {p.code}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Price */}
+                  <td style={tdStyle}>
+                    <span style={{
+                      fontFamily: 'var(--font-data)', fontSize: 13, fontWeight: 500, lineHeight: '18px',
+                      color: inactive ? 'var(--on-surface-variant)' : 'var(--success)',
+                    }}>
+                      $ {p.selling_price.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </td>
+
+                  {/* Stock */}
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    <span style={{
+                      fontFamily: 'var(--font-data)', fontSize: 14, fontWeight: 700, lineHeight: '18px',
+                      color: inactive ? 'var(--on-surface-variant)' : isOut ? 'var(--error)' : isLow ? 'var(--tertiary)' : 'var(--on-surface)',
+                    }}>
+                      {String(qty).padStart(2, '0')}
+                    </span>
+                  </td>
+
+                  {/* Status badge */}
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    {inactive ? (
+                      <span style={badgeStyle('var(--surface-container-highest)', 'var(--on-surface-variant)')}>INACTIVO</span>
+                    ) : isOut ? (
+                      <span style={badgeStyle('var(--danger-bg)', 'var(--error)')}>SIN STOCK</span>
+                    ) : isLow ? (
+                      <span style={badgeStyle('var(--warning-bg)', 'var(--tertiary)')}>STOCK BAJO</span>
                     ) : (
-                      <button
-                        onClick={async () => {
-                          try {
-                            await api.post(`/products/${p.id}/barcode`)
-                            load()
-                          } catch (e) {}
-                        }}
-                        style={{ padding: '4px 10px', borderRadius: 4, border: '1px solid var(--border)', background: 'var(--surface-hover)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
-                      >
-                        Generar
-                      </button>
+                      <span style={badgeStyle('var(--success-bg)', 'var(--success)')}>EN STOCK</span>
                     )}
                   </td>
-                  <td style={td}>
-                    <div style={{ fontWeight: 500 }}>
-                      {p.name}
-                      {inactive && <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--danger)' }}>INACTIVO</span>}
-                    </div>
-                    {p.description && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.description}</div>}
-                  </td>
-                  <td style={{ ...td, fontSize: 13, color: 'var(--text-muted)' }}>
-                    {(p as any).category_name || '-'}
-                  </td>
-                  <td style={{ ...td, textAlign: 'right', fontWeight: 600, color: inactive ? 'var(--text-muted)' : 'var(--success)' }}>
-                    ${p.selling_price.toLocaleString()}
-                  </td>
-                  <td style={{ ...td, textAlign: 'center' }}>
-                    <span style={{
-                      fontWeight: 700, fontSize: 16,
-                      color: inactive ? 'var(--text-muted)' : isOut ? 'var(--danger)' : isLow ? 'var(--warning)' : 'var(--text)',
-                    }}>
-                      {qty}
-                    </span>
-                  </td>
-                  <td style={{ ...td, textAlign: 'center' }}>{p.min_stock}</td>
-                  <td style={{ ...td, textAlign: 'center' }}>
-                    <span style={{
-                      padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600,
-                      background: inactive ? 'var(--text-muted)' : isOut ? 'var(--danger)' : isLow ? 'var(--warning)' : 'var(--success)',
-                      color: inactive ? '#000' : 'white',
-                    }}>
-                      {inactive ? 'Inactivo' : isOut ? 'Agotado' : isLow ? 'Bajo' : 'OK'}
-                    </span>
-                  </td>
-                  <td style={{ ...td, textAlign: 'center' }}>
+
+                  {/* Actions */}
+                  <td style={{ ...tdStyle, textAlign: 'right' }}>
                     {inactive ? (
-                      <button
-                        onClick={() => handleReactivate(p.id)}
-                        style={{ padding: '4px 12px', borderRadius: 4, border: 'none', color: 'white', fontSize: 12, fontWeight: 600, background: 'var(--success)', cursor: 'pointer' }}
-                      >
+                      <button onClick={() => handleReactivate(p.id)} style={{
+                        padding: '4px 12px', borderRadius: 'var(--radius)',
+                        background: 'var(--success)', color: 'var(--bg)', fontWeight: 600, fontSize: 12,
+                      }}>
                         Reactivar
                       </button>
                     ) : (
-                      <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-                        <button onClick={() => handleStockAdjust(p.id, 1, 'entry')} title="+1 stock" style={btnSm}>+1</button>
-                        <button onClick={() => handleStockAdjust(p.id, 1, 'exit')} title="-1 stock" style={{ ...btnSm, background: 'var(--danger)' }}>-1</button>
-                        <button onClick={() => handleEdit(p)} style={{ ...btnSm, background: 'var(--surface-hover)' }}>✎</button>
-                        <button onClick={() => handleDelete(p)} style={{ ...btnSm, background: 'transparent', color: 'var(--text-muted)' }}>×</button>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
+                        <button onClick={() => handleStockAdjust(p.id, 1, 'exit')} style={actionBtnStyle}>
+                          <MaterialIcon name="remove" size={16} />
+                        </button>
+                        <button onClick={() => handleStockAdjust(p.id, 1, 'entry')} style={actionBtnStyle}>
+                          <MaterialIcon name="add" size={16} />
+                        </button>
+                        <button onClick={() => handleEdit(p)} style={actionBtnStyle}>
+                          <MaterialIcon name="edit" size={16} />
+                        </button>
+                        <button onClick={() => handleDelete(p)} style={actionBtnStyle}>
+                          <MaterialIcon name="delete" size={16} />
+                        </button>
                       </div>
                     )}
                   </td>
@@ -337,17 +429,89 @@ export default function Products() {
               )
             })}
             {products.length === 0 && (
-              <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
-                {showInactive ? 'No hay productos inactivos' : 'No se encontraron productos'}
-              </td></tr>
+              <tr>
+                <td colSpan={6} style={{ padding: 48, textAlign: 'center', color: 'var(--on-surface-variant)', fontSize: 14 }}>
+                  {showInactive ? 'No hay productos inactivos' : 'No se encontraron productos'}
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
+
+        {/* ── PAGINATION ── */}
+        <div style={{
+          background: 'var(--surface-container-high)',
+          padding: '10px 16px',
+          borderTop: '1px solid rgba(66,71,84,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <span style={{ fontSize: 13, color: 'var(--on-surface-variant)' }}>
+            Mostrando {products.length} de {products.length} productos
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button style={paginationBtnStyle}>Anterior</button>
+            <button style={{ ...paginationBtnStyle, width: 32, height: 32, padding: 0, justifyContent: 'center', background: 'var(--primary-container)', color: 'var(--on-primary-container)', fontWeight: 700, border: 'none', fontFamily: 'var(--font-data)', fontSize: 12 }}>1</button>
+            <button style={paginationBtnStyle}>Siguiente</button>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
-const th: React.CSSProperties = { textAlign: 'left', padding: '10px 14px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' }
-const td: React.CSSProperties = { padding: '12px 14px', fontSize: 14 }
-const btnSm: React.CSSProperties = { padding: '4px 8px', borderRadius: 4, border: 'none', color: 'white', fontSize: 12, fontWeight: 600, background: 'var(--primary)', cursor: 'pointer' }
+/* ── Shared style objects ── */
+
+const thStyle: React.CSSProperties = {
+  padding: '8px 12px',
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: '0.05em',
+  textTransform: 'uppercase',
+  color: 'var(--outline)',
+  textAlign: 'left',
+  lineHeight: '16px',
+}
+
+const tdStyle: React.CSSProperties = {
+  padding: '8px 12px',
+  fontSize: 13,
+  lineHeight: '18px',
+}
+
+const badgeStyle = (bg: string, fg: string): React.CSSProperties => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '3px 8px',
+  borderRadius: 999,
+  fontSize: 10,
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  lineHeight: '14px',
+  background: bg,
+  color: fg,
+})
+
+const actionBtnStyle: React.CSSProperties = {
+  padding: 4,
+  borderRadius: 'var(--radius)',
+  background: 'transparent',
+  color: 'var(--on-surface-variant)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'background 0.15s ease',
+}
+
+const paginationBtnStyle: React.CSSProperties = {
+  padding: '6px 14px',
+  borderRadius: 6,
+  border: '1px solid rgba(66,71,84,0.5)',
+  color: 'var(--on-surface-variant)',
+  fontSize: 13,
+  background: 'transparent',
+  fontWeight: 500,
+  transition: 'background 0.15s ease',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+}
