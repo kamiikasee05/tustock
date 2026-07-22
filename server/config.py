@@ -5,7 +5,11 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+if getattr(sys, "frozen", False):
+    BUNDLE_DIR = Path(sys._MEIPASS)
+    BASE_DIR = BUNDLE_DIR
+else:
+    BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / "server" / ".env")
 
 DATABASE_URL = os.getenv("TUSTOCK_DB") or f"sqlite:///{BASE_DIR / 'tustock.db'}"

@@ -13,7 +13,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   if (!res.ok) {
     if (res.status === 401) throw new Error('Sin acceso. Verifique que el servidor este corriendo.')
     const err = await res.json().catch(() => ({ detail: 'Error de conexion' }))
-    throw new Error(err.detail || 'Error de conexion')
+    throw new Error(err.detail || err.message || err.error || 'Error de conexion')
   }
   return res.json()
 }

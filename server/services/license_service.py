@@ -152,6 +152,39 @@ def get_license_status(db: Session) -> dict:
 def activate_license(db: Session, key: str, customer_name: str = "") -> dict:
     lic = db.query(License).filter(License.key == key).first()
     if not lic:
+        cloud = validate_against_cloud(key)
+        if cloud.get("ok"):
+            existing = db.query(License).filter(License.active == True).first()
+            if existing:
+                existing.key = key
+                existing.plan = cloud.get("plan", "basico")
+                existing.active = True
+                existing.customer_name = customer_name or cloud.get("customer_name", "")
+                existing.last_validated_at = datetime.utcnow()
+                existing.max_products = 999999
+                existing.expires_at = None
+                existing.reports_enabled = True
+                existing.export_enabled = True
+                existing.monitor_enabled = cloud.get("plan") in ("suscripcion", "pro")
+                existing.eula_accepted = True
+                db.commit()
+                return {"ok": True, "plan": existing.plan}
+            else:
+                lic = License(
+                    key=key,
+                    plan=cloud.get("plan", "basico"),
+                    active=True,
+                    customer_name=customer_name or cloud.get("customer_name", ""),
+                    last_validated_at=datetime.utcnow(),
+                    max_products=999999,
+                    reports_enabled=True,
+                    export_enabled=True,
+                    monitor_enabled=cloud.get("plan") in ("suscripcion", "pro"),
+                    eula_accepted=True,
+                )
+                db.add(lic)
+                db.commit()
+                return {"ok": True, "plan": lic.plan}
         return {"ok": False, "error": "Clave de licencia inválida"}
     if not lic.active:
         return {"ok": False, "error": "La licencia está desactivada"}

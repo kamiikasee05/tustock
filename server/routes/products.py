@@ -114,17 +114,24 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 
 @router.post("")
 def create_product(data: ProductCreate, db: Session = Depends(get_db)):
-    """Crea un nuevo producto validando que el código no esté duplicado y el plan lo permita."""
     from services.license_service import can_add_product
+    from sqlalchemy.exc import IntegrityError
     ok, msg = can_add_product(db)
     if not ok:
         raise HTTPException(403, msg)
     existing = db.query(Product).filter(Product.code == data.code).first()
     if existing:
         raise HTTPException(400, "El codigo ya esta en uso")
-    p = Product(**data.model_dump())
+    payload = data.model_dump()
+    if payload.get("barcode") == "":
+        payload["barcode"] = None
+    p = Product(**payload)
     db.add(p)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(400, "El código o código de barras ya está en uso")
     db.refresh(p)
     return to_product_out(p)
 

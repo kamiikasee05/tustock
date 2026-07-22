@@ -145,7 +145,7 @@ app.include_router(vendors_router, dependencies=[Depends(verify_token)])
 app.include_router(pending_orders_router, dependencies=[Depends(verify_token)])
 app.include_router(customers_router, dependencies=[Depends(verify_token)])
 app.include_router(budgets_router, dependencies=[Depends(verify_token)])
-app.include_router(license_router, dependencies=[Depends(verify_token)])
+app.include_router(license_router)
 app.include_router(admin_router)  # admin usa su propio token
 
 if WEB_DIR.exists():

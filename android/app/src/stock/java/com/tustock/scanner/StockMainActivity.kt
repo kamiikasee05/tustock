@@ -140,7 +140,7 @@ class StockMainActivity : AppCompatActivity() {
 
             scope.launch {
                 val result = ApiClient.createProduct(
-                    CreateProductRequest(code = code, name = name, selling_price = price)
+                    CreateProductRequest(code = "TST-${System.currentTimeMillis()}", name = name, selling_price = price, barcode = code)
                 )
                 result.onSuccess { product ->
                     if (qty > 0) {

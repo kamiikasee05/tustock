@@ -41,7 +41,8 @@ data class CreateProductRequest(
     val cost_price: Double = 0.0,
     val selling_price: Double = 0.0,
     val min_stock: Int = 5,
-    val unit: String = "unidad"
+    val unit: String = "unidad",
+    val barcode: String? = null
 )
 
 data class ErrorResponse(val detail: String?)
@@ -67,7 +68,7 @@ object ApiClient {
     suspend fun scanProduct(code: String): Result<ProductResponse> = withContext(Dispatchers.IO) {
         try {
             val request = authorizedBuilder()
-                .url("$baseUrl/api/products/scan/$code")
+                .url("$baseUrl/api/products/scan/${java.net.URLEncoder.encode(code, "UTF-8")}")
                 .get()
                 .build()
 

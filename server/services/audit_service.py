@@ -150,8 +150,7 @@ def list_audits(db: Session):
     ]
 
 def scan_to_audit(db: Session, audit_id: int, product_code: str):
-    """Incrementa en 1 el conteo de un producto al escanear su código durante la auditoría."""
-    product = db.query(Product).filter(Product.code == product_code).first()
+    product = db.query(Product).filter((Product.code == product_code) | (Product.barcode == product_code)).first()
     if not product:
         return {"error": "Producto no encontrado", "code": product_code}
 
