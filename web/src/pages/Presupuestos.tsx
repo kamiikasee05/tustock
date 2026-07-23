@@ -26,7 +26,7 @@ export default function Presupuestos() {
   useEffect(() => { api.get<Product[]>('/products').then(setProducts).catch(() => {}) }, [])
 
   const addToCart = (code: string) => {
-    const prod = products.find(p => p.code === code)
+    const prod = products.find(p => p.code === code || p.barcode === code)
     if (!prod) { toast('Producto no encontrado', 'error'); return }
     const existing = cart.find(i => i.product_id === prod.id)
     if (existing) { setCart(cart.map(i => i.product_id === prod.id ? { ...i, quantity: i.quantity + 1 } : i)) }

@@ -49,9 +49,22 @@ respaldos/
 session-*.md
 *.log.md
 
+# PyInstaller output
+dist/
+installer/build/
+installer/dist/
+
+# Frontend build output
+web/dist/
+
+# Stitch AI (temp output)
+stitch_output/
+*.zip
+
 # Logs
 logs/
 *.pid
+server/*.log
 
 # Backup
 backups/

@@ -43,7 +43,7 @@ export default function Sales() {
   }, [])
 
   const addToCart = (code: string) => {
-    const prod = products.find(p => p.code === code)
+    const prod = products.find(p => p.code === code || p.barcode === code)
     if (!prod) {
       toast(`Código no encontrado: ${code}`, 'error')
       return
@@ -388,7 +388,7 @@ export default function Sales() {
               {sales.map(s => (
                 <tr key={s.id} style={{ borderBottom: '1px solid rgba(66,71,84,0.2)', transition: 'background var(--transition)' }}>
                   <td style={td}>#{s.id}</td>
-                  <td style={td}>{s.sale_date}{s.created_at ? ' ' + s.created_at.split('T')[1]?.slice(0, 5) : ''}</td>
+                  <td style={td}>{s.sale_date}{s.created_at ? ' ' + (s.created_at.split('T')[1] || s.created_at.split(' ')[1] || '').slice(0, 5) : ''}</td>
                   <td style={{ ...td, textAlign: 'right', fontFamily: 'var(--font-data)', fontWeight: 600, color: 'var(--success)' }}>
                     ${s.total.toLocaleString()}
                   </td>
