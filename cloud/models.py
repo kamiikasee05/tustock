@@ -59,6 +59,7 @@ class AuthorizedKey(Base):
     plan = Column(String(30), nullable=False)
     customer_name = Column(String(200), default="")
     is_active = Column(Boolean, default=True)
+    expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 

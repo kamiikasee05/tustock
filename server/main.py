@@ -84,7 +84,6 @@ from routes.pending_orders import router as pending_orders_router
 from routes.customers import router as customers_router
 from routes.budgets import router as budgets_router
 from routes.license import router as license_router
-from routes.admin import router as admin_router
 
 @app.get("/api/products/{product_id}/barcode.png")
 def public_barcode_image(product_id: int, db: Session = Depends(get_db)):
@@ -146,13 +145,12 @@ app.include_router(pending_orders_router, dependencies=[Depends(verify_token)])
 app.include_router(customers_router, dependencies=[Depends(verify_token)])
 app.include_router(budgets_router, dependencies=[Depends(verify_token)])
 app.include_router(license_router)
-app.include_router(admin_router)  # admin usa su propio token
 
 if WEB_DIR.exists():
     @app.middleware("http")
     async def trial_check(request: Request, call_next):
         path = request.url.path
-        exempt = path in ("/api/health", "/api/license/status", "/api/license/activate", "/api/license/can-add-product", "/api/license/accept-eula") or path.startswith("/api/admin") or path.startswith("/api/license/terms") or path.startswith("/api/license/privacy") or path.startswith("/api/license/refund") or path.startswith("/assets")
+        exempt = path in ("/api/health", "/api/license/status", "/api/license/activate", "/api/license/can-add-product", "/api/license/accept-eula") or path.startswith("/api/license/terms") or path.startswith("/api/license/privacy") or path.startswith("/api/license/refund") or path.startswith("/assets")
         if not exempt and path.startswith("/api"):
             from database import SessionLocal
             from services.license_service import get_license_status

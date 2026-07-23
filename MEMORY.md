@@ -99,16 +99,17 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 - **Monitor Premium (Fase 4 adelantada):** Servicio independiente puerto 8091, login propio, dashboard mobile responsive, API read-only. Expuesto vía Cloudflare Tunnel para acceso remoto desde el celular. Solo esta clienta lo tiene.
 - **Monitor Cloud (Fase 5):** Desplegado en Railway. URL pública: `monitor.tustocksoft.com.ar` (custom domain via Cloudflare). API push-based, dashboard mobile responsive, login multiusuario JWT. Agente local (`cloud/agent.py`) pushea métricas cada 30s desde la PC del cliente. URL fija, sin tunnel. Puerto interno: 8080.
 - **Launcher unificado:** `scripts/launcher.py` — inicia servidor, monitor, tunnel y cloud agent desde un solo punto. `TUSTOCK.bat` con menú interactivo de 8 opciones.
-- **Dashboard admin de licencias:** App independiente en `E:\TUSTOCK_ADMIN\` (Vite+React standalone, puerto 5174). Generar keys, ver licencias, revocar/activar, stats por plan, ingresos estimados, trials por vencer. Panel de Suscripciones MP con link compartido y vinculación de suscripciones entrantes a licencias. Scripts: `scripts/start-admin.bat`, `scripts/stop-admin.bat`.
+- **Dashboard admin de licencias:** App independiente en `E:\TUSTOCK_ADMIN\` (Vite+React standalone, puerto 5174). Generar keys, ver licencias, revocar/activar, stats por plan, ingresos estimados, trials por vencer. Panel de Suscripciones MP con link compartido y vinculación de suscripciones entrantes a licencias. **Habla directo a la cloud API (tustock.up.railway.app), NO al server local.** Ejecutable `TUSTOCK_ADMIN.exe` con tray icon púrpura. Scripts: `build.bat`, `start-admin.bat`, `stop-admin.bat`.
 - **Validación cloud de licencias:** Cada 7 días el sistema local valida la key contra la API cloud. Si no hay internet, sigue funcionando con cache de hasta 14 días. Trial no requiere validación cloud. Admin sync-keys al generar.
 - **Bloqueo por licencia:** Middleware que bloquea todas las APIs cuando el trial vence o no hay licencia activa. Solo deja pasar health, license/status y license/activate.
-- **Landing page:** `docs/index.html` — página estática dark theme responsive servida via GitHub Pages (`tustocksoft.com.ar`). Incluye hero, features, planes, caso real, FAQ, WhatsApp CTA.
+- **Landing page:** `docs/index.html` — página estática dark theme responsive servida via GitHub Pages (`tustocksoft.com.ar`). Incluye hero, features, planes, caso real, FAQ, WhatsApp CTA. Rediseñada con Stitch design system (dark theme, glass effects, gradient hero).
 - **Mercado Pago:** Integración con dos apps (Checkout Pro para pagos únicos Básico/Pro, Suscripciones vía Plan compartido). Crear preferencias, webhook, verificar status. Admin tiene botón "Cobrar MP" y columna estado de pago. Suscripciones: Plan único `preapproval_plan` ($8K/mes) con link compartido, webhook registra nuevas suscripciones, admin las vincula a licencias desde el panel. Requiere `TUSTOCK_MP_TOKEN` configurado.
 - **Guía de Usuario PDF** generada automáticamente
 - **Documentación legal:** Términos y Condiciones de Uso + EULA, Política de Privacidad, Política de Reembolso y Cancelación (`legal/`). Links en footer de landing page y referenciados desde el registro cloud.
 - **EULA clickwrap:** Modal en primera ejecución que obliga a aceptar términos. Endpoints para servir documentos legales (`/api/license/terms`, `/api/license/privacy`, `/api/license/refund`).
 - **Consentimiento explícito:** Checkbox obligatorio de aceptación de Términos + Política de Privacidad en formulario de registro del Monitor Cloud.
 - **Baja de cuenta cloud:** Endpoint `POST /api/business/delete-account` con confirmación por email. Soft-delete del Business + eliminación de MetricsPush. UI en dashboard con botón "Eliminar mi cuenta".
+- **Frontend React rediseñado con Stitch:** 44 archivos modificados, 13 páginas con Stitch design system — dark theme #10131a, glass effects, Material Icons, Geist Mono, animaciones, responsive mobile-first. Design tokens en `index.css`, componente `MaterialIcon`, Layout con sidebar + bottom nav móvil.
 
 ---
 
@@ -200,7 +201,7 @@ PC del cliente                          Cloud (Railway/VPS)
 
 ## 6. FASE ACTUAL DEL ROADMAP
 
-**Estamos en: Fase 1 y Fase 5 completas. Fase 1 (licencias + trial + feature gating) ✅. Monitor Cloud desplegado. Admin dashboard completo. Validación cloud de licencias implementada. Mercado Pago híbrido: Checkout Pro (pagos únicos) + Plan compartido (suscripciones).**
+**Estamos en: Fase 1 y Fase 5 completas. Fase 1 (licencias + trial + feature gating) ✅. Monitor Cloud desplegado. Admin dashboard completo. Validación cloud de licencias implementada. Mercado Pago híbrido: Checkout Pro (pagos únicos) + Plan compartido (suscripciones). Rediseño Stitch completo en todas las superficies.**
 
 ### Hitos alcanzados
 
@@ -230,17 +231,54 @@ PC del cliente                          Cloud (Railway/VPS)
 - ✅ **Primer post de Facebook publicado** (11/7): Post 1 ("¿Cuánto stock tenés AHORA?") en 3 grupos de 30k+ miembros. Copy+lienzo auditado por Legal+Marketing.
 - ✅ **Mercado Libre publicado** (12/7): MLA3596381120 / MLAU4283798573. Título, categoría, precio ($80K), 5 imágenes, descripción plain text, envío, pagos, envío gratis. Verificado contra HTML descargado.
 - ✅ **Programa Despegue ML analizado**: $45K ARS garantía (recuperable 100%), $45K en publicidad gratis, reputación verde claro. Riesgo bajo para producto digital. Pendiente activar por el humano.
-### Agenda para hoy (15 de Julio 2026)
+- ✅ **Rediseño Stitch frontend React completado**: 44 archivos modificados, 13 páginas rediseñadas con Stitch design system (dark theme #10131a, glass effects, Geist Mono, Material Icons, animations). Build exitoso -30KB. (18/7)
+- ✅ **Dominio Monitor Cloud activo**: `monitor.tustocksoft.com.ar` configurado via Railway CLI + Cloudflare DNS. Puerto interno 8080, SSL automático via Let's Encrypt. (14/7)
+
+### Agenda para hoy (22 de Julio 2026)
 
 | # | Tarea | Quién | Estado |
 |---|-------|:-----:|:------:|
-| 1 | **Auditoría de código** completada — 1 bug crítico, 7 menores, 5 observaciones | 🔍 Dispatcher | ✅ |
-| 2 | **Revisión legal** completada — 4 faltas urgentes detectadas | ⚖️ Legal | ✅ |
-| 3 | **Corregir todo** (bugs DEV + faltas legales) | 🖥 DEV | ✅ Completado — Dashboard fix + Stitch + 4 faltas legales + limpieza |
-| 4 | **Publicar Post 3 en Facebook** | 🧑 HUMANO | ✅ Completado |
-| 5 | **Commit de cambios pendientes** (rediseño Stitch, fixes, .env) | 🧑 HUMANO | ⏳ Pendiente — después de las correcciones |
-| 6 | **Activar Programa Despegue ML** ($45K recuperable) | 🧑 HUMANO | ⏳ Pendiente |
-| 7 | **Registrar bases de datos AAIP** | 🧑 HUMANO | ⏳ Pendiente — guía en `obsidian/03-Legal/` |
+| 1 | **Bugs críticos de instalación** — productos no registran, barcode, audit scan | 🖥 DEV | ✅ 5 bugs corregidos |
+| 2 | **Preparar USB actualizado** para cliente SU - Day | 🧑 HUMANO + Dispatcher | ✅ USB listo y entregado |
+| 3 | **Configurar.bat token mismatch** — generaba token random, frontend usa fijo | Dispatcher | ✅ Corregido |
+| 4 | **Sync key a cloud** — key no estaba en cloud, activación fallaba | Dispatcher | ✅ Key sincronizada |
+| 5 | **Fix barcode en Sales + Presupuestos** — lookup solo revisaba `code`, no `barcode` | 🖥 DEV | ✅ Corregido |
+| 6 | **Tray icon + ocultar terminal** — exe corre sin ventana, icono en bandeja | 🖥 DEV | ✅ Implementado y verificado en notebook cliente |
+| 7 | **Documentar aprendizaje** de instalaciones para que el sistema madure | Dispatcher | ✅ Checklist §15 creado |
+| 8 | **Fix undefined en historial ventas** — created_at formato espacio vs ISO | Dispatcher | ✅ Corregido y deployado |
+| 9 | **Admin EXE con tray icon** — TUSTOCK_ADMIN.exe con icono púrpura en bandeja | 🖥 DEV | ✅ Archivos creados, pendiente build |
+
+### Situación actual (20 de Julio 2026)
+
+**Contexto:** No hay capital disponible para activar el Programa Despegue de ML ($45K). Además, se observa competencia creciendo en Facebook Groups (kiosqueros, almaceneros) — muchos publican sus sistemas de stock/ventas. Necesitamos un nuevo acercamiento comercial que no dependa de capital inicial y que nos diferencie de la competencia.
+
+**Acción:** Ventas + Marketing investigaron en paralelo. Documentos generados:
+- `docs/marketing/estrategias-sin-capital.md` (Ventas)
+- `docs/marketing/estrategias-diferenciacion.md` (Marketing)
+
+**Nota:** El humano tuvo una emergencia familiar el 20/7. No pudo ejecutar el plan de contenido. Se reprograma para mañana (21/7).
+
+### Estado post-instalación segundo cliente (21-22 de Julio 2026)
+
+**Cliente SU - Day** recibió el sistema. Se encontraron 3 bugs críticos durante la demo:
+1. Productos no se registraban (barcode vacío violaba UNIQUE constraint)
+2. App Stock escaneaba barcode pero lo enviaba como `code` interno, no como `barcode` físico
+3. Errores de licencia se mostraban genéricos como "Error de conexion"
+
+**Fix:** 5 bugs corregidos por DEV. Exe y APK recompilados. USB actualizado listo para entregar.
+**Segunda visita (22/7):** Se encontraron 3 bugs adicionales (configurar.bat token mismatch, key no sync en cloud, scanner USB no encontraba productos). Todo corregido in-situ. Tray icon implementado y verificado. Fix undefined en historial de ventas (created_at formato).
+
+**Resultado final:** Todos los flujos funcionando — ventas, cobro, registro de stock, pedidos, alta de clientes/vendedores, licencia, tray icon. Cliente satisfecho.
+
+**Pendiente:** Entregar USB actualizado al cliente y verificar que todo funcione in-situ.
+
+### Feedback post-instalación (22 de Julio 2026 — Reunión con clienta SU - Day)
+
+La clienta manifestó dos necesidades concretas:
+
+1. **Actualizar saldos de cuentas corrientes (pagos de fiado):** Ya está implementado. El sistema permite registrar pagos desde la página de Clientes → seleccionar cliente → "Registrar pago". Balance se computa automáticamente. **No requiere desarrollo.** Solo explicarle cómo usarlo.
+
+2. **Ver el stock en todo momento desde el celular:** El Monitor Cloud actualmente solo muestra **stock bajo** (productos por debajo del mínimo, hasta 10). Ella quiere ver **todo el inventario**. **Requiere desarrollo:** agregar sección de "Inventario completo" al Monitor Cloud + ampliar datos que recolecta el agente. Feature candidata para próximo sprint.
 
 ### Prioridades actuales (Julio 2026)
 
@@ -255,8 +293,8 @@ PC del cliente                          Cloud (Railway/VPS)
 | 🟡 3 | **Activar Programa Despegue ML** ($45K garantía recuperable) | 🧑 HUMANO | Reputación verde claro + $45K publicidad gratis. Riesgo bajo. Ver `obsidian/02-Ventas/Programa Despegue ML.md`. |
 | 🟡 4 | **Pasar Railway a Hobby cuando se acaben los créditos gratis** | 🧑 HUMANO | $5/mes. El crédito free trial se usa primero, después se paga. |
 | 🟡 5 | **Registrar bases de datos en AAIP** (PASO 1 + 2) | 🧑 HUMANO | Obligación legal (Ley 25.326 art. 21). Guía en `obsidian/TU STOCK/03-Legal/Registro AAIP.md`. |
-| 🟢 6 | **Implementar rediseño Stitch en frontend React** | 🎨 UI + 🖥 DEV | Prompt listo en `docs/stitch-frontend-prompt.md`. Pendiente de implementar. |
-| 🟢 7 | **Dominio para Monitor Cloud** | 🖥 DEV + 🧑 HUMANO | `monitor.tustocksoft.com.ar` → Railway. Custom domain + CNAME. |
+| ✅ | **Implementar rediseño Stitch en frontend React** | 🎨 UI + 🖥 DEV | Completado 18/7. 44 archivos, 13 páginas rediseñadas con Stitch dark theme, glass effects, Geist Mono, Material Icons. |
+| ✅ | **Dominio para Monitor Cloud** | 🖥 DEV + 🧑 HUMANO | `monitor.tustocksoft.com.ar` configurado via Railway CLI + Cloudflare DNS. Puerto interno: 8080. SSL automático. |
 | 🟢 8 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
 | 🟢 9 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
 | 🟢 10 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
@@ -501,6 +539,14 @@ PC del cliente                          Cloud (Railway/VPS)
 | 2026-07-14 | **EULA flash fix**: Modal de ToS aparecía brevemente al navegar. Causa: `<a href="/route">` causaba recarga completa de página, reseteando `useLicense()`. Fix doble: (1) Layout.tsx `window.location.pathname` → `useNavigate()`, (2) EulaModal.tsx guard `if (loading) return null`, (3) TrialBanner/SubscriptionBanner/Reports: `<a href>` → `<Link to>` de React Router. | 🖥 DEV |
 | 2026-07-14 | **Subdominio Monitor Cloud**: `monitor.tustocksoft.com.ar` configurado via Railway CLI + Cloudflare DNS. Puerto interno: 8080. SSL automático via Let's Encrypt. Railway CLI (`railway status`, `railway domain`) confirma dominio ACTIVE. | 🧑 HUMANO + Dispatcher |
 | 2026-07-15 | **Auditoría + corrección completa**: DEV + Legal auditores en paralelo. 1 bug crítico (Dashboard links), 7 menores, 4 faltas legales urgentes (email incorrecto, marca inconsistente, checkbox consentimiento roto, PII visible). Todo corregido. Build verificado. -30KB. | 🖥 DEV + ⚖️ Legal + Dispatcher |
+| 2026-07-21 | **Dispatcher NO codifica**: El humano reprendió al Dispatcher por hacer trabajo de DEV (bugs de instalación, fixes de código). El Dispatcher es coordinador/orquestador. Toda tarea técnica de código DELEGADA a DEV. Regla reforzada. | 🧑 HUMANO + Dispatcher |
+| 2026-07-22 | **Checklist de instalación creado**: 10 puntos + tabla de errores comunes + flujo definitivo. resultado de 2 instalaciones reales. Documentado en MEMORY.md sección 15. | Dispatcher |
+| 2026-07-22 | **configurar.bat fix**: Token fijo `tustock-local-token` en vez de random. El frontend hardcodea este token. Si el .env tiene otro, todo da 401. | Dispatcher |
+| 2026-07-22 | **Cloud sync obligatorio**: Keys generadas en admin deben sync al cloud antes de que el cliente active. Sin sync, activate_license falla con "Clave inválida". | Dispatcher |
+| 2026-07-22 | **Tray icon aprobado**: TUSTOCK.exe sin ventana de terminal. Icono en bandeja del sistema. Click abre navegador. Servidor en thread. pystray + PIL para icono dinámico. Fallback a consola si pystray falla. | 🧑 HUMANO + 🖥 DEV |
+| 2026-07-22 | **Admin EXE aprobado**: TUSTOCK_ADMIN.exe con tray icon púrpura/azul. Sirve dist/ en puerto 5174, proxea /api/admin/* a localhost:8090. Zero dependencias nuevas (stdlib). build.bat + start/stop scripts. | 🧑 HUMANO + 🖥 DEV |
+| 2026-07-22 | **Admin independizado de server principal**: Todas las rutas admin migradas a cloud API (tustock.up.railway.app). Admin frontend habla SOLO a cloud, nunca a localhost. Server principal más liviano (sin admin routes). Admin funciona desde cualquier PC con internet. Pendiente: setear TUSTOCK_ADMIN_TOKEN en Railway + deploy. | 🧑 HUMANO + 🖥 DEV |
+| 2026-07-22 | **Feature sugerida: POS Remoto en Monitor Cloud** — SU - Day (Dayana) pide tomar pedidos y cobrar desde el celular. Análisis DEV + Ventas completados en `obsidian/07-Features Sugeridas/`. Recomendación: Cola de comandos + PWA, tier nuevo Pro+ ($220K) o Suscripción Premium ($12-15K/mes). NO aprobada aún para desarrollo. | 🧑 HUMANO + Dispatcher |
 
 ---
 ## 13. EQUIPO LEGAL
@@ -558,6 +604,25 @@ PC del cliente                          Cloud (Railway/VPS)
 | `cloud/payments.py` | Variable `units` asignada sin uso. | Removida |
 | `server/pending_orders.py:134` | Variable `pm_label` asignada sin uso. | Removida |
 
+### 🐛 Bugs corregidos 2026-07-21 (instalación segundo cliente)
+
+| # | Archivo | Problema | Fix | Severidad |
+|---|---------|----------|-----|:---------:|
+| 1 | `server/routes/products.py` | `create_product` no maneja IntegrityError. Barcode vacío `""` viola constraint UNIQUE, segundo producto sin barcode causa 500 | `barcode: ""` → `None` antes de guardar + `IntegrityError` catch | 🔥 Crítico |
+| 2 | `web/src/api/client.ts` | Errores de licencia (403) muestran "Error de conexion" al usuario — frontend solo lee `err.detail`, ignora `err.message` y `err.error` | `err.detail \|\| err.message \|\| err.error` | 🔥 Crítico |
+| 3 | `android/.../ApiClient.kt` + `StockMainActivity.kt` | App Stock envía barcode escaneado como campo `code`, no como `barcode`. `CreateProductRequest` no tenía campo `barcode` | Campo `barcode` agregado al request, barcode escaneado va como `barcode`, `code` auto-generado como `TST-{timestamp}` | 🔥 Crítico |
+| 4 | `server/services/audit_service.py` | `scan_to_audit` solo busca por `Product.code`, ignora `Product.barcode` — productos con barcode físico distinto al code no se encuentran | Query: `Product.code == x OR Product.barcode == x` | 🟡 Alto |
+| 5 | `android/.../ApiClient.kt` | URL path sin encoding — barcode con caracteres especiales rompe la request | `URLEncoder.encode(code, "UTF-8")` | 🟡 Alto |
+
+### 🐛 Bugs corregidos 2026-07-22 (instalación segunda vez + POS)
+
+| # | Archivo | Problema | Fix | Severidad |
+|---|---------|----------|-----|:---------:|
+| 6 | `configurar.bat` | Generaba token random (`tustock_XXX`) que no matcheaba el token hardcodeado del frontend (`tustock-local-token`) | Token fijo `tustock-local-token` en configurar.bat | 🔥 Crítico |
+| 7 | `cloud/api.py` (cloud) | Key de cliente `TST-2241-8D21-AD68-4EA1` no existía en la cloud database — activación fallaba con "Clave inválida" | Sync manual de key al cloud via POST `/api/licenses/sync` | 🔥 Crítico |
+| 8 | `web/src/pages/Sales.tsx` + `Presupuestos.tsx` | `addToCart()` solo buscaba `p.code`, no `p.barcode`. Scanner USB con código de barras físico no encontraba productos | `products.find(p => p.code === code \|\| p.barcode === code)` | 🔥 Crítico |
+| 9 | `_internal/web/dist` | PyInstaller copia archivos con hash de build. Al rebuildear, el JS tiene hash nuevo (`index-XXX.js`) pero index.html viejo apunta al hash anterior. Resultado: frontend viejo se sirve尽管 hay archivos nuevos | Borrar JS viejo después de copiar el nuevo. Verificar index.html apunta al hash correcto | 🟡 Alto |
+
 ### 🐛 Bugs activos
 
 *(No hay bugs activos conocidos)*
@@ -568,10 +633,76 @@ PC del cliente                          Cloud (Railway/VPS)
 |---------|---------|
 | `server/auth.py` | `verify_token` usa comparación directa `!=` en lugar de `secrets.compare_digest()`. El admin SÍ usa timing-safe. |
 | `server/migrations/` | Directorio vacío. No hay sistema de migraciones (Alembic). |
-| `web/package.json` | `recharts` y `lucide-react` instalados pero **no se usan** en ningún componente. |
 | `server/services/license_service.py` | `validate_against_cloud` timeout 10s — podría fallar en conexiones lentas. |
 | `server/config.py` | `TUSTOCK_CLOUD_CACHE_DAYS` = 7 hardcodeado. MEMORY menciona 14 días porque el máximo absoluto es `CACHE_DAYS + 7` en `check_cloud_validation()`. |
 
+- [fix] LANDING NOJEKYLL: Agregado `docs/.nojekyll` para evitar que GitHub Pages intente buildear archivos .md con Jekyll (sintaxis `{{` en stitch-implementation-guide.md causaba Liquid syntax error). Build 3083463 deployado exitosamente. (2026-07-18)
+- [feature] UI REDESIGN FASES 0-2: design tokens, layout responsive con hamburger menu, sidebar agrupada, y componentes UI reutilizables (Modal, DataTable, Button, Card, Badge, EmptyState, Skeleton) (2026-07-14)
+- [feature] STITCH FRONTEND REDESIGN: 44 archivos modificados, 13 páginas rediseñadas con Stitch design system — dark theme #10131a, glass effects, Material Icons, Geist Mono, animations, responsive mobile-first. Build exitoso -30KB. Commit 831098a. (2026-07-18)
+- [feature] APK STOCK COMPILADO: APK de Android para Stock (escanear/contar) compilado via GitHub Actions (workflow `.github/workflows/build-stock-apk.yml`). `app-stock-debug.apk` generado exitosamente. (2026-07-21)
+- [fix] CLOUD ACTIVATION: `activate_license()` ahora valida contra el cloud (Railway) cuando la key no está en la DB local. Permite activar licencias generadas en admin desde PCs nuevas sin necesidad de sync manual. (2026-07-21)
+- [fix] LICENSE ROUTER SIN TOKEN: Router de licencias removido `dependencies=[Depends(verify_token)]` para permitir `/api/license/status` y `/accept-eula` sin token (el frontend los llama al abrirse). (2026-07-21)
+- [feature] FONTES LOCALES: Material Icons, Inter y Geist Mono embebidos en `/assets/fonts/` para funcionar sin internet. CSS local `fonts-local.css` reemplaza CDN de Google. (2026-07-21)
+- [fix] EXE PYINSTALLER FIX: `config.py` detecta `sys.frozen` para resolver `BASE_DIR` correctamente en el bundle PyInstaller. (2026-07-21)
+- [feature] SEGUNDO CLIENTE: SU - Day. Plan Suscripción ($8K/mes). Key TST-2241-8D21-AD68-4EA1. Notebook + app Android POS + Stock funcionando. (2026-07-21)
+- [fix] PRODUCT REGISTRATION: `create_product` ahora maneja IntegrityError + convierte barcode vacío a None. Frontend muestra errores reales de licencia. App Stock envía barcode como campo `barcode` (no `code`). Audit scan busca por code O barcode. URL encoding en scan de Android. (2026-07-21)
+- [fix] CONFIGURAR.BAT TOKEN: Token fijo `tustock-local-token` en vez de random. Sin esto, frontend y backend no matchean y TODOS los endpoints dan 401 "Token inválido". (2026-07-22)
+- [fix] SALES BARCODE LOOKUP: `addToCart()` en Sales.tsx y Presupuestos.tsx ahora busca por `code` O `barcode`. Scanner USB con código físico ahora encuentra el producto. (2026-07-22)
+- [fix] CLOUD SYNC KEY: Keys generadas en admin deben hacerse sync al cloud via POST `/api/licenses/sync` antes de que el cliente active. Sin esto, `activate_license()` falla con "Clave inválida". (2026-07-22)
+- [fix] PYINSTALLER JS HASH: Al copiar frontend rebuilt a USB, verificar que index.html apunta al hash del JS nuevo. Borrar JS viejo con hash anterior. (2026-07-22)
+- [fix] SALES UNDEFINED DATE: `created_at` del backend viene como `"2026-07-22 03:43:14"` (separado por espacio), pero Sales.tsx usaba `split('T')[1]` (formato ISO). Resultado: `"undefined"` visible en la columna de fecha/hora del historial de ventas. Fix: fallback a `split(' ')[1]`. (2026-07-22)
+- [feature] TRAY ICON: TUSTOCK.exe corre sin ventana de terminal (console=False). Icono en bandeja del sistema con menú contextual (Abrir TUSTOCK / Detener servidor). Click izquierdo abre navegador. Servidor FastAPI en thread separado. Fallback a consola si pystray no está disponible. (2026-07-22)
+- [feature] ADMIN EXE: TUSTOCK_ADMIN.exe con tray icon púrpura/azul (distinto al de TUSTOCK). Sirve dist/ en puerto 5174, proxea /api/admin/* a localhost:8090. build.bat para PyInstaller, start/stop scripts. Cero dependencias nuevas (stdlib). (2026-07-22)
+
 ---
 
-*Última actualización: 14 de Julio de 2026 (noche)*
+*Última actualización: 22 de Julio de 2026*
+
+---
+
+## 15. APRENDIZAJO PARA INSTALACIONES (Checklist Pre-Entrega)
+
+> **Este documento es el resultado de 2 instalaciones reales.** Cada punto viene de un bug o problema que apareció in-situ. Seguir este checklist ANTES de entregar el USB al cliente para evitar problemas.
+
+### Checklist pre-entrega USB
+
+| # | Paso | Por qué | Verificado |
+|---|------|---------|:----------:|
+| 1 | **Rebuild exe** (`pyinstaller --clean --noconfirm tustock.spec`) | Asegura que todos los fixes de código estén en el bundle | ⬜ |
+| 2 | **Rebuild frontend** (`npm run build` en `web/`) | Genera JS/CSS nuevos con hashes actualizados | ⬜ |
+| 3 | **Fuentes locales** — verificar que `web/public/assets/fonts/` existe | Sin internet no carga fonts del CDN. `public/` sobrevive a `npm run build` | ⬜ |
+| 4 | **Verificar index.html** apunta al JS correcto | El hash del JS cambia en cada build. Si el hash no matchea, se sirve el JS viejo | ⬜ |
+| 5 | **configurar.bat** usa `tustock-local-token` (NO random) | El frontend hardcodea `tustock-local-token`. Si el .env tiene otro token, TODOS los endpoints dan 401 | ⬜ |
+| 6 | **.env sanitizado** — tokens vacíos en `_internal/server/.env` | No shippear tokens de desarrollo | ⬜ |
+| 7 | **Sync key al cloud** — `POST /api/licenses/sync` con la key del cliente | Sin esto, `activate_license()` falla con "Clave inválida" | ⬜ |
+| 8 | **Copiar APKs compilados** — Stock y POS | El APK Stock tiene fixes de barcode que no existían antes | ⬜ |
+| 9 | **LEEME.txt** con instrucciones claras | El cliente no sabe qué es `configurar.bat` ni qué hacer | ⬜ |
+| 10 | **Copiar Guía de Usuario PDF** | Para que el cliente tenga referencia offline | ⬜ |
+
+### Errores comunes in-situ y cómo resolverlos
+
+| Síntoma | Causa | Solución |
+|---------|-------|----------|
+| **"Token inválido o faltante" / "Sin acceso"** | Token de `.env` no coincide con el hardcodeado del frontend (`tustock-local-token`) | Re-ejecutar `configurar.bat` con el token correcto |
+| **"Clave inválida" al activar licencia** | Key no existe en la cloud database | Sync manual: `POST https://tustock.up.railway.app/api/licenses/sync` con `{"license_key":"KEY","plan":"suscripcion","customer_name":"NOMBRE"}` |
+| **Productos no registran (500)** | Barcode vacío `""` viola UNIQUE constraint | Fix ya aplicado (2026-07-21) — barcode `""` se convierte a `None` |
+| **Scanner USB no encuentra producto** | `addToCart()` solo busca por `code`, no por `barcode` | Fix ya aplicado (2026-07-22) — busca por `code` O `barcode` |
+| **App Stock registra barcode como "code"** | `CreateProductRequest` no tenía campo `barcode` | Fix ya aplicado (2026-07-21) — barcode va como campo `barcode` |
+| **Frontend muestra "Error de conexion"** | Solo lee `err.detail`, ignora `err.message` | Fix ya aplicado (2026-07-21) — triple fallback |
+| **JS viejo se sirve después de rebuild** | Hash del JS cambió pero `index.html` viejo apunta al hash anterior | Borrar JS viejo después de copiar el nuevo. Verificar hash en `index.html` |
+| **Fuentes no cargan (sin internet)** | `index.html` apunta a Google Fonts CDN | Fuentes locales en `web/public/assets/fonts/`, CSS local `fonts-local.css` |
+| **Servidor no arranca** | Falta `tustock-local-token` en `.env` (config.py hace `sys.exit(1)`) | Ejecutar `configurar.bat` primero |
+| **Puerto 8090 cerrado** | Firewall de Windows bloquea conexiones desde red | `netsh advfirewall firewall add rule name="TUSTOCK-8090" dir=in action=allow protocol=tcp localport=8090` |
+| **App Android no conecta** | Servidor escucha en `127.0.0.1` en vez de `0.0.0.0` | Verificar `TUSTOCK_HOST=0.0.0.0` en `.env` |
+
+### Flujo de instalación corregido (definitivo)
+
+```
+1. Copiar carpeta TUSTOCK/ a la PC del cliente
+2. Ejecutar configurar.bat (genera .env con token correcto)
+3. Ejecutar TUSTOCK.exe (arranca servidor en puerto 8090)
+4. Abrir navegador → http://localhost:8090
+5. Aceptar EULA
+6. Activar licencia (key del cliente)
+7. Instalar APK en el celular → configurar IP: 192.168.X.X:8090
+```

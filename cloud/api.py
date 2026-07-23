@@ -7,6 +7,7 @@ y los sirve via dashboard web con login JWT.
 import hashlib
 import secrets
 import json
+import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -20,7 +21,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from audit import log_event
-from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR, MP_ACCESS_TOKEN, MP_SUBS_TOKEN
+from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR, MP_ACCESS_TOKEN, MP_SUBS_TOKEN, ADMIN_TOKEN
 from payments import SUBSCRIPTION_PLAN_ID, SUBSCRIPTION_PLAN_PRICE, SUBSCRIPTION_PLAN_URL, update_plan_notification_url, get_subscription_plan
 from models import init_db, get_db, Business, MetricsPush, Payment, AuthorizedKey, KeyActivation, Subscription
 
@@ -108,9 +109,171 @@ def _get_current_business(request: Request, db: Session = Depends(get_db)) -> Bu
     return _get_business_from_token(auth[7:], db)
 
 
+def verify_admin(request: Request):
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer ") or not secrets.compare_digest(auth[7:], ADMIN_TOKEN):
+        raise HTTPException(401, "Admin token invalido")
+
+
+def _generate_key() -> str:
+    raw = uuid.uuid4().hex[:16].upper()
+    return f"TST-{raw[:4]}-{raw[4:8]}-{raw[8:12]}-{raw[12:16]}"
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "tustock-cloud-monitor", "version": "1.0.0"}
+
+
+@app.get("/api/admin/licenses")
+def admin_list_licenses(request: Request, db: Session = Depends(get_db)):
+    verify_admin(request)
+    keys = db.query(AuthorizedKey).order_by(AuthorizedKey.created_at.desc()).all()
+    return {
+        "licenses": [
+            {
+                "id": ak.id,
+                "key": ak.license_key,
+                "plan": ak.plan,
+                "customer_name": ak.customer_name or "",
+                "active": ak.is_active,
+                "expires_at": ak.expires_at.isoformat() if ak.expires_at else None,
+                "created_at": ak.created_at.isoformat() if ak.created_at else None,
+                "last_validated_at": None,
+            }
+            for ak in keys
+        ]
+    }
+
+
+@app.post("/api/admin/generate")
+def admin_generate_license(data: dict, request: Request, db: Session = Depends(get_db)):
+    verify_admin(request)
+
+    plan = data.get("plan", "basico")
+    customer_name = data.get("customer_name", "").strip()
+    expires_str = data.get("expires_at")
+
+    if plan not in ("basico", "suscripcion", "pro", "trial"):
+        raise HTTPException(400, "Plan invalido. Opciones: basico, suscripcion, pro, trial")
+    if customer_name and len(customer_name) > 200:
+        raise HTTPException(400, "Nombre de cliente muy largo (max 200 caracteres)")
+
+    from datetime import date as _date, timedelta as _td
+    expires_at = None
+    if expires_str:
+        try:
+            expires_at = datetime.fromisoformat(expires_str)
+        except ValueError:
+            try:
+                expires_at = datetime.combine(_date.fromisoformat(expires_str), datetime.min.time())
+            except ValueError:
+                raise HTTPException(400, "Formato de fecha invalido (YYYY-MM-DD)")
+    if plan == "trial" and not expires_at:
+        expires_at = datetime.combine(_date.today() + _td(days=30), datetime.min.time())
+
+    key = _generate_key()
+    ak = AuthorizedKey(
+        license_key=key,
+        plan=plan,
+        customer_name=customer_name,
+        is_active=True,
+        expires_at=expires_at,
+    )
+    db.add(ak)
+    db.commit()
+    db.refresh(ak)
+
+    return {
+        "ok": True,
+        "key": ak.license_key,
+        "plan": ak.plan,
+        "customer_name": ak.customer_name,
+        "expires_at": ak.expires_at.isoformat() if ak.expires_at else None,
+    }
+
+
+@app.post("/api/admin/revoke/{license_key}")
+def admin_revoke_license(license_key: str, request: Request, db: Session = Depends(get_db)):
+    verify_admin(request)
+    ak = db.query(AuthorizedKey).filter(AuthorizedKey.license_key == license_key).first()
+    if not ak:
+        raise HTTPException(404, "Licencia no encontrada")
+    ak.is_active = False
+    db.commit()
+    return {"ok": True, "message": f"Licencia {license_key} revocada"}
+
+
+@app.post("/api/admin/activate/{license_key}")
+def admin_activate_license(license_key: str, request: Request, db: Session = Depends(get_db)):
+    verify_admin(request)
+    ak = db.query(AuthorizedKey).filter(AuthorizedKey.license_key == license_key).first()
+    if not ak:
+        raise HTTPException(404, "Licencia no encontrada")
+    ak.is_active = True
+    db.commit()
+    return {"ok": True, "message": f"Licencia {license_key} activada"}
+
+
+@app.delete("/api/admin/delete/{license_key}")
+def admin_delete_license(license_key: str, request: Request, db: Session = Depends(get_db)):
+    verify_admin(request)
+    ak = db.query(AuthorizedKey).filter(AuthorizedKey.license_key == license_key).first()
+    if not ak:
+        raise HTTPException(404, "Licencia no encontrada")
+    db.delete(ak)
+    db.commit()
+    return {"ok": True, "message": f"Licencia {license_key} eliminada"}
+
+
+@app.get("/api/admin/stats")
+def admin_stats(request: Request, db: Session = Depends(get_db)):
+    verify_admin(request)
+    from datetime import date as _date, timedelta as _td
+
+    all_keys = db.query(AuthorizedKey).all()
+    active_keys = [k for k in all_keys if k.is_active]
+    by_plan = {}
+    for k in all_keys:
+        by_plan[k.plan] = by_plan.get(k.plan, 0) + 1
+
+    PRICE = {"basico": 80000, "suscripcion": 8000, "pro": 160000, "trial": 0, "premium": 0}
+    estimated_revenue = sum(PRICE.get(k.plan, 0) for k in active_keys)
+    mrr = sum(PRICE.get(k.plan, 0) for k in active_keys if k.plan == "suscripcion")
+    one_time = sum(PRICE.get(k.plan, 0) for k in active_keys if k.plan != "suscripcion")
+
+    active_by_plan = {}
+    for k in active_keys:
+        active_by_plan[k.plan] = active_by_plan.get(k.plan, 0) + 1
+
+    customers_with_names = sum(1 for k in active_keys if k.customer_name)
+
+    today = _date.today()
+    soon = today + _td(days=7)
+    trials_expiring = [
+        {
+            "key": k.license_key,
+            "customer_name": k.customer_name or "Sin nombre",
+            "expires_at": k.expires_at.isoformat() if k.expires_at else None,
+            "days_left": (k.expires_at.date() - today).days if k.expires_at else 0,
+        }
+        for k in active_keys
+        if k.plan == "trial" and k.expires_at and today <= k.expires_at.date() <= soon
+    ]
+
+    return {
+        "total": len(all_keys),
+        "active": len(active_keys),
+        "by_plan": by_plan,
+        "revenue": {
+            "estimated_total": estimated_revenue,
+            "mrr": mrr,
+            "one_time": one_time,
+            "customers": customers_with_names,
+        },
+        "active_by_plan": active_by_plan,
+        "trials_expiring": trials_expiring,
+    }
 
 
 @app.get("/api/licenses/terms")
