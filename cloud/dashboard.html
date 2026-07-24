@@ -87,6 +87,15 @@ a{color:var(--primary-container);text-decoration:none}
 .debtor-name{font-size:14px;font-weight:500}
 .debtor-bal{font-size:15px;font-weight:700;color:#fbbf24}
 
+.order-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--outline)}
+.order-item:last-child{border-bottom:none}
+.order-info{display:flex;align-items:center;gap:10px}
+.order-status-badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.order-meta{font-size:12px;color:var(--on-surface-variant)}
+.order-right{text-align:right}
+.order-amount{font-size:15px;font-weight:700}
+.order-time{font-size:11px;color:var(--on-surface-variant);margin-top:2px}
+
 .empty{text-align:center;padding:24px;color:var(--on-surface-variant);font-size:13px}
 .refresh-indicator{display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;margin-right:6px;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
@@ -331,6 +340,30 @@ function renderDashboard(app){
             <div class="debtor-avatar">${h((d.name||'?')[0])}</div>
             <div class="debtor-info"><div class="debtor-name">${h(anonymized)}</div></div>
             <div class="debtor-bal">${fmt$(d.balance)}</div>
+          </div>`;
+        }).join('')}
+      </div>`:''}
+
+      ${(d.data.pending_orders||[]).length>0 ? `
+      <div class="section">
+        <div class="section-title">
+          <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 8h6M8 5v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Pedidos Pendientes
+        </div>
+        ${d.data.pending_orders.map(o=>{
+          const st = o.status||'pending';
+          const stLabel = {pending:'Pendiente',approved:'Aprobado',rejected:'Rechazado'}[st]||st;
+          const stColor = {pending:'#fbbf24',approved:'#4ade80',rejected:'#f87171'}[st]||'#8b95a5';
+          return `
+          <div class="order-item">
+            <div class="order-info">
+              <div class="order-status-badge" style="background:${stColor}22;color:${stColor}">${h(stLabel)}</div>
+              <div class="order-meta">Pedido #${o.id}</div>
+            </div>
+            <div class="order-right">
+              <div class="order-amount">${fmt$(o.total)}</div>
+              <div class="order-time">${fmtTime(o.created_at)}</div>
+            </div>
           </div>`;
         }).join('')}
       </div>`:''}
