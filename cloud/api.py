@@ -25,6 +25,10 @@ from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY
 from payments import SUBSCRIPTION_PLAN_ID, SUBSCRIPTION_PLAN_PRICE, SUBSCRIPTION_PLAN_URL, update_plan_notification_url, get_subscription_plan
 from models import init_db, get_db, Business, MetricsPush, Payment, AuthorizedKey, KeyActivation, Subscription
 
+import sys as _sys
+if not JWT_SECRET:
+    print("WARNING: TUSTOCK_JWT_SECRET no está configurado. Los tokens JWT no serán seguros.", file=_sys.stderr)
+
 init_db()
 
 _rate_limit_store: dict[str, list[datetime]] = defaultdict(list)
@@ -61,7 +65,12 @@ app = FastAPI(title="TUSTOCK Cloud Monitor", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://tustocksoft.com.ar",
+        "https://monitor.tustocksoft.com.ar",
+        "http://localhost:5174",
+        "http://localhost:8090",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -123,6 +132,48 @@ def _generate_key() -> str:
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "tustock-cloud-monitor", "version": "1.0.0"}
+
+
+@app.post("/api/register-from-install")
+def register_from_install(data: dict, request: Request, db: Session = Depends(get_db)):
+    ip = request.client.host if request.client else ""
+    email = data.get("email", "").strip().lower()
+    name = data.get("name", "").strip()
+
+    if not email or not name:
+        raise HTTPException(400, "email y name son requeridos")
+
+    if "@" not in email or "." not in email.split("@")[-1]:
+        raise HTTPException(400, "Email inválido")
+
+    if len(name) > 200:
+        raise HTTPException(400, "Nombre muy largo (max 200 caracteres)")
+
+    if db.query(Business).filter(Business.email == email).first():
+        raise HTTPException(409, "El email ya está registrado")
+
+    auto_password = f"TUSTOCK-{secrets.token_hex(4).upper()}"
+
+    biz = Business(
+        name=name,
+        email=email,
+        password_hash=_hash_password(auto_password),
+        api_key=secrets.token_hex(32),
+        terms_accepted=True,
+        terms_accepted_at=datetime.now(timezone.utc),
+    )
+    db.add(biz)
+    db.commit()
+    db.refresh(biz)
+
+    log_event("register_from_install", {"email": email, "business_id": biz.id}, ip)
+    return {
+        "ok": True,
+        "api_key": biz.api_key,
+        "email": email,
+        "password": auto_password,
+        "message": "Cuenta creada. Usá la api_key para configurar el agente.",
+    }
 
 
 @app.get("/api/admin/licenses")
@@ -844,7 +895,7 @@ def validate_license(data: dict, db: Session = Depends(get_db)):
         "trial": {"max_products": 100, "monitor_enabled": False, "reports_enabled": False, "export_enabled": False, "backup_enabled": False},
         "basico": {"max_products": 999999, "monitor_enabled": False, "reports_enabled": True, "export_enabled": True, "backup_enabled": False},
         "suscripcion": {"max_products": 999999, "monitor_enabled": True, "reports_enabled": True, "export_enabled": True, "backup_enabled": False},
-        "pro": {"max_products": 999999, "monitor_enabled": True, "reports_enabled": True, "export_enabled": True, "backup_enabled": True},
+        "pro": {"max_products": 999999, "monitor_enabled": True, "reports_enabled": True, "export_enabled": True, "backup_enabled": False},
         "premium": {"max_products": 999999, "monitor_enabled": True, "reports_enabled": True, "export_enabled": True, "backup_enabled": False},
     }
     feat = features.get(ak.plan, features["trial"])
