@@ -5,6 +5,8 @@ y los sirve via dashboard web con login JWT.
 """
 
 import hashlib
+import hmac as _hmac
+import logging
 import secrets
 import json
 import uuid
@@ -21,13 +23,15 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from audit import log_event
-from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR, MP_ACCESS_TOKEN, MP_SUBS_TOKEN, ADMIN_TOKEN
+from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR, MP_ACCESS_TOKEN, MP_SUBS_TOKEN, ADMIN_TOKEN, MP_WEBHOOK_SECRET, MP_WEBHOOK_SECRET_SUBS
 from payments import SUBSCRIPTION_PLAN_ID, SUBSCRIPTION_PLAN_PRICE, SUBSCRIPTION_PLAN_URL, update_plan_notification_url, get_subscription_plan
 from models import init_db, get_db, Business, MetricsPush, Payment, AuthorizedKey, KeyActivation, Subscription
 
 import sys as _sys
 if not JWT_SECRET:
     print("WARNING: TUSTOCK_JWT_SECRET no está configurado. Los tokens JWT no serán seguros.", file=_sys.stderr)
+
+logger = logging.getLogger("tustock.cloud.webhook")
 
 init_db()
 
@@ -489,6 +493,55 @@ def metrics(business: Business = Depends(_get_current_business), db: Session = D
     }
 
 
+@app.get("/api/inventory")
+def get_inventory(
+    page: int = 1,
+    per_page: int = 20,
+    search: str = "",
+    category: str = "",
+    low_only: bool = False,
+    business: Business = Depends(_get_current_business),
+    db: Session = Depends(get_db),
+):
+    last = db.query(MetricsPush).filter(
+        MetricsPush.business_id == business.id
+    ).order_by(desc(MetricsPush.pushed_at)).first()
+
+    if not last or not last.payload or not last.payload.get("inventory"):
+        return {"ok": True, "products": [], "total": 0, "page": 1, "per_page": per_page, "pages": 0, "categories": []}
+
+    inventory = last.payload["inventory"]
+    products = inventory.get("products", [])
+
+    all_categories = sorted(set(p.get("category", "") for p in products if p.get("category")))
+
+    if search:
+        q = search.lower()
+        products = [p for p in products if q in (p.get("name", "")).lower() or q in (p.get("code", "")).lower()]
+
+    if category:
+        products = [p for p in products if p.get("category") == category]
+
+    if low_only:
+        products = [p for p in products if p.get("stock", 0) <= p.get("min_stock", 0)]
+
+    total = len(products)
+    pages = max(1, (total + per_page - 1) // per_page)
+    page = max(1, min(page, pages))
+    start = (page - 1) * per_page
+    products = products[start:start + per_page]
+
+    return {
+        "ok": True,
+        "products": products,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "pages": pages,
+        "categories": all_categories,
+    }
+
+
 @app.get("/api/business")
 def get_business(business: Business = Depends(_get_current_business)):
     return {
@@ -633,7 +686,7 @@ def update_plan_webhook(db: Session = Depends(get_db)):
     if not MP_SUBS_TOKEN:
         raise HTTPException(400, "Mercado Pago Suscripciones no configurado")
 
-    webhook_url = "https://tustock.up.railway.app/api/payments/webhook"
+    webhook_url = "https://tustock.up.railway.app/api/payments/webhook?source_news=webhooks"
     result = update_plan_notification_url(MP_SUBS_TOKEN, SUBSCRIPTION_PLAN_ID, webhook_url)
     return result
 
@@ -691,9 +744,52 @@ def subscription_status(license_key: str, db: Session = Depends(get_db)):
     }
 
 
+def verify_mp_signature(
+    x_signature: str,
+    x_request_id: str,
+    data_id: str,
+    secret: str,
+) -> tuple:
+    """Verifica la firma x-signature de Mercado Pago (HMAC-SHA256)."""
+    meta = {"x_signature_present": bool(x_signature), "secret_present": bool(secret)}
+    if not x_signature or not secret:
+        return False, meta
+    try:
+        parts = {}
+        for item in x_signature.split(","):
+            if "=" in item:
+                k, v = item.split("=", 1)
+                parts[k.strip()] = v.strip()
+        ts = parts.get("ts", "")
+        v1 = parts.get("v1", "")
+        meta["ts"] = ts
+        if not ts or not v1:
+            return False, meta
+        manifest_parts = []
+        if data_id:
+            manifest_parts.append(f"id:{data_id}")
+        if x_request_id:
+            manifest_parts.append(f"request-id:{x_request_id}")
+        manifest_parts.append(f"ts:{ts}")
+        manifest = ";".join(manifest_parts) + ";"
+        meta["manifest"] = manifest
+        expected = _hmac.new(
+            secret.encode("utf-8"),
+            manifest.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+        meta["match"] = _hmac.compare_digest(expected, v1)
+        return meta["match"], meta
+    except Exception as e:
+        meta["error"] = str(e)
+        return False, meta
+
+
 @app.post("/api/payments/webhook")
 async def payment_webhook(request: Request, db: Session = Depends(get_db)):
     topic = request.query_params.get("topic", "")
+    x_signature = request.headers.get("x-signature", "")
+    x_request_id = request.headers.get("x-request-id", "")
 
     data_id = ""
     body = {}
@@ -709,6 +805,40 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
         data_id = body.get("id", "")
     if not data_id:
         data_id = request.query_params.get("id", "")
+
+    webhook_type = body.get("type", topic)
+    if webhook_type in ("subscription_preapproval", "subscription_preapproval_plan", "authorized_payment") or topic in ("preapproval", "authorized_payment"):
+        secret = MP_WEBHOOK_SECRET_SUBS
+    else:
+        secret = MP_WEBHOOK_SECRET
+
+    if secret:
+        sig_ok, sig_meta = verify_mp_signature(x_signature, x_request_id, str(data_id), secret)
+        if not sig_ok:
+            logger.warning("webhook signature verification failed | data_id=%s topic=%s meta=%s", data_id, topic, sig_meta)
+        else:
+            logger.info("webhook signature verified | data_id=%s topic=%s", data_id, topic)
+    else:
+        logger.warning("webhook received without MP_WEBHOOK_SECRET configured | data_id=%s topic=%s", data_id, topic)
+
+    if x_signature and secret:
+        try:
+            ts_str = ""
+            for item in x_signature.split(","):
+                if "=" in item:
+                    k, v = item.split("=", 1)
+                    if k.strip() == "ts":
+                        ts_str = v.strip()
+            if ts_str:
+                ts_val = int(ts_str)
+                from time import time as _time
+                age_seconds = _time() - ts_val
+                if age_seconds > 300:
+                    logger.warning("webhook timestamp is %d seconds old (>5min) | data_id=%s", age_seconds, data_id)
+        except Exception:
+            pass
+
+    logger.info("webhook received | topic=%s type=%s data_id=%s", topic, webhook_type, data_id)
 
     if not data_id:
         return {"ok": False, "error": "No data.id"}

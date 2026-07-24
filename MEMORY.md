@@ -23,9 +23,59 @@
 > **Apps MP del proyecto (Julio 2026):**
 > - **Checkout Pro** (pagos únicos Básico/Pro): Token → env var `TUSTOCK_MP_TOKEN` (verificar en dashboard de MP)
 > - **Suscripciones** (plan $8K/mes): Token → env var `TUSTOCK_MP_SUBS_TOKEN` (verificar en dashboard de MP)
-> - **Webhook URL:** `https://tustock.up.railway.app/api/payments/webhook`
+> - **Webhook URL:** `https://tustock.up.railway.app/api/payments/webhook?source_news=webhooks`
 > - **Back URLs:** `https://tustock.up.railway.app`
 > - **Railway configurado:** ✅ `TUSTOCK_MP_TOKEN` (Checkout Pro) + `TUSTOCK_MP_SUBS_TOKEN` (Suscripciones) — Julio 2026
+
+---
+
+## LEAD POTENCIAL: Polirrubro Multi-Sucursal (Julio 2026)
+
+> **Cliente potencial:** Polirrubro con 3 sucursales que vende desde bebidas hasta verduras. Maneja todo en cuaderno, Mercado Pago para transferencias, caja para efectivo. Quiere digitalizar.
+
+**Estado:** 🟡 Estrategia de acercamiento definida — Social Proof (caso librería)
+
+**Estrategia aprobada (23/7):** Acercamiento psicológico. Primero instalar en la librería (semana del 28/7), validar que funciona, y usar ese caso como estandarte para polirrubro. "Ella ya lo tiene, ¿por qué vos no?"
+
+**Acciones tomadas:**
+1. ✅ Análisis comercial (Ventas)
+2. ✅ Análisco técnico (DEV)
+3. ✅ Estrategia definida: Social Proof vía librería
+4. ⬜ Instalación en librería (semana del 28/7) — VALIDACIÓN
+5. ✅ Material de testimonio (Marketing) — `docs/marketing/social-proof-polirrubro.md`
+6. ⬜ Approach al polirrubro con caso de éxito — `docs/marketing/estrategia-polirrubro.md`
+
+**Monitor Cloud SU - Day configurado (23/7):**
+- Email: daybarrionuevo6@gmail.com
+- Contraseña: TUSTOCK-Dayana2026
+- API Key: 12d7b33ed253820e458c8ad32333437240f376facb789db4f97513d155f839e2
+- Archivo config: `temp\cloud-config-day.json`
+- **Pendiente:** Copiar config/cloud.json a su PC y reiniciar TUSTOCK
+
+**Visita 23/7 — Hallazgos:**
+1. ❌ PC de Dayana no tiene directorio `config/` — hay que crearlo manualmente
+2. ❌ Dayana quiere VENDER desde el Monitor Cloud (tomar pedidos, cobrar) — Feature que no ofrecemos
+3. ✅ Cuenta en el cloud creada, API key generada
+
+**Feature sugerido por Dayana — POS Remoto en Monitor Cloud:**
+- Documentado en `docs/features-sugeridos/pos-remoto-monitor.md`
+- Solicitud: tomar pedidos y cobrar desde el celular
+- No está en el roadmap. Requiere ~20-30h de desarrollo (Opción B: cola de pedidos)
+- **Decisión pendiente:** ¿Desarrollamos? ¿Cobramos extra? ¿Lo dejamos para después?
+
+**Recomendación de Ventas:**
+- **Valor del cliente:** 3 licencias Básico = $240K ARS, o 1 Suscripción = $8K/mes ($96K/año)
+- **Tier recomendado:** Pro ($160K) o Suscripción premium ($12-15K/mes) con multi-sucursal incluido
+- **Estrategia:** Primero entrevista para validar. Si necesita stock consolidado y reports, desarrollar multi-sucursal básica ANTES de vender. Si solo necesita control por sucursal, vender 3 licencias separadas.
+
+**Recomendación de DEV:**
+- **Opción recomendada:** Instancias independientes + consolidador en cloud
+- **Esfuerzo estimado:** ~38 horas (~1 semana de desarrollo)
+- **MVP:** Cada sucursal con su instancia, script consolida datos al final del día, dashboard cloud muestra consolidated view
+- **Riesgo bajo:** Sin cambios a SQLite, sin PostgreSQL, compatible con clientes actuales
+- **Limitación:** Catálogo de productos no se sincroniza en tiempo real (periódico o manual)
+
+**Decisión pendiente del humano:** ¿Avanzamos con entrevista al cliente? ¿O esperamos?
 
 ---
 
@@ -97,7 +147,7 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 - Servidor con SPA fallback para frontend compilado
 - Esquemas Pydantic para validación de datos (schemas.py)
 - **Monitor Premium (Fase 4 adelantada):** Servicio independiente puerto 8091, login propio, dashboard mobile responsive, API read-only. Expuesto vía Cloudflare Tunnel para acceso remoto desde el celular. Solo esta clienta lo tiene.
-- **Monitor Cloud (Fase 5):** Desplegado en Railway. URL pública: `monitor.tustocksoft.com.ar` (custom domain via Cloudflare). API push-based, dashboard mobile responsive, login multiusuario JWT. Agente local (`cloud/agent.py`) pushea métricas cada 30s desde la PC del cliente. URL fija, sin tunnel. Puerto interno: 8080.
+- **Monitor Cloud (Fase 5):** Desplegado en Railway. URL pública: `monitor.tustocksoft.com.ar` (custom domain via Cloudflare). API push-based, dashboard mobile responsive con 3 tabs (Dashboard/Inventario/Pedidos), login multiusuario JWT. Agente local (`cloud/agent.py`) pushea métricas cada 30s + inventario completo (max 500 productos). Push real-time post-venta/ajuste (`server/cloud_push.py`). Endpoint `GET /api/inventory` con búsqueda, filtros y paginación. Webhook MP con verificación HMAC-SHA256. URL fija, sin tunnel. Puerto interno: 8080.
 - **Launcher unificado:** `scripts/launcher.py` — inicia servidor, monitor, tunnel y cloud agent desde un solo punto. `TUSTOCK.bat` con menú interactivo de 8 opciones.
 - **Dashboard admin de licencias:** App independiente en `E:\TUSTOCK_ADMIN\` (Vite+React standalone, puerto 5174). Generar keys, ver licencias, revocar/activar, stats por plan, ingresos estimados, trials por vencer. Panel de Suscripciones MP con link compartido y vinculación de suscripciones entrantes a licencias. **Habla directo a la cloud API (tustock.up.railway.app), NO al server local.** Ejecutable `TUSTOCK_ADMIN.exe` con tray icon púrpura. Scripts: `build.bat`, `start-admin.bat`, `stop-admin.bat`.
 - **Validación cloud de licencias:** Cada 7 días el sistema local valida la key contra la API cloud. Si no hay internet, sigue funcionando con cache de hasta 14 días. Trial no requiere validación cloud. Admin sync-keys al generar.
@@ -246,7 +296,9 @@ PC del cliente                          Cloud (Railway/VPS)
 | 6 | **Tray icon + ocultar terminal** — exe corre sin ventana, icono en bandeja | 🖥 DEV | ✅ Implementado y verificado en notebook cliente |
 | 7 | **Documentar aprendizaje** de instalaciones para que el sistema madure | Dispatcher | ✅ Checklist §15 creado |
 | 8 | **Fix undefined en historial ventas** — created_at formato espacio vs ISO | Dispatcher | ✅ Corregido y deployado |
-| 9 | **Admin EXE con tray icon** — TUSTOCK_ADMIN.exe con icono púrpura en bandeja | 🖥 DEV | ✅ Archivos creados, pendiente build |
+| 9 | **Admin EXE con tray icon** — TUSTOCK_ADMIN.exe con icono púrpura en bandeja | 🖥 DEV | ✅ Build y test exitosos |
+| 10 | **Admin independizado** — endpoints migrados a cloud API, admin habla solo a Railway | 🖥 DEV | ✅ Implementado, token seteado, verificado |
+| 11 | **Limpieza proyecto** — ~330 MB de basura removidos, .gitignore actualizado, repo limpio | Dispatcher | ✅ Push hecho |
 
 ### Situación actual (20 de Julio 2026)
 
@@ -291,11 +343,11 @@ La clienta manifestó dos necesidades concretas:
 | ✅ | **Post 3 publicado en Facebook Groups** (cierre de secuencia) | 🧑 HUMANO | Hecho 15/7. Secuencia de 3 posts completada. |
 | ✅ | **Mercado Libre publicado** (MLA3596381120) | 🧑 HUMANO | Hecho 12/7. Título, categoría, precio ($80K), 5 imágenes, descripción. Verificado. Pendiente: activar Programa Despegue. |
 | 🟡 3 | **Activar Programa Despegue ML** ($45K garantía recuperable) | 🧑 HUMANO | Reputación verde claro + $45K publicidad gratis. Riesgo bajo. Ver `obsidian/02-Ventas/Programa Despegue ML.md`. |
-| 🟡 4 | **Pasar Railway a Hobby cuando se acaben los créditos gratis** | 🧑 HUMANO | $5/mes. El crédito free trial se usa primero, después se paga. |
+| 🟡 4 | **Pasar Railway a Hobby cuando se acaben los créditos gratis** | 🧑 HUMANO | $5/mes. Hobby tiene $5 de créditos incluidos, 48 vCPU/48GB, 99.9% uptime. Cubre nuestra cloud API + Monitor. No apurar — aprovechar gratis todo lo posible. |
 | 🟡 5 | **Registrar bases de datos en AAIP** (PASO 1 + 2) | 🧑 HUMANO | Obligación legal (Ley 25.326 art. 21). Guía en `obsidian/TU STOCK/03-Legal/Registro AAIP.md`. |
 | ✅ | **Implementar rediseño Stitch en frontend React** | 🎨 UI + 🖥 DEV | Completado 18/7. 44 archivos, 13 páginas rediseñadas con Stitch dark theme, glass effects, Geist Mono, Material Icons. |
 | ✅ | **Dominio para Monitor Cloud** | 🖥 DEV + 🧑 HUMANO | `monitor.tustocksoft.com.ar` configurado via Railway CLI + Cloudflare DNS. Puerto interno: 8080. SSL automático. |
-| 🟢 8 | **CRM en Google Sheets** | 🖥 DEV | No perder oportunidades de venta |
+| 🔥 3.5 | **Evaluar multi-sucursal para polirrubro** — 3 sucursales, lead potencial | 📢 Ventas + 🖥 DEV | Cliente real. Si desarrollamos multi-sucursal básica (~38h), podemos cerrar $240K+ |
 | 🟢 9 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
 | 🟢 10 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
 
@@ -546,7 +598,11 @@ La clienta manifestó dos necesidades concretas:
 | 2026-07-22 | **Tray icon aprobado**: TUSTOCK.exe sin ventana de terminal. Icono en bandeja del sistema. Click abre navegador. Servidor en thread. pystray + PIL para icono dinámico. Fallback a consola si pystray falla. | 🧑 HUMANO + 🖥 DEV |
 | 2026-07-22 | **Admin EXE aprobado**: TUSTOCK_ADMIN.exe con tray icon púrpura/azul. Sirve dist/ en puerto 5174, proxea /api/admin/* a localhost:8090. Zero dependencias nuevas (stdlib). build.bat + start/stop scripts. | 🧑 HUMANO + 🖥 DEV |
 | 2026-07-22 | **Admin independizado de server principal**: Todas las rutas admin migradas a cloud API (tustock.up.railway.app). Admin frontend habla SOLO a cloud, nunca a localhost. Server principal más liviano (sin admin routes). Admin funciona desde cualquier PC con internet. Pendiente: setear TUSTOCK_ADMIN_TOKEN en Railway + deploy. | 🧑 HUMANO + 🖥 DEV |
+| 2026-07-22 | **Lead polirrubro multi-sucursal**: Cliente real con 3 sucursales, polirrubro. Maneja todo en cuaderno. Evaluación técnica y comercial en curso. DEV estima ~38h para multi-sucursal básica (instancias independientes + consolidador). Ventas recomienda entrevista primero para validar requerimientos. | 📢 Ventas + 🖥 DEV + Dispatcher |
+| 2026-07-22 | **Admin EXE aprobado**: TUSTOCK_ADMIN.exe con tray icon púrpura/azul. Sirve dist/ en puerto 5174, proxea /api/admin/* a localhost:8090. Zero dependencias nuevas (stdlib). build.bat + start/stop scripts. | 🧑 HUMANO + 🖥 DEV |
+| 2026-07-22 | **Admin independizado de server principal**: Todas las rutas admin migradas a cloud API (tustock.up.railway.app). Admin frontend habla SOLO a cloud, nunca a localhost. Server principal más liviano (sin admin routes). Admin funciona desde cualquier PC con internet. Pendiente: setear TUSTOCK_ADMIN_TOKEN en Railway + deploy. | 🧑 HUMANO + 🖥 DEV |
 | 2026-07-22 | **Feature sugerida: POS Remoto en Monitor Cloud** — SU - Day (Dayana) pide tomar pedidos y cobrar desde el celular. Análisis DEV + Ventas completados en `obsidian/07-Features Sugeridas/`. Recomendación: Cola de comandos + PWA, tier nuevo Pro+ ($220K) o Suscripción Premium ($12-15K/mes). NO aprobada aún para desarrollo. | 🧑 HUMANO + Dispatcher |
+| 2026-07-23 | **Quick wins seguridad (4 fixes)**: (1) `backup_enabled: False` en plan Pro (feature no existe), (2) JWT_SECRET obligatorio al startup con sys.exit si vacío, (3) CORS restringido a 4 orígenes específicos (tustocksoft.com.ar, monitor subdomain, localhost:5174, localhost:8090), (4) `configurar.bat` crea `server/.env` con valores por defecto si no existe. Auditoría de calidad. | 🖥 DEV |
 
 ---
 ## 13. EQUIPO LEGAL
@@ -653,16 +709,36 @@ La clienta manifestó dos necesidades concretas:
 - [fix] SALES UNDEFINED DATE: `created_at` del backend viene como `"2026-07-22 03:43:14"` (separado por espacio), pero Sales.tsx usaba `split('T')[1]` (formato ISO). Resultado: `"undefined"` visible en la columna de fecha/hora del historial de ventas. Fix: fallback a `split(' ')[1]`. (2026-07-22)
 - [feature] TRAY ICON: TUSTOCK.exe corre sin ventana de terminal (console=False). Icono en bandeja del sistema con menú contextual (Abrir TUSTOCK / Detener servidor). Click izquierdo abre navegador. Servidor FastAPI en thread separado. Fallback a consola si pystray no está disponible. (2026-07-22)
 - [feature] ADMIN EXE: TUSTOCK_ADMIN.exe con tray icon púrpura/azul (distinto al de TUSTOCK). Sirve dist/ en puerto 5174, proxea /api/admin/* a localhost:8090. build.bat para PyInstaller, start/stop scripts. Cero dependencias nuevas (stdlib). (2026-07-22)
+- [feature] ADMIN INDEPENDIENTE: Endpoints admin migrados a cloud API (tustock.up.railway.app). Admin frontend habla SOLO a cloud, nunca a localhost. Server principal más liviano (sin admin routes). Admin funciona desde cualquier PC con internet. Token: TUSTOCK_ADMIN_TOKEN en Railway. (2026-07-22)
+- [feature] LIMPIEZA PROYECTO: ~330 MB de basura removidos (build, dist, admin viejo, stitch output, zips, DB temporal). .gitignore actualizado (dist/, installer/build/, installer/dist/, web/dist/, stitch_output/, *.zip, server/*.log). Admin removido del tracking de git. Repo limpio. (2026-07-22)
+- [feature] CLOUD AGENT AUTO-SETUP: Endpoint `POST /api/register-from-install` crea cuenta en el cloud desde la instalación. `configurar.bat` ahora pregunta email del negocio y crea la cuenta automáticamente. `scripts/fix-cloud-agent.ps1` para configurar PCs existentes. Documentación en `docs/setup-cloud-agent.md`. Resuelve GAP de vinculación instalación↔Monitor Cloud. (2026-07-23)
+- [audit] AUDITORÍA CALIDAD: Agente quality-auditor creado + auditoría inicial completada — 14 hallazgos (3 críticos: webhook MP sin firma, JWT_SECRET vacío, consentimiento bypass). Reporte en `docs/auditoria-calidad-2026-07-23.md`. Quick wins: backup_enabled False en Pro, JWT_SECRET obligatorio, CORS restringido, .env en configurar.bat. (2026-07-23)
+- [fix] QUICK WINS SEGURIDAD: (1) backup_enabled False en plan Pro (feature inexistente), (2) JWT_SECRET obligatorio al startup con sys.exit si vacío, (3) CORS restringido a 4 orígenes (tustocksoft.com.ar, monitor subdomain, localhost:5174, localhost:8090), (4) configurar.bat crea server/.env con defaults si no existe. (2026-07-23)
+- [fix] POSTGRESQL MIGRATION: Cloud DB migrada de SQLite efímero a PostgreSQL managed en Railway. `config.py` lee `DATABASE_URL` de env var, `models.py` usa engine condicional (SQLite fallback para local, pool_pre_ping para PG), `requirements.txt` con psycopg2-binary. DB ahora persiste entre redeploys. (2026-07-23)
+- [feature] CLOUD PUSH REAL-TIME: `server/cloud_push.py` — módulo que pushea métricas al Monitor Cloud inmediatamente después de cada venta o ajuste de stock. Fire-and-forget via `threading.Thread(daemon=True)`. Lee config de `config/cloud.json`, usa las mismas queries que `cloud/agent.py`, timeout 5s, errores silenciosos. Hook en `server/routes/sales.py` (post-commit) y `server/routes/stock.py` (post-adjust). El agente timer-based (30s) se mantiene como fallback. (2026-07-23)
+- [fix] CLOUD AGENT PYINSTALLER: Tres bugs de path resolution en PyInstaller one-folder: (1) `cloud/agent.py` BASE_DIR apuntaba a `_internal/` en vez de project root, (2) `tustock_entry.py` nunca iniciaba el cloud agent como thread, (3) `run_cloud_agent()` usaba `project_root` para log_dir cuando debería usar `bundle_dir/_internal/`, y `cloud_push.py` leía DB de la ruta equivocada (project root en vez de sys._MEIPASS). Todo corregido con detección `sys.frozen`. Cloud push ahora funciona desde el .exe. (2026-07-24)
+- [feature] POS REMOTO FASE 1: Pedidos pendientes visibles en Monitor Cloud. `cloud_push.py` consulta `pending_orders` del día y los agrega al push payload. `cloud/dashboard.html` tiene sección "Pedidos Pendientes" con badges de color (pendiente/aprobado/rechazado). Deploy vía git push a Railway. Read-only — no se crean pedidos desde el celular todavía. (2026-07-24)
+- [feature] INVENTARIO MONITOR CLOUD: Inventario completo visible en el Monitor Cloud. `collect_inventory()` en `cloud_push.py` y `cloud/agent.py` pushea productos con stock (max 500, query SQL con products+categories+current_stock). Endpoint `GET /api/inventory` con JWT auth, paginación, búsqueda por nombre/código, filtro por categoría, filtro stock bajo. `dashboard.html` con 3 tabs (Dashboard/Inventario/Pedidos), tabla responsive con badges (🟢 OK/🟡 Bajo/🔴 Sin stock), KPI total productos, categorías dinámicas. Gating: solo planes Suscripción/Pro/Premium. (2026-07-24)
+- [feature] WEBHOOK MP FIRMA: Verificación HMAC-SHA256 en webhook de Mercado Pago. `verify_mp_signature()` parsea header `x-signature` (formato `ts=<ms>,v1=<hash>`), construye manifest `id:;request-id:;ts:;`, calcula HMAC-SHA256 con secret, compara con `hmac.compare_digest()`. Modo warn (log pero no rechaza). Dual secret: `MP_WEBHOOK_SECRET` (Checkout Pro) + `MP_WEBHOOK_SECRET_SUBS` (Suscripciones) con fallback. Replay check (>5min = warning). `notification_url` actualizado con `?source_news=webhooks` para recibir solo webhooks (no IPN legacy). Env vars pendientes de configurar en Railway. (2026-07-24)
 
 ---
 
-*Última actualización: 22 de Julio de 2026*
+*Última actualización: 24 de Julio de 2026 (Inventario Monitor Cloud + Webhook MP firma)*
 
 ---
 
 ## 15. APRENDIZAJO PARA INSTALACIONES (Checklist Pre-Entrega)
 
-> **Este documento es el resultado de 2 instalaciones reales.** Cada punto viene de un bug o problema que apareció in-situ. Seguir este checklist ANTES de entregar el USB al cliente para evitar problemas.
+> **Este documento es el resultado de 2 instalaciones reales + 1 auditoría de calidad.** Cada punto viene de un bug o problema que apareció in-situ. Seguir este checklist ANTES de entregar el USB al cliente para evitar problemas.
+
+### GAPs descubiertos en instalaciones reales
+
+| # | GAP | Consecuencia | Solución |
+|---|-----|-------------|----------|
+| 1 | **Sin vinculación instalación↔Monitor Cloud** | El agente pushea datos pero no hay Business asociado. El cliente no puede ver el monitor. | Endpoint `POST /api/register-from-install` + configurar.bat pregunta email |
+| 2 | **Directorio `config/` no existe en PCs nuevas** | `cloud.json` no se puede guardar. El agente no arranca. | Crear directorio manualmente o que configurar.bat lo cree |
+| 3 | **Token de admin en .env del cliente** | Seguridad comprometida. El cliente podría acceder al admin. | Sanitizar .env antes de copiar al USB |
+| 4 | **APKs sin compilar** | El APK Stock tiene fixes de barcode que no existían en la versión vieja | Siempre recompilar APKs antes de entregar |
 
 ### Checklist pre-entrega USB
 
@@ -673,11 +749,13 @@ La clienta manifestó dos necesidades concretas:
 | 3 | **Fuentes locales** — verificar que `web/public/assets/fonts/` existe | Sin internet no carga fonts del CDN. `public/` sobrevive a `npm run build` | ⬜ |
 | 4 | **Verificar index.html** apunta al JS correcto | El hash del JS cambia en cada build. Si el hash no matchea, se sirve el JS viejo | ⬜ |
 | 5 | **configurar.bat** usa `tustock-local-token` (NO random) | El frontend hardcodea `tustock-local-token`. Si el .env tiene otro token, TODOS los endpoints dan 401 | ⬜ |
-| 6 | **.env sanitizado** — tokens vacíos en `_internal/server/.env` | No shippear tokens de desarrollo | ⬜ |
+| 6 | **.env sanitizado** — sin `TUSTOCK_ADMIN_TOKEN` | No shippear token de admin al cliente | ⬜ |
 | 7 | **Sync key al cloud** — `POST /api/licenses/sync` con la key del cliente | Sin esto, `activate_license()` falla con "Clave inválida" | ⬜ |
 | 8 | **Copiar APKs compilados** — Stock y POS | El APK Stock tiene fixes de barcode que no existían antes | ⬜ |
 | 9 | **LEEME.txt** con instrucciones claras | El cliente no sabe qué es `configurar.bat` ni qué hacer | ⬜ |
 | 10 | **Copiar Guía de Usuario PDF** | Para que el cliente tenga referencia offline | ⬜ |
+| 11 | **cloud.json preconfigurado** — API key del cliente en `config/cloud.json` | Sin esto, el agente no pushea datos al Monitor Cloud | ⬜ |
+| 12 | **Verificar que el cliente tiene email** | Sin email no se puede crear cuenta en el Monitor Cloud | ⬜ |
 
 ### Errores comunes in-situ y cómo resolverlos
 
@@ -689,6 +767,9 @@ La clienta manifestó dos necesidades concretas:
 | **Scanner USB no encuentra producto** | `addToCart()` solo busca por `code`, no por `barcode` | Fix ya aplicado (2026-07-22) — busca por `code` O `barcode` |
 | **App Stock registra barcode como "code"** | `CreateProductRequest` no tenía campo `barcode` | Fix ya aplicado (2026-07-21) — barcode va como campo `barcode` |
 | **Frontend muestra "Error de conexion"** | Solo lee `err.detail`, ignora `err.message` | Fix ya aplicado (2026-07-21) — triple fallback |
+| **Monitor Cloud no muestra datos** | El agente no está configurado (falta `config/cloud.json`) | Crear `config/cloud.json` con la API key del cliente |
+| **Monitor Cloud "API key inválida"** | La API key no coincide con ningún Business en el cloud | Verificar que el email está registrado y la key es correcta |
+| **PC cliente no tiene directorio `config/`** | Windows no crea directorios automáticamente | Crear manualmente o que configurar.bat lo haga |
 | **JS viejo se sirve después de rebuild** | Hash del JS cambió pero `index.html` viejo apunta al hash anterior | Borrar JS viejo después de copiar el nuevo. Verificar hash en `index.html` |
 | **Fuentes no cargan (sin internet)** | `index.html` apunta a Google Fonts CDN | Fuentes locales en `web/public/assets/fonts/`, CSS local `fonts-local.css` |
 | **Servidor no arranca** | Falta `tustock-local-token` en `.env` (config.py hace `sys.exit(1)`) | Ejecutar `configurar.bat` primero |
@@ -706,3 +787,7 @@ La clienta manifestó dos necesidades concretas:
 6. Activar licencia (key del cliente)
 7. Instalar APK en el celular → configurar IP: 192.168.X.X:8090
 ```
+
+---
+
+*Última actualización: 24 de Julio de 2026 (Inventario Monitor Cloud + Webhook MP firma)*

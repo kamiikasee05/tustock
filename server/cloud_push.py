@@ -95,6 +95,8 @@ def collect_metrics() -> dict:
         for r in pending_rows
     ]
 
+    inventory = collect_inventory()
+
     return {
         "date": today,
         "server_time": datetime.now(timezone.utc).isoformat(),
@@ -108,7 +110,41 @@ def collect_metrics() -> dict:
         "low_stock": low_stock,
         "debtors": debtors,
         "pending_orders": pending_orders,
+        "inventory": inventory,
     }
+
+
+def collect_inventory() -> dict:
+    try:
+        rows = _query(LOCAL_DB, """
+            SELECT p.name, p.code, p.barcode, c.name,
+                   p.selling_price, p.cost_price,
+                   p.min_stock, p.unit,
+                   COALESCE(cs.quantity, 0)
+            FROM products p
+            LEFT JOIN categories c ON c.id = p.category_id
+            LEFT JOIN current_stock cs ON cs.product_id = p.id
+            WHERE p.is_active = 1
+            ORDER BY p.name
+            LIMIT 500
+        """)
+        products = [
+            {
+                "name": r[0], "code": r[1], "barcode": r[2],
+                "category": r[3] or "", "price": float(r[4] or 0),
+                "cost": float(r[5] or 0), "min_stock": r[6] or 0,
+                "unit": r[7] or "un", "stock": float(r[8]),
+            }
+            for r in rows
+        ]
+        total_count = _scalar(LOCAL_DB, "SELECT COUNT(*) FROM products WHERE is_active = 1")
+        return {
+            "products": products,
+            "total": total_count,
+            "truncated": len(products) < total_count,
+        }
+    except Exception:
+        return None
 
 
 def _push(data: dict):

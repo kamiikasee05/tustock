@@ -44,7 +44,7 @@ def create_preference(access_token: str, plan: str, price: float, license_key: s
             "pending": "https://tustock.up.railway.app",
         },
         "auto_return": "approved",
-        "notification_url": "https://tustock.up.railway.app/api/payments/webhook",
+        "notification_url": "https://tustock.up.railway.app/api/payments/webhook?source_news=webhooks",
     }
 
     if customer_email:
@@ -124,7 +124,7 @@ def create_subscription(access_token: str, plan: str, price: float, license_key:
             "currency_id": "ARS",
         },
         "back_url": "https://tustock.up.railway.app",
-        "notification_url": "https://tustock.up.railway.app/api/payments/webhook",
+        "notification_url": "https://tustock.up.railway.app/api/payments/webhook?source_news=webhooks",
         "status": "pending",
     }
 

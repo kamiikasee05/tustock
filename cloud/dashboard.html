@@ -111,13 +111,38 @@ a{color:var(--primary-container);text-decoration:none}
 .kpi-value{font-size:22px}
 .topbar{padding:12px 14px}
 }
+.nav-tabs{display:flex;gap:0;background:var(--surface);border-bottom:1px solid var(--outline);padding:0 20px;position:sticky;top:51px;z-index:9}
+.nav-tab{padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--on-surface-variant);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
+.nav-tab:hover{color:var(--on-surface)}
+.nav-tab.active{color:var(--primary-container);border-bottom-color:var(--primary-container)}
+.filter-bar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.filter-bar input,.filter-bar select{padding:8px 12px;background:#0b0e15;border:1px solid var(--outline);border-radius:var(--radius-sm);color:var(--on-surface);font-size:13px;outline:none;transition:border .2s}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--primary-container)}
+.filter-bar input{flex:1;min-width:150px}
+.filter-bar select{min-width:120px}
+.filter-bar label{font-size:12px;color:var(--on-surface-variant);display:flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer}
+.inv-table{width:100%;border-collapse:collapse;font-size:13px}
+.inv-table th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--on-surface-variant);padding:8px 10px;border-bottom:1px solid var(--outline)}
+.inv-table td{padding:10px;border-bottom:1px solid var(--outline)}
+.inv-table tr:last-child td{border-bottom:none}
+.inv-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.badge-ok{background:rgba(74,222,128,0.15);color:#4ade80}
+.badge-low{background:rgba(251,191,36,0.15);color:#fbbf24}
+.badge-out{background:rgba(248,113,113,0.15);color:#f87171}
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--outline)}
+.pagination button{padding:6px 12px;border:1px solid var(--outline);border-radius:6px;background:transparent;color:var(--on-surface-variant);font-size:12px;cursor:pointer;transition:all .2s}
+.pagination button:hover:not(:disabled){border-color:var(--primary);color:var(--on-surface)}
+.pagination button:disabled{opacity:.4;cursor:default}
+.pagination .page-info{font-size:12px;color:var(--on-surface-variant)}
+@media(max-width:600px){.filter-bar{flex-direction:column}.filter-bar input{min-width:0;width:100%}.nav-tabs{padding:0 14px}.nav-tab{font-size:12px;padding:10px 10px}.inv-table th,.inv-table td{padding:8px 6px;font-size:12px}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script>
 const API = window.location.origin;
-let state = {view:'login',token:localStorage.getItem('tm_token')||'',email:'',password:'',name:'',data:null,lastPush:'',error:'',loading:false,tab:'register',refreshTimer:null};
+let state = {view:'login',token:localStorage.getItem('tm_token')||'',email:'',password:'',name:'',data:null,lastPush:'',error:'',loading:false,tab:'register',refreshTimer:null,dashboardTab:'dashboard',inventory:null,invPage:1,invSearch:'',invCategory:'',invLowOnly:false,invCategories:[]};
 const $ = s => document.getElementById(s);
 const h = t => {const d=document.createElement('div');d.textContent=t;return d.innerHTML};
 
@@ -206,7 +231,7 @@ function doRegister(){
 
 function logout(){
   clearInterval(state.refreshTimer);
-  state.token='';state.view='dashboard';state.data=null;
+  state.token='';state.view='dashboard';state.data=null;state.inventory=null;state.dashboardTab='dashboard';state.invPage=1;state.invSearch='';state.invCategory='';state.invLowOnly=false;
   localStorage.removeItem('tm_token');render();
 }
 
@@ -216,6 +241,20 @@ function fetchData(){
     if(d.detail==='Not authenticated'){logout();return;}
     state.data=d;
     state.lastPush=d.last_push||'';
+    render();
+  }).catch(()=>{});
+}
+
+function fetchInventory(){
+  if(!state.token||state.view!=='dashboard') return;
+  const params = new URLSearchParams({page:state.invPage,per_page:20});
+  if(state.invSearch) params.set('search',state.invSearch);
+  if(state.invCategory) params.set('category',state.invCategory);
+  if(state.invLowOnly) params.set('low_only','true');
+  api('/api/inventory?'+params.toString()).then(d=>{
+    if(d.detail==='Not authenticated'){logout();return;}
+    state.inventory=d;
+    state.invCategories=d.categories||[];
     render();
   }).catch(()=>{});
 }
@@ -236,9 +275,115 @@ function deleteAccount(){
   .catch(()=>alert('Error de conexión'));
 }
 
+function renderInventorySection(){
+  const inv = state.inventory;
+  if(!inv) return `<div class="content"><div class="section"><div class="empty">Cargando inventario...</div></div></div>`;
+  const products = inv.products||[];
+  const catOpts = state.invCategories.map(c=>`<option value="${h(c)}" ${state.invCategory===c?'selected':''}>${h(c)}</option>`).join('');
+
+  let tableRows = '';
+  if(products.length===0){
+    tableRows = `<tr><td colspan="6" class="empty">No se encontraron productos</td></tr>`;
+  } else {
+    tableRows = products.map(p=>{
+      const stock = p.stock||0;
+      const minStock = p.min_stock||0;
+      let badge = '<span class="badge badge-ok">OK</span>';
+      if(stock<=0) badge = '<span class="badge badge-out">Sin stock</span>';
+      else if(stock<=minStock) badge = '<span class="badge badge-low">Bajo</span>';
+      return `<tr>
+        <td>${h(p.name)}</td>
+        <td>${h(p.code||'')}</td>
+        <td>${h(p.category)}</td>
+        <td class="num">${fmt$(p.price)}</td>
+        <td class="num">${stock} ${h(p.unit||'un')}</td>
+        <td>${badge}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const page = inv.page||1;
+  const pages = inv.pages||1;
+  const total = inv.total||0;
+
+  return `
+  <div class="content">
+    <div class="grid">
+      <div class="kpi">
+        <div class="kpi-label">Total Productos</div>
+        <div class="kpi-value">${total}</div>
+        <div class="kpi-sub">${inv.truncated?'Mostrando primeros 500':'Todos los productos'}</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <input type="text" placeholder="Buscar por nombre o código..." value="${h(state.invSearch)}" oninput="state.invSearch=this.value;state.invPage=1;fetchInventory()" />
+      <select onchange="state.invCategory=this.value;state.invPage=1;fetchInventory()">
+        <option value="">Todas las categorías</option>
+        ${catOpts}
+      </select>
+      <label><input type="checkbox" ${state.invLowOnly?'checked':''} onchange="state.invLowOnly=this.checked;state.invPage=1;fetchInventory()" /> Solo stock bajo</label>
+    </div>
+
+    <div class="section" style="overflow-x:auto">
+      <table class="inv-table">
+        <thead><tr>
+          <th>Nombre</th><th>Código</th><th>Categoría</th><th class="num">Precio</th><th class="num">Stock</th><th>Estado</th>
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+
+      ${pages>1 ? `
+      <div class="pagination">
+        <button ${page<=1?'disabled':''} onclick="state.invPage=${page-1};fetchInventory()">← Anterior</button>
+        <span class="page-info">${page} / ${pages}</span>
+        <button ${page>=pages?'disabled':''} onclick="state.invPage=${page+1};fetchInventory()">Siguiente →</button>
+      </div>`:''}
+    </div>
+  </div>`;
+}
+
+function renderPedidosSection(d){
+  const orders = (d&&d.data)?(d.data.pending_orders||[]):[];
+  if(orders.length===0) return `<div class="content"><div class="section"><div class="empty">No hay pedidos pendientes</div></div></div>`;
+  const orderHtml = orders.map(o=>{
+    const st = o.status||'pending';
+    const stLabel = {pending:'Pendiente',approved:'Aprobado',rejected:'Rechazado'}[st]||st;
+    const stColor = {pending:'#fbbf24',approved:'#4ade80',rejected:'#f87171'}[st]||'#8b95a5';
+    return `
+    <div class="order-item">
+      <div class="order-info">
+        <div class="order-status-badge" style="background:${stColor}22;color:${stColor}">${h(stLabel)}</div>
+        <div class="order-meta">Pedido #${o.id}</div>
+      </div>
+      <div class="order-right">
+        <div class="order-amount">${fmt$(o.total)}</div>
+        <div class="order-time">${fmtTime(o.created_at)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  return `
+  <div class="content">
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 8h6M8 5v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Pedidos Pendientes
+      </div>
+      ${orderHtml}
+    </div>
+  </div>`;
+}
+
 function renderDashboard(app){
   const d = state.data;
   let content = '';
+
+  const tabs = `
+    <div class="nav-tabs">
+      <button class="nav-tab ${state.dashboardTab==='dashboard'?'active':''}" onclick="state.dashboardTab='dashboard';render()">Dashboard</button>
+      <button class="nav-tab ${state.dashboardTab==='inventario'?'active':''}" onclick="state.dashboardTab='inventario';if(!state.inventory)fetchInventory();render()">Inventario</button>
+      <button class="nav-tab ${state.dashboardTab==='pedidos'?'active':''}" onclick="state.dashboardTab='pedidos';render()">Pedidos</button>
+    </div>`;
 
   if(!d || !d.has_data){
     content = `
@@ -249,7 +394,7 @@ function renderDashboard(app){
         <p class="ts">${d && d.last_push ? 'Último push: '+fmtTime(d.last_push) : 'Esperando primer push del sistema local...'}</p>
       </div>
     </div>`;
-  } else {
+  } else if(state.dashboardTab==='dashboard'){
     const sales = d.data.sales_today||{};
     const methods = d.data.by_method||[];
     const top = d.data.top_products||[];
@@ -343,31 +488,11 @@ function renderDashboard(app){
           </div>`;
         }).join('')}
       </div>`:''}
-
-      ${(d.data.pending_orders||[]).length>0 ? `
-      <div class="section">
-        <div class="section-title">
-          <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 8h6M8 5v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          Pedidos Pendientes
-        </div>
-        ${d.data.pending_orders.map(o=>{
-          const st = o.status||'pending';
-          const stLabel = {pending:'Pendiente',approved:'Aprobado',rejected:'Rechazado'}[st]||st;
-          const stColor = {pending:'#fbbf24',approved:'#4ade80',rejected:'#f87171'}[st]||'#8b95a5';
-          return `
-          <div class="order-item">
-            <div class="order-info">
-              <div class="order-status-badge" style="background:${stColor}22;color:${stColor}">${h(stLabel)}</div>
-              <div class="order-meta">Pedido #${o.id}</div>
-            </div>
-            <div class="order-right">
-              <div class="order-amount">${fmt$(o.total)}</div>
-              <div class="order-time">${fmtTime(o.created_at)}</div>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>`:''}
     </div>`;
+  } else if(state.dashboardTab==='inventario'){
+    content = renderInventorySection();
+  } else if(state.dashboardTab==='pedidos'){
+    content = renderPedidosSection(d);
   }
 
   app.innerHTML = `
@@ -379,10 +504,11 @@ function renderDashboard(app){
       </div>
       <div class="topbar-right">
         <span class="last-push">${state.lastPush?'<span class="refresh-indicator"></span>'+fmtTime(state.lastPush):''}</span>
-        <button class="btn-sm" onclick="fetchData()">Actualizar</button>
+        <button class="btn-sm" onclick="fetchData();if(state.dashboardTab==='inventario')fetchInventory()">Actualizar</button>
         <button class="btn-danger-sm" onclick="logout()">Salir</button>
       </div>
     </div>
+    ${tabs}
     ${content}
     <div class="content">
       <div class="delete-section">
