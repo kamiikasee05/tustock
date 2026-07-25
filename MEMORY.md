@@ -353,6 +353,7 @@ La clienta manifestó dos necesidades concretas:
 | ✅ | **Implementar rediseño Stitch en frontend React** | 🎨 UI + 🖥 DEV | Completado 18/7. 44 archivos, 13 páginas rediseñadas con Stitch dark theme, glass effects, Geist Mono, Material Icons. |
 | ✅ | **Dominio para Monitor Cloud** | 🖥 DEV + 🧑 HUMANO | `monitor.tustocksoft.com.ar` configurado via Railway CLI + Cloudflare DNS. Puerto interno: 8080. SSL automático. |
 | 🔥 3.5 | **Evaluar multi-sucursal para polirrubro** — 3 sucursales, lead potencial | 📢 Ventas + 🖥 DEV | Cliente real. Si desarrollamos multi-sucursal básica (~38h), podemos cerrar $240K+ |
+| 🔥 11 | **Fix campos numéricos sin decimales** — no permiten coma, imposible vender por kilo/litro | 🖥 DEV | Bug bloqueante para Dayana y cualquier negocio que venda por peso/volumen. Verificar input de precios, cantidades y stock. |
 | 🟢 9 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
 | 🟢 10 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
 
