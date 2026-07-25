@@ -146,7 +146,7 @@ app.include_router(pending_orders_router, dependencies=[Depends(verify_token)])
 app.include_router(customers_router, dependencies=[Depends(verify_token)])
 app.include_router(budgets_router, dependencies=[Depends(verify_token)])
 app.include_router(license_router)
-app.include_router(remote_orders_router)
+app.include_router(remote_orders_router, dependencies=[Depends(verify_token)])
 
 if WEB_DIR.exists():
     @app.middleware("http")

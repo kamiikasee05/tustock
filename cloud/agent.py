@@ -39,6 +39,19 @@ def save_config(cfg: dict):
     CONFIG_FILE.write_text(json.dumps(cfg, indent=2), "utf-8")
 
 
+def _get_local_token() -> str:
+    cfg = load_config()
+    token = cfg.get("local_token", "")
+    if token:
+        return token
+    env_path = BASE_DIR / "server" / ".env"
+    if env_path.exists():
+        for line in env_path.read_text("utf-8").splitlines():
+            if line.startswith("TUSTOCK_TOKEN="):
+                return line.split("=", 1)[1].strip()
+    return "tustock-local-token"
+
+
 def _query(db, sql, params=None):
     import sqlite3
     conn = sqlite3.connect(str(db))
@@ -136,6 +149,23 @@ def collect_metrics(db_path: Path) -> dict:
     """)
     debtors = [{"name": r[0], "balance": float(r[1])} for r in debt_rows]
 
+    pending_rows = _query(db_path, """
+        SELECT po.id, po.total, po.status, po.created_at
+        FROM pending_orders po
+        WHERE po.created_at >= :today
+        ORDER BY po.created_at DESC
+        LIMIT 10
+    """, {"today": today})
+    pending_orders = [
+        {
+            "id": r[0],
+            "total": float(r[1]),
+            "status": r[2] or "pending",
+            "created_at": str(r[3]) if r[3] else None,
+        }
+        for r in pending_rows
+    ]
+
     inventory = collect_inventory(db_path)
 
     return {
@@ -150,6 +180,7 @@ def collect_metrics(db_path: Path) -> dict:
         "top_products": top_products,
         "low_stock": low_stock,
         "debtors": debtors,
+        "pending_orders": pending_orders,
         "inventory": inventory,
     }
 
@@ -200,6 +231,7 @@ def execute_command(cmd: dict, api_url: str, api_key: str):
     payload = cmd.get("payload", {})
     cmd_id = cmd.get("id")
     local_url = "http://localhost:8090"
+    token = _get_local_token()
 
     try:
         if cmd_type == "direct_sale":
@@ -207,7 +239,7 @@ def execute_command(cmd: dict, api_url: str, api_key: str):
             req = urllib.request.Request(
                 f"{local_url}/api/remote-orders",
                 data=data,
-                headers={"Content-Type": "application/json"},
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
                 method="POST",
             )
             with urllib.request.urlopen(req, timeout=10) as resp:
@@ -221,7 +253,7 @@ def execute_command(cmd: dict, api_url: str, api_key: str):
             req = urllib.request.Request(
                 f"{local_url}/api/pending-orders/{order_id}/approve",
                 data=data,
-                headers={"Content-Type": "application/json"},
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
                 method="POST",
             )
             with urllib.request.urlopen(req, timeout=10) as resp:
@@ -233,6 +265,7 @@ def execute_command(cmd: dict, api_url: str, api_key: str):
             req = urllib.request.Request(
                 f"{local_url}/api/pending-orders/{order_id}/reject",
                 method="POST",
+                headers={"Authorization": f"Bearer {token}"},
             )
             with urllib.request.urlopen(req, timeout=10) as resp:
                 result = json.loads(resp.read())

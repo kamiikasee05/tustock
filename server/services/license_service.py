@@ -38,7 +38,7 @@ PLAN_FEATURES = {
         "reports_enabled": True,
         "export_enabled": True,
         "monitor_enabled": True,
-        "backup_enabled": True,
+        "backup_enabled": False,
     },
     "premium": {
         "max_products": 999999,

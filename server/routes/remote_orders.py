@@ -98,4 +98,10 @@ def create_remote_order(
 
     db.commit()
 
+    try:
+        from cloud_push import push_async
+        push_async()
+    except Exception:
+        pass
+
     return {"sale_id": sale.id, "total": total, "items_count": len(sale_items)}
