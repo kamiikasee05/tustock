@@ -154,8 +154,8 @@ def collect_metrics(db_path: Path) -> dict:
         FROM customers c
         LEFT JOIN (SELECT customer_id, SUM(amount) as total FROM customer_transactions WHERE type='debt' GROUP BY customer_id) d ON d.customer_id = c.id
         LEFT JOIN (SELECT customer_id, SUM(amount) as total FROM customer_transactions WHERE type='payment' GROUP BY customer_id) p ON p.customer_id = c.id
-        WHERE c.is_active = 1 AND COALESCE(d.total,0)-COALESCE(p.total,0) > 0
-        ORDER BY 3 DESC
+        WHERE c.is_active = 1
+        ORDER BY c.name
         LIMIT 50
     """)
     customers = [{"id": r[0], "name": r[1], "balance": float(r[2])} for r in customers_rows]
