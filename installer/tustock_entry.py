@@ -135,6 +135,69 @@ def open_browser(url):
     webbrowser.open(url)
 
 
+def run_cloud_agent(bundle_dir: Path):
+    log_dir = bundle_dir / "server" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    def log(msg):
+        with open(log_dir / "cloud_agent.log", "a") as f:
+            f.write(f"[{datetime.now().isoformat()}] {msg}\n")
+
+    try:
+        log("run_cloud_agent called")
+
+        if getattr(sys, "frozen", False):
+            project_root = Path(sys.executable).resolve().parent
+        else:
+            project_root = bundle_dir
+
+        cfg_path = project_root / "config" / "cloud.json"
+        if not cfg_path.exists():
+            log(f"No cloud config at {cfg_path}, exiting")
+            return
+        import json
+        cfg = json.loads(cfg_path.read_text("utf-8"))
+        if not cfg.get("api_url") or not cfg.get("api_key"):
+            log("Cloud config missing api_url or api_key, exiting")
+            return
+
+        agent_path = bundle_dir / "cloud"
+        if not (agent_path / "agent.py").exists():
+            agent_path = bundle_dir / "_internal" / "cloud"
+        if not (agent_path / "agent.py").exists():
+            log("cloud/agent.py not found, exiting")
+            return
+
+        import importlib.util
+        import time
+
+        spec = importlib.util.spec_from_file_location("cloud_agent", str(agent_path / "agent.py"))
+        agent_mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(agent_mod)
+
+        api_url = cfg["api_url"]
+        api_key = cfg["api_key"]
+        local_db = Path(sys._MEIPASS) / "tustock.db" if getattr(sys, "frozen", False) else project_root / "tustock.db"
+        interval = agent_mod.PUSH_INTERVAL
+
+        log(f"Cloud agent arrancando. URL: {api_url}, DB: {local_db}, project_root: {project_root}")
+
+        while True:
+            try:
+                data = agent_mod.collect_metrics(local_db)
+                ok = agent_mod.push_metrics(api_url, api_key, data)
+                status = "OK" if ok else "FAIL"
+                log(f"Push {status} — {data['date']} — ${data['sales_today']['total']:.0f} — count:{data['sales_today']['count']}")
+            except Exception as e:
+                log(f"Error: {e}")
+            time.sleep(interval)
+    except Exception as e:
+        try:
+            log(f"CRASH: {e}")
+        except Exception:
+            pass
+
+
 def main():
     global BUNDLE_DIR
     BUNDLE_DIR = get_bundle_dir()
@@ -155,6 +218,9 @@ def main():
 
     server_thread = threading.Thread(target=run_server, args=(BUNDLE_DIR,), daemon=True)
     server_thread.start()
+
+    agent_thread = threading.Thread(target=run_cloud_agent, args=(BUNDLE_DIR,), daemon=True)
+    agent_thread.start()
 
     try:
         import pystray
