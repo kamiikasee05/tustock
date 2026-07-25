@@ -25,7 +25,7 @@ from sqlalchemy import desc
 from audit import log_event
 from config import CLOUD_HOST, CLOUD_PORT, JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_DAYS, BASE_DIR, MP_ACCESS_TOKEN, MP_SUBS_TOKEN, ADMIN_TOKEN, MP_WEBHOOK_SECRET, MP_WEBHOOK_SECRET_SUBS
 from payments import SUBSCRIPTION_PLAN_ID, SUBSCRIPTION_PLAN_PRICE, SUBSCRIPTION_PLAN_URL, update_plan_notification_url, get_subscription_plan
-from models import init_db, get_db, Business, MetricsPush, Payment, AuthorizedKey, KeyActivation, Subscription
+from models import init_db, get_db, Business, MetricsPush, Payment, AuthorizedKey, KeyActivation, Subscription, CommandQueue
 
 import sys as _sys
 if not JWT_SECRET:
@@ -1069,6 +1069,173 @@ def serve_app():
         return HTMLResponse("<h1>Dashboard no encontrado</h1>", status_code=404)
     html = file_path.read_text("utf-8")
     return HTMLResponse(html)
+
+
+@app.post("/api/pos/order")
+async def pos_create_order(
+    request: Request,
+    business: Business = Depends(_get_current_business),
+    db: Session = Depends(get_db),
+):
+    body = await request.json()
+    items = body.get("items", [])
+    payment_method = body.get("payment_method", "efectivo")
+    customer_name = body.get("customer_name")
+    notes = body.get("notes", "")
+
+    if not items:
+        raise HTTPException(400, "Sin items")
+    if payment_method not in ("efectivo", "transferencia", "fiado", "mercadopago"):
+        raise HTTPException(400, "Método de pago inválido")
+
+    cmd = CommandQueue(
+        business_id=business.id,
+        command_type="direct_sale",
+        payload={"items": items, "payment_method": payment_method, "customer_name": customer_name, "notes": notes},
+        status="pending",
+    )
+    db.add(cmd)
+    db.commit()
+
+    log_event("pos_order", {"business_id": business.id, "items_count": len(items)})
+    return {"ok": True, "command_id": cmd.id, "message": "Pedido enviado — procesando..."}
+
+
+@app.post("/api/pos/approve")
+async def pos_approve_order(
+    request: Request,
+    business: Business = Depends(_get_current_business),
+    db: Session = Depends(get_db),
+):
+    body = await request.json()
+    order_id = body.get("order_id")
+    payment_method = body.get("payment_method", "efectivo")
+
+    if not order_id:
+        raise HTTPException(400, "order_id requerido")
+
+    cmd = CommandQueue(
+        business_id=business.id,
+        command_type="approve_order",
+        payload={"order_id": order_id, "payment_method": payment_method},
+        status="pending",
+    )
+    db.add(cmd)
+    db.commit()
+
+    log_event("pos_approve", {"business_id": business.id, "order_id": order_id})
+    return {"ok": True, "command_id": cmd.id, "message": "Aprobación enviada"}
+
+
+@app.post("/api/pos/reject")
+async def pos_reject_order(
+    request: Request,
+    business: Business = Depends(_get_current_business),
+    db: Session = Depends(get_db),
+):
+    body = await request.json()
+    order_id = body.get("order_id")
+
+    if not order_id:
+        raise HTTPException(400, "order_id requerido")
+
+    cmd = CommandQueue(
+        business_id=business.id,
+        command_type="reject_order",
+        payload={"order_id": order_id},
+        status="pending",
+    )
+    db.add(cmd)
+    db.commit()
+
+    log_event("pos_reject", {"business_id": business.id, "order_id": order_id})
+    return {"ok": True, "command_id": cmd.id, "message": "Rechazo enviado"}
+
+
+@app.get("/api/pos/pending-orders")
+def pos_pending_orders(
+    business: Business = Depends(_get_current_business),
+    db: Session = Depends(get_db),
+):
+    last = db.query(MetricsPush).filter(
+        MetricsPush.business_id == business.id
+    ).order_by(desc(MetricsPush.pushed_at)).first()
+
+    if not last or not last.payload:
+        return {"orders": []}
+
+    orders = last.payload.get("pending_orders", [])
+    return {"orders": orders}
+
+
+@app.get("/api/commands/pending")
+def get_pending_commands(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    api_key = request.headers.get("X-API-Key", "") or request.query_params.get("api_key", "")
+    business = db.query(Business).filter(Business.api_key == api_key).first()
+    if not business:
+        raise HTTPException(401, "API key inválida")
+
+    commands = db.query(CommandQueue).filter(
+        CommandQueue.business_id == business.id,
+        CommandQueue.status == "pending",
+    ).order_by(CommandQueue.created_at).all()
+
+    for cmd in commands:
+        cmd.status = "executing"
+    db.commit()
+
+    return {
+        "commands": [
+            {
+                "id": cmd.id,
+                "command_type": cmd.command_type,
+                "payload": cmd.payload,
+                "created_at": cmd.created_at.isoformat() if cmd.created_at else None,
+            }
+            for cmd in commands
+        ]
+    }
+
+
+@app.post("/api/commands/{cmd_id}/ack")
+async def ack_command(
+    cmd_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    api_key = request.headers.get("X-API-Key", "") or request.query_params.get("api_key", "")
+    business = db.query(Business).filter(Business.api_key == api_key).first()
+    if not business:
+        raise HTTPException(401, "API key inválida")
+
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+
+    cmd = db.query(CommandQueue).filter(
+        CommandQueue.id == cmd_id,
+        CommandQueue.business_id == business.id,
+    ).first()
+
+    if not cmd:
+        raise HTTPException(404, "Comando no encontrado")
+
+    if body.get("ok"):
+        cmd.status = "completed"
+        cmd.result = body.get("result")
+    else:
+        cmd.status = "failed"
+        cmd.error_message = body.get("error", "Error desconocido")
+
+    cmd.executed_at = datetime.now(timezone.utc)
+    db.commit()
+
+    return {"ok": True}
 
 
 if __name__ == "__main__":

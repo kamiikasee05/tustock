@@ -168,6 +168,83 @@ def push_metrics(api_url: str, api_key: str, data: dict) -> bool:
         return False
 
 
+def fetch_pending_commands(api_url: str, api_key: str) -> list:
+    try:
+        req = urllib.request.Request(
+            f"{api_url.rstrip('/')}/api/commands/pending",
+            headers={"X-API-Key": api_key},
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+            return data.get("commands", [])
+    except Exception:
+        return []
+
+
+def ack_command(api_url: str, api_key: str, cmd_id: int, ok: bool, result=None, error=None):
+    try:
+        payload = json.dumps({"ok": ok, "result": result, "error": error}).encode()
+        req = urllib.request.Request(
+            f"{api_url.rstrip('/')}/api/commands/{cmd_id}/ack",
+            data=payload,
+            headers={"X-API-Key": api_key, "Content-Type": "application/json"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=10)
+    except Exception:
+        pass
+
+
+def execute_command(cmd: dict, api_url: str, api_key: str):
+    cmd_type = cmd.get("command_type", "")
+    payload = cmd.get("payload", {})
+    cmd_id = cmd.get("id")
+    local_url = "http://localhost:8090"
+
+    try:
+        if cmd_type == "direct_sale":
+            data = json.dumps(payload).encode()
+            req = urllib.request.Request(
+                f"{local_url}/api/remote-orders",
+                data=data,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result = json.loads(resp.read())
+                ack_command(api_url, api_key, cmd_id, True, result=result)
+
+        elif cmd_type == "approve_order":
+            order_id = payload.get("order_id")
+            payment_method = payload.get("payment_method", "efectivo")
+            data = json.dumps({"payment_method": payment_method}).encode()
+            req = urllib.request.Request(
+                f"{local_url}/api/pending-orders/{order_id}/approve",
+                data=data,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result = json.loads(resp.read())
+                ack_command(api_url, api_key, cmd_id, True, result=result)
+
+        elif cmd_type == "reject_order":
+            order_id = payload.get("order_id")
+            req = urllib.request.Request(
+                f"{local_url}/api/pending-orders/{order_id}/reject",
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result = json.loads(resp.read())
+                ack_command(api_url, api_key, cmd_id, True, result=result)
+
+        else:
+            ack_command(api_url, api_key, cmd_id, False, error=f"Tipo desconocido: {cmd_type}")
+
+    except Exception as e:
+        ack_command(api_url, api_key, cmd_id, False, error=str(e))
+
+
 def setup_wizard():
     print("=== Configurar Monitor Cloud ===")
     print()
@@ -213,6 +290,14 @@ def main():
             status = "OK" if ok else "FAIL"
             t = datetime.now().strftime("%H:%M:%S")
             print(f"  [{t}] Push {status} — {data['date']} — ${data['sales_today']['total']:.0f}")
+
+            commands = fetch_pending_commands(cfg["api_url"], cfg["api_key"])
+            if commands:
+                print(f"  [{t}] Comandos recibidos: {len(commands)}")
+            for cmd in commands:
+                print(f"  [{t}] Ejecutando: {cmd.get('command_type')} id={cmd.get('id')}")
+                execute_command(cmd, cfg["api_url"], cfg["api_key"])
+
         except Exception as e:
             print(f"  [{datetime.now().strftime('%H:%M:%S')}] Error: {e}")
         time.sleep(PUSH_INTERVAL)

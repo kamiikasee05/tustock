@@ -720,10 +720,11 @@ La clienta manifestó dos necesidades concretas:
 - [feature] POS REMOTO FASE 1: Pedidos pendientes visibles en Monitor Cloud. `cloud_push.py` consulta `pending_orders` del día y los agrega al push payload. `cloud/dashboard.html` tiene sección "Pedidos Pendientes" con badges de color (pendiente/aprobado/rechazado). Deploy vía git push a Railway. Read-only — no se crean pedidos desde el celular todavía. (2026-07-24)
 - [feature] INVENTARIO MONITOR CLOUD: Inventario completo visible en el Monitor Cloud. `collect_inventory()` en `cloud_push.py` y `cloud/agent.py` pushea productos con stock (max 500, query SQL con products+categories+current_stock). Endpoint `GET /api/inventory` con JWT auth, paginación, búsqueda por nombre/código, filtro por categoría, filtro stock bajo. `dashboard.html` con 3 tabs (Dashboard/Inventario/Pedidos), tabla responsive con badges (🟢 OK/🟡 Bajo/🔴 Sin stock), KPI total productos, categorías dinámicas. Gating: solo planes Suscripción/Pro/Premium. (2026-07-24)
 - [feature] WEBHOOK MP FIRMA: Verificación HMAC-SHA256 en webhook de Mercado Pago. `verify_mp_signature()` parsea header `x-signature` (formato `ts=<ms>,v1=<hash>`), construye manifest `id:;request-id:;ts:;`, calcula HMAC-SHA256 con secret, compara con `hmac.compare_digest()`. Modo warn (log pero no rechaza). Dual secret: `MP_WEBHOOK_SECRET` (Checkout Pro) + `MP_WEBHOOK_SECRET_SUBS` (Suscripciones) con fallback. Replay check (>5min = warning). `notification_url` actualizado con `?source_news=webhooks` para recibir solo webhooks (no IPN legacy). Env vars pendientes de configurar en Railway. (2026-07-24)
+- [fix] EXE MODELS IMPORT CRASH: `sys.path.insert(0, agent_path)` en `tustock_entry.py` insertaba `cloud/` en sys.path, causando que `cloud/models.py` sombree al package `server/models/` (race condition entre threads). Eliminada línea innecesaria (agent.py se carga con importlib.util). Exe reconstruido y verificado. (2026-07-24)
 
 ---
 
-*Última actualización: 24 de Julio de 2026 (Inventario Monitor Cloud + Webhook MP firma)*
+*Última actualización: 24 de Julio de 2026 (Inventario Monitor Cloud + Webhook MP firma + EXE crash fix)*
 
 ---
 

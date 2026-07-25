@@ -188,6 +188,13 @@ def run_cloud_agent(bundle_dir: Path):
                 ok = agent_mod.push_metrics(api_url, api_key, data)
                 status = "OK" if ok else "FAIL"
                 log(f"Push {status} — {data['date']} — ${data['sales_today']['total']:.0f} — count:{data['sales_today']['count']}")
+
+                commands = agent_mod.fetch_pending_commands(api_url, api_key)
+                if commands:
+                    log(f"Comandos recibidos: {len(commands)}")
+                for cmd in commands:
+                    log(f"Ejecutando comando: {cmd.get('command_type')} id={cmd.get('id')}")
+                    agent_mod.execute_command(cmd, api_url, api_key)
             except Exception as e:
                 log(f"Error: {e}")
             time.sleep(interval)

@@ -105,11 +105,48 @@ a{color:var(--primary-container);text-decoration:none}
 .btn-delete{padding:8px 16px;border:none;border-radius:var(--radius-sm);background:rgba(248,113,113,0.12);color:#f87171;font-size:13px;cursor:pointer;font-weight:500}
 .btn-delete:hover{background:rgba(248,113,113,0.2)}
 
+.pos-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.pos-product-list{max-height:380px;overflow-y:auto}
+.pos-product-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--outline);cursor:pointer;transition:background .15s}
+.pos-product-item:hover{background:rgba(255,255,255,0.03)}
+.pos-product-item:last-child{border-bottom:none}
+.pos-product-name{font-size:13px;font-weight:500;color:var(--on-surface)}
+.pos-product-meta{font-size:11px;color:var(--on-surface-variant);margin-top:2px}
+.pos-product-price{font-size:13px;color:var(--primary-container);font-weight:600;white-space:nowrap;margin-left:12px}
+.pos-cart-list{max-height:240px;overflow-y:auto;margin-bottom:12px}
+.pos-cart-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--outline)}
+.pos-cart-item:last-child{border-bottom:none}
+.pos-cart-info{flex:1;min-width:0}
+.pos-cart-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pos-cart-controls{display:flex;align-items:center;gap:6px;margin-top:4px}
+.pos-qty-btn{width:24px;height:24px;border:1px solid var(--outline);border-radius:4px;background:transparent;color:var(--on-surface);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.pos-qty-btn:hover{border-color:var(--primary);color:var(--primary)}
+.pos-qty-val{font-size:13px;font-weight:600;min-width:20px;text-align:center}
+.pos-cart-right{display:flex;align-items:center;gap:8px;margin-left:12px}
+.pos-cart-subtotal{font-size:13px;font-weight:600;white-space:nowrap}
+.pos-cart-remove{color:#f87171;font-size:18px;cursor:pointer;padding:2px;transition:opacity .15s}
+.pos-cart-remove:hover{opacity:.7}
+.pos-total{font-size:18px;font-weight:700;text-align:right;padding:10px 0;border-top:2px solid var(--outline)}
+.pos-pay-label{font-size:12px;color:var(--on-surface-variant);margin-bottom:6px}
+.pos-pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.pos-pay-btn{padding:8px;border:1px solid var(--outline);border-radius:var(--radius-sm);background:transparent;color:var(--on-surface);font-size:12px;cursor:pointer;text-transform:capitalize;transition:all .15s}
+.pos-pay-btn:hover{border-color:var(--primary)}
+.pos-pay-active{border-color:var(--primary-container);background:rgba(77,142,255,0.15);color:var(--primary-container)}
+.pos-send-btn{width:100%;padding:12px;background:linear-gradient(135deg,#4d8eff,#7c5cff);border:none;border-radius:10px;color:white;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.pos-send-btn:hover{opacity:.88}
+.pos-send-disabled{opacity:.5;cursor:default}
+.pos-toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:100;animation:fadeIn .3s}
+.pos-toast-ok{background:rgba(74,222,128,0.9);color:#000}
+.pos-toast-err{background:rgba(248,113,113,0.9);color:#fff}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
 @media(max-width:480px){
 .content{padding:14px}
 .grid{grid-template-columns:1fr 1fr}
 .kpi-value{font-size:22px}
 .topbar{padding:12px 14px}
+.pos-grid{grid-template-columns:1fr}
+.pos-pay-grid{grid-template-columns:1fr 1fr}
 }
 .nav-tabs{display:flex;gap:0;background:var(--surface);border-bottom:1px solid var(--outline);padding:0 20px;position:sticky;top:51px;z-index:9}
 .nav-tab{padding:12px 16px;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--on-surface-variant);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
@@ -142,7 +179,7 @@ a{color:var(--primary-container);text-decoration:none}
 <div id="app"></div>
 <script>
 const API = window.location.origin;
-let state = {view:'login',token:localStorage.getItem('tm_token')||'',email:'',password:'',name:'',data:null,lastPush:'',error:'',loading:false,tab:'register',refreshTimer:null,dashboardTab:'dashboard',inventory:null,invPage:1,invSearch:'',invCategory:'',invLowOnly:false,invCategories:[]};
+let state = {view:'login',token:localStorage.getItem('tm_token')||'',email:'',password:'',name:'',data:null,lastPush:'',error:'',loading:false,tab:'register',refreshTimer:null,dashboardTab:'dashboard',inventory:null,invPage:1,invSearch:'',invCategory:'',invLowOnly:false,invCategories:[],posProducts:[],posCart:[],posSearch:'',posPaymentMethod:'efectivo',posCustomer:'',posSending:false,posToast:null};
 const $ = s => document.getElementById(s);
 const h = t => {const d=document.createElement('div');d.textContent=t;return d.innerHTML};
 
@@ -231,7 +268,7 @@ function doRegister(){
 
 function logout(){
   clearInterval(state.refreshTimer);
-  state.token='';state.view='dashboard';state.data=null;state.inventory=null;state.dashboardTab='dashboard';state.invPage=1;state.invSearch='';state.invCategory='';state.invLowOnly=false;
+  state.token='';state.view='dashboard';state.data=null;state.inventory=null;state.dashboardTab='dashboard';state.invPage=1;state.invSearch='';state.invCategory='';state.invLowOnly=false;state.posProducts=[];state.posCart=[];state.posSearch='';state.posPaymentMethod='efectivo';state.posCustomer='';state.posSending=false;state.posToast=null;
   localStorage.removeItem('tm_token');render();
 }
 
@@ -374,6 +411,138 @@ function renderPedidosSection(d){
   </div>`;
 }
 
+function fetchPosData(){
+  if(!state.token) return;
+  api('/api/inventory?per_page=500').then(d=>{
+    state.posProducts = (d.products||[]);
+    render();
+  }).catch(()=>{});
+}
+
+function posAddItem(code){
+  var p = state.posProducts.find(function(x){return x.code===code;});
+  if(!p) return;
+  var existing = state.posCart.find(function(x){return x.code===code;});
+  if(existing){ existing.quantity++; }
+  else { state.posCart.push({code:p.code,name:p.name,unit_price:p.price,quantity:1}); }
+  render();
+}
+
+function posRemoveItem(code){
+  state.posCart = state.posCart.filter(function(x){return x.code!==code;});
+  render();
+}
+
+function posQty(code,delta){
+  var item = state.posCart.find(function(x){return x.code===code;});
+  if(!item) return;
+  item.quantity = Math.max(1, item.quantity + delta);
+  render();
+}
+
+function posSendOrder(){
+  if(state.posCart.length===0 || state.posSending) return;
+  state.posSending = true;
+  render();
+
+  var payload = {
+    items: state.posCart.map(function(x){return {product_code:x.code,name:x.name,quantity:x.quantity,unit_price:x.unit_price};}),
+    payment_method: state.posPaymentMethod,
+    customer_name: state.posCustomer || null,
+    notes: "Venta remota desde Monitor"
+  };
+
+  api('/api/pos/order', {method:'POST', body:JSON.stringify(payload)}).then(function(d){
+    state.posCart = [];
+    state.posCustomer = '';
+    state.posSending = false;
+    state.posToast = {type:'success', text:d.message||'Pedido enviado'};
+    setTimeout(function(){state.posToast=null;render();}, 3000);
+    render();
+  }).catch(function(e){
+    state.posSending = false;
+    state.posToast = {type:'error', text:'Error: '+e.message};
+    setTimeout(function(){state.posToast=null;render();}, 3000);
+    render();
+  });
+}
+
+function renderPosSection(){
+  var products = state.posProducts||[];
+  var cart = state.posCart||[];
+  var total = cart.reduce(function(s,x){return s+x.quantity*x.unit_price;},0);
+  var filtered = products.filter(function(p){
+    var q = (state.posSearch||'').toLowerCase();
+    return !q || p.name.toLowerCase().indexOf(q)!==-1 || (p.code||'').toLowerCase().indexOf(q)!==-1;
+  });
+
+  return `
+  <div class="content">
+    <div class="pos-grid">
+      <div class="section">
+        <div class="section-title">
+          <svg viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Agregar productos
+        </div>
+        <input type="text" placeholder="Buscar por nombre o código..." value="${h(state.posSearch||'')}" 
+          oninput="state.posSearch=this.value;render()" 
+          style="width:100%;padding:10px;background:#0b0e15;border:1px solid var(--outline);border-radius:var(--radius-sm);color:var(--on-surface);font-size:13px;margin-bottom:10px;outline:none" />
+        <div class="pos-product-list">
+          ${filtered.length===0?'<div class="empty">No hay productos</div>':''}
+          ${filtered.map(function(p){return `
+          <div class="pos-product-item" onclick="posAddItem('${h(p.code)}')">
+            <div class="pos-product-info">
+              <div class="pos-product-name">${h(p.name)}</div>
+              <div class="pos-product-meta">${h(p.code||'')} · Stock: ${p.stock}</div>
+            </div>
+            <div class="pos-product-price">${fmt$(p.price)}</div>
+          </div>`;}).join('')}
+        </div>
+      </div>
+      
+      <div class="section">
+        <div class="section-title">
+          <svg viewBox="0 0 16 16" fill="none"><path d="M1 1h3l1.5 8h8l1.5-6H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="13" r="1" fill="currentColor"/><circle cx="12" cy="13" r="1" fill="currentColor"/></svg>
+          Pedido
+        </div>
+        ${cart.length===0?'<div class="empty">Agregá productos desde la izquierda</div>':`
+          <div class="pos-cart-list">
+            ${cart.map(function(x){return `
+            <div class="pos-cart-item">
+              <div class="pos-cart-info">
+                <div class="pos-cart-name">${h(x.name)}</div>
+                <div class="pos-cart-controls">
+                  <button class="pos-qty-btn" onclick="posQty('${h(x.code)}',-1)">-</button>
+                  <span class="pos-qty-val">${x.quantity}</span>
+                  <button class="pos-qty-btn" onclick="posQty('${h(x.code)}',1)">+</button>
+                </div>
+              </div>
+              <div class="pos-cart-right">
+                <span class="pos-cart-subtotal">${fmt$(x.quantity*x.unit_price)}</span>
+                <span class="pos-cart-remove" onclick="posRemoveItem('${h(x.code)}')">&times;</span>
+              </div>
+            </div>`;}).join('')}
+          </div>
+          <div class="pos-total">Total: ${fmt$(total)}</div>
+          <input type="text" placeholder="Cliente (opcional)" value="${h(state.posCustomer||'')}" 
+            oninput="state.posCustomer=this.value" 
+            style="width:100%;padding:8px 12px;background:#0b0e15;border:1px solid var(--outline);border-radius:var(--radius-sm);color:var(--on-surface);font-size:13px;margin:10px 0;outline:none" />
+          <div class="pos-pay-label">Cobrar con:</div>
+          <div class="pos-pay-grid">
+            ${['efectivo','transferencia','fiado','mercadopago'].map(function(m){return `
+            <button class="pos-pay-btn ${state.posPaymentMethod===m?'pos-pay-active':''}" onclick="state.posPaymentMethod='${m}';render()">${m}</button>`;}).join('')}
+          </div>
+          <button class="pos-send-btn ${state.posSending?'pos-send-disabled':''}" onclick="posSendOrder()" ${state.posSending?'disabled':''}>
+            ${state.posSending?'Enviando...':'ENVIAR PEDIDO'}
+          </button>
+        `}
+      </div>
+    </div>
+
+    ${state.posToast?'<div class="pos-toast pos-toast-'+(state.posToast.type==='success'?'ok':'err')+'">'+h(state.posToast.text)+'</div>':''}
+  </div>`;
+}
+
 function renderDashboard(app){
   const d = state.data;
   let content = '';
@@ -383,9 +552,12 @@ function renderDashboard(app){
       <button class="nav-tab ${state.dashboardTab==='dashboard'?'active':''}" onclick="state.dashboardTab='dashboard';render()">Dashboard</button>
       <button class="nav-tab ${state.dashboardTab==='inventario'?'active':''}" onclick="state.dashboardTab='inventario';if(!state.inventory)fetchInventory();render()">Inventario</button>
       <button class="nav-tab ${state.dashboardTab==='pedidos'?'active':''}" onclick="state.dashboardTab='pedidos';render()">Pedidos</button>
+      <button class="nav-tab ${state.dashboardTab==='pos'?'active':''}" onclick="state.dashboardTab='pos';fetchPosData()">POS</button>
     </div>`;
 
-  if(!d || !d.has_data){
+  if(state.dashboardTab==='pos'){
+    content = renderPosSection();
+  } else if(!d || !d.has_data){
     content = `
     <div class="content">
       <div class="no-data">
@@ -493,6 +665,8 @@ function renderDashboard(app){
     content = renderInventorySection();
   } else if(state.dashboardTab==='pedidos'){
     content = renderPedidosSection(d);
+  } else if(state.dashboardTab==='pos'){
+    content = renderPosSection();
   }
 
   app.innerHTML = `
@@ -504,7 +678,7 @@ function renderDashboard(app){
       </div>
       <div class="topbar-right">
         <span class="last-push">${state.lastPush?'<span class="refresh-indicator"></span>'+fmtTime(state.lastPush):''}</span>
-        <button class="btn-sm" onclick="fetchData();if(state.dashboardTab==='inventario')fetchInventory()">Actualizar</button>
+        <button class="btn-sm" onclick="fetchData();if(state.dashboardTab==='inventario')fetchInventory();if(state.dashboardTab==='pos')fetchPosData()">Actualizar</button>
         <button class="btn-danger-sm" onclick="logout()">Salir</button>
       </div>
     </div>

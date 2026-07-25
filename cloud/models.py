@@ -94,6 +94,20 @@ class Subscription(Base):
     grace_period_end = Column(DateTime, nullable=True)
 
 
+class CommandQueue(Base):
+    __tablename__ = "command_queue"
+
+    id = Column(Integer, primary_key=True, index=True)
+    business_id = Column(Integer, nullable=False, index=True)
+    command_type = Column(String(50), nullable=False)
+    payload = Column(JSON, nullable=False)
+    status = Column(String(20), default="pending")
+    result = Column(JSON, nullable=True)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    executed_at = Column(DateTime, nullable=True)
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 
