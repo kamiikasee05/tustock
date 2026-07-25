@@ -78,6 +78,17 @@ def collect_metrics() -> dict:
     """)
     debtors = [{"name": r[0], "balance": float(r[1])} for r in debt_rows]
 
+    customers_rows = _query(LOCAL_DB, """
+        SELECT c.id, c.name, COALESCE(d.total,0)-COALESCE(p.total,0)
+        FROM customers c
+        LEFT JOIN (SELECT customer_id, SUM(amount) as total FROM customer_transactions WHERE type='debt' GROUP BY customer_id) d ON d.customer_id = c.id
+        LEFT JOIN (SELECT customer_id, SUM(amount) as total FROM customer_transactions WHERE type='payment' GROUP BY customer_id) p ON p.customer_id = c.id
+        WHERE c.is_active = 1 AND COALESCE(d.total,0)-COALESCE(p.total,0) > 0
+        ORDER BY 3 DESC
+        LIMIT 50
+    """)
+    customers = [{"id": r[0], "name": r[1], "balance": float(r[2])} for r in customers_rows]
+
     pending_rows = _query(LOCAL_DB, """
         SELECT po.id, po.total, po.status, po.created_at
         FROM pending_orders po
@@ -109,6 +120,7 @@ def collect_metrics() -> dict:
         "top_products": top_products,
         "low_stock": low_stock,
         "debtors": debtors,
+        "customers": customers,
         "pending_orders": pending_orders,
         "inventory": inventory,
     }

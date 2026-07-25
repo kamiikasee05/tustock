@@ -4,6 +4,7 @@ from database import get_db
 from models.product import Product
 from models.sale import Sale, SaleItem
 from models.stock import CurrentStock, StockMovement
+from models.customer import Customer, CustomerTransaction
 from datetime import datetime, timezone, date
 
 router = APIRouter(prefix="/api/remote-orders", tags=["remote-orders"])
@@ -16,6 +17,7 @@ def create_remote_order(
 ):
     items = data.get("items", [])
     payment_method = data.get("payment_method", "efectivo")
+    customer_id = data.get("customer_id")
     customer_name = data.get("customer_name")
     notes = data.get("notes", "Venta remota")
 
@@ -86,6 +88,24 @@ def create_remote_order(
     )
     db.add(sale)
     db.flush()
+
+    customer = None
+    if customer_id:
+        customer = db.query(Customer).filter(Customer.id == customer_id, Customer.is_active == True).first()
+    elif customer_name and payment_method == "fiado":
+        customer = db.query(Customer).filter(Customer.name == customer_name, Customer.is_active == True).first()
+
+    if customer:
+        sale.customer_id = customer.id
+
+    if payment_method == "fiado" and customer:
+        db.add(CustomerTransaction(
+            customer_id=customer.id,
+            type="debt",
+            amount=total,
+            sale_id=sale.id,
+            notes=f"Venta remota #{sale.id} - fiado",
+        ))
 
     for si in sale_items:
         db.add(SaleItem(

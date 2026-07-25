@@ -179,7 +179,7 @@ a{color:var(--primary-container);text-decoration:none}
 <div id="app"></div>
 <script>
 const API = window.location.origin;
-let state = {view:'login',token:localStorage.getItem('tm_token')||'',email:'',password:'',name:'',data:null,lastPush:'',error:'',loading:false,tab:'register',refreshTimer:null,dashboardTab:'dashboard',inventory:null,invPage:1,invSearch:'',invCategory:'',invLowOnly:false,invCategories:[],posProducts:[],posCart:[],posSearch:'',posPaymentMethod:'efectivo',posCustomer:'',posSending:false,posToast:null};
+let state = {view:'login',token:localStorage.getItem('tm_token')||'',email:'',password:'',name:'',data:null,lastPush:'',error:'',loading:false,tab:'register',refreshTimer:null,dashboardTab:'dashboard',inventory:null,invPage:1,invSearch:'',invCategory:'',invLowOnly:false,invCategories:[],posProducts:[],posCart:[],posSearch:'',posPaymentMethod:'efectivo',posCustomer:'',posCustomerId:null,posSending:false,posToast:null};
 const $ = s => document.getElementById(s);
 const h = t => {const d=document.createElement('div');d.textContent=t;return d.innerHTML};
 
@@ -268,7 +268,7 @@ function doRegister(){
 
 function logout(){
   clearInterval(state.refreshTimer);
-  state.token='';state.view='dashboard';state.data=null;state.inventory=null;state.dashboardTab='dashboard';state.invPage=1;state.invSearch='';state.invCategory='';state.invLowOnly=false;state.posProducts=[];state.posCart=[];state.posSearch='';state.posPaymentMethod='efectivo';state.posCustomer='';state.posSending=false;state.posToast=null;
+  state.token='';state.view='dashboard';state.data=null;state.inventory=null;state.dashboardTab='dashboard';state.invPage=1;state.invSearch='';state.invCategory='';state.invLowOnly=false;state.posProducts=[];state.posCart=[];state.posSearch='';state.posPaymentMethod='efectivo';state.posCustomer='';state.posCustomerId=null;state.posSending=false;state.posToast=null;
   localStorage.removeItem('tm_token');render();
 }
 
@@ -440,6 +440,26 @@ function posQty(code,delta){
   render();
 }
 
+function handleCustomerSelect(el) {
+  var val = el.value;
+  var otherInput = document.getElementById('posOtherCustomer');
+  if (val === 'other') {
+    state.posCustomerId = null;
+    state.posCustomer = '';
+    if (otherInput) { otherInput.style.display = 'block'; otherInput.focus(); }
+  } else if (val === '') {
+    state.posCustomerId = null;
+    state.posCustomer = '';
+    if (otherInput) { otherInput.style.display = 'none'; }
+  } else {
+    var customers = (state.data && state.data.data && state.data.data.customers) || [];
+    var c = customers.find(function(x){ return String(x.id) === String(val); });
+    state.posCustomerId = parseInt(val);
+    state.posCustomer = c ? c.name : '';
+    if (otherInput) { otherInput.style.display = 'none'; }
+  }
+}
+
 function posSendOrder(){
   if(state.posCart.length===0 || state.posSending) return;
   state.posSending = true;
@@ -448,6 +468,7 @@ function posSendOrder(){
   var payload = {
     items: state.posCart.map(function(x){return {product_code:x.code,name:x.name,quantity:x.quantity,unit_price:x.unit_price};}),
     payment_method: state.posPaymentMethod,
+    customer_id: state.posCustomerId || null,
     customer_name: state.posCustomer || null,
     notes: "Venta remota desde Monitor"
   };
@@ -455,6 +476,7 @@ function posSendOrder(){
   api('/api/pos/order', {method:'POST', body:JSON.stringify(payload)}).then(function(d){
     state.posCart = [];
     state.posCustomer = '';
+    state.posCustomerId = null;
     state.posSending = false;
     state.posToast = {type:'success', text:d.message||'Pedido enviado'};
     setTimeout(function(){state.posToast=null;render();}, 3000);
@@ -524,9 +546,18 @@ function renderPosSection(){
             </div>`;}).join('')}
           </div>
           <div class="pos-total">Total: ${fmt$(total)}</div>
+          ${state.posPaymentMethod==='fiado' ? `
+          <select onchange="handleCustomerSelect(this)" style="width:100%;padding:8px 12px;background:#0b0e15;border:1px solid var(--outline);border-radius:var(--radius-sm);color:var(--on-surface);font-size:13px;margin:10px 0;outline:none">
+            <option value="">-- Seleccionar cliente --</option>
+            ${(state.data && state.data.data && state.data.data.customers || []).map(function(c){return '<option value="'+c.id+'">'+h(c.name)+' (debe '+fmt$(c.balance)+')</option>';}).join('')}
+            <option value="other">Otro (escribir nombre)...</option>
+          </select>
+          <input type="text" id="posOtherCustomer" placeholder="Nombre del cliente" oninput="state.posCustomer=this.value" style="display:none;width:100%;padding:8px 12px;background:#0b0e15;border:1px solid var(--outline);border-radius:var(--radius-sm);color:var(--on-surface);font-size:13px;margin:10px 0;outline:none" />
+          ` : `
           <input type="text" placeholder="Cliente (opcional)" value="${h(state.posCustomer||'')}" 
             oninput="state.posCustomer=this.value" 
             style="width:100%;padding:8px 12px;background:#0b0e15;border:1px solid var(--outline);border-radius:var(--radius-sm);color:var(--on-surface);font-size:13px;margin:10px 0;outline:none" />
+          `}
           <div class="pos-pay-label">Cobrar con:</div>
           <div class="pos-pay-grid">
             ${['efectivo','transferencia','fiado','mercadopago'].map(function(m){return `

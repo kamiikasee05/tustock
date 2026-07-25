@@ -1088,6 +1088,7 @@ async def pos_create_order(
     items = body.get("items", [])
     payment_method = body.get("payment_method", "efectivo")
     customer_name = body.get("customer_name")
+    customer_id = body.get("customer_id")
     notes = body.get("notes", "")
 
     if not items:
@@ -1098,7 +1099,7 @@ async def pos_create_order(
     cmd = CommandQueue(
         business_id=business.id,
         command_type="direct_sale",
-        payload={"items": items, "payment_method": payment_method, "customer_name": customer_name, "notes": notes},
+        payload={"items": items, "payment_method": payment_method, "customer_name": customer_name, "customer_id": customer_id, "notes": notes},
         status="pending",
     )
     db.add(cmd)

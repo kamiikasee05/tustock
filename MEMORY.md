@@ -60,8 +60,11 @@
 **Feature sugerido por Dayana — POS Remoto en Monitor Cloud:**
 - Documentado en `docs/features-sugeridos/pos-remoto-monitor.md`
 - Solicitud: tomar pedidos y cobrar desde el celular
-- No está en el roadmap. Requiere ~20-30h de desarrollo (Opción B: cola de pedidos)
-- **Decisión pendiente:** ¿Desarrollamos? ¿Cobramos extra? ¿Lo dejamos para después?
+- **✅ IMPLEMENTADO (25/7):** POS Remoto Fase 1 — venta remota directa desde Monitor Cloud
+- Flujo: Monitor Cloud → CommandQueue → Agent local → Server → Venta + stock descontado + push real-time
+- Archivos: `cloud/api.py` (6 endpoints), `cloud/models.py` (CommandQueue), `server/routes/remote_orders.py`, `cloud/agent.py` (command loop), `cloud/dashboard.html` (tab POS)
+- **Validación de precio:** Dayana pagaba $24K/mes por feature similar en otro sistema. Nuestro precio de $15K/mes es 37% más barato y más completo.
+- **Tier asignado:** Pro ($160K único) o Suscripción Pro ($15K/mes). Clienta premium lo recibe incluido.
 
 **Recomendación de Ventas:**
 - **Valor del cliente:** 3 licencias Básico = $240K ARS, o 1 Suscripción = $8K/mes ($96K/año)
@@ -90,7 +93,8 @@ Sistema de gestión de stock y ventas para polirrubros argentinos (kioscos, libr
 4. **Datos en tu PC** — nadie más ve la información del negocio
 5. **Sin técnico** — lo instala el dueño en 15 minutos
 6. **Monitor remoto** — mirá las ventas desde el celular estés donde estés (URL fija, push-based)
-7. **Licencias validadas en la nube** — cada 7 días verifica que la key sea legítima, sin internet sigue funcionando
+7. **POS Remoto** — tomá pedidos y cobrás desde el celular (Monitor Cloud)
+8. **Licencias validadas en la nube** — cada 7 días verifica que la key sea legítima, sin internet sigue funcionando
 
 **No competimos en:** features enterprise, contabilidad integrada, e-commerce, facturación electrónica (AFIP). Eso no es nuestro cliente.
 
@@ -160,6 +164,7 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 - **Consentimiento explícito:** Checkbox obligatorio de aceptación de Términos + Política de Privacidad en formulario de registro del Monitor Cloud.
 - **Baja de cuenta cloud:** Endpoint `POST /api/business/delete-account` con confirmación por email. Soft-delete del Business + eliminación de MetricsPush. UI en dashboard con botón "Eliminar mi cuenta".
 - **Frontend React rediseñado con Stitch:** 44 archivos modificados, 13 páginas con Stitch design system — dark theme #10131a, glass effects, Material Icons, Geist Mono, animaciones, responsive mobile-first. Design tokens en `index.css`, componente `MaterialIcon`, Layout con sidebar + bottom nav móvil.
+- **POS Remoto Fase 1:** Venta remota directa desde Monitor Cloud. Tab POS con buscador, carrito, selector de pago, envío de pedido. Command Queue (`CommandQueue` en cloud) — el agent local lee comandos pendientes y los ejecuta en el server local. Crea venta, descuenta stock, registra movimientos. Push real-time post-venta. Verificación HMAC-SHA256 en webhook MP. Endpoints: `POST /api/pos/order`, `POST /api/pos/approve`, `POST /api/pos/reject`, `GET /api/pos/pending-orders`, `GET /api/commands/pending`, `POST /api/commands/{id}/ack`. Clienta SU-Day validó end-to-end con 15 gotitas de gel.
 
 ---
 
@@ -502,6 +507,10 @@ La clienta manifestó dos necesidades concretas:
 - [fix] LIMPIEZA UI: 14 componentes UI no utilizados eliminados (GlassPanel, KPICard, MiniBarChart, QuickAction, Toggle, CustomerDrawer, Modal, DataTable, Button, Card, Badge, EmptyState, Skeleton, index.ts). recharts y lucide-react desinstalados. Build -30KB. (2026-07-15)
 - [feature] TERCER POST EN FACEBOOK: Post 3 (cierre de secuencia — "¿Y si el mes que viene arrancás con todo bajo control?") publicado en grupos de Facebook. Copy listo en `docs/marketing/post3-facebook.md`. (2026-07-15)
 - [fix] LANDING MOCKUP: Placeholder SVG genérico reemplazado por dashboard mockup realista — titlebar con dots macOS, 3 KPI cards, tabla de últimas ventas con productos argentinos, gráfico de barras semanal CSS puro. (2026-07-15)
+- [feature] POS REMOTO FASE 1: Venta remota directa desde Monitor Cloud. Command Queue (CommandQueue en cloud) — agent lee comandos pendientes y ejecuta en server local. Crea venta, descuenta stock, push real-time. Tab POS en dashboard (buscador, carrito, selector de pago). Auth via Bearer token. Webhook MP con HMAC-SHA256. 6 endpoints cloud + 1 endpoint local. Validado end-to-end con 15 gotitas de gel. (2026-07-25)
+- [fix] REGISTER-FROM-INSTALL: Endpoint ahora retorna API key existente cuando el email ya está registrado (en vez de 409). Permite re-ejecutar configurar.bat sin perder acceso. (2026-07-25)
+- [fix] CONFIGURAR.BAT JSON: Fix cmd.exe tritura comillas y {}. Ahora usa curl -d @file. (2026-07-25)
+- [fix] 4 BUGS SEGURIDAD: (1) backup_enabled False en Pro, (2) remote_orders con auth, (3) push_async post-venta remota, (4) agent pushea pending_orders. (2026-07-25)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
@@ -603,6 +612,8 @@ La clienta manifestó dos necesidades concretas:
 | 2026-07-22 | **Admin independizado de server principal**: Todas las rutas admin migradas a cloud API (tustock.up.railway.app). Admin frontend habla SOLO a cloud, nunca a localhost. Server principal más liviano (sin admin routes). Admin funciona desde cualquier PC con internet. Pendiente: setear TUSTOCK_ADMIN_TOKEN en Railway + deploy. | 🧑 HUMANO + 🖥 DEV |
 | 2026-07-22 | **Feature sugerida: POS Remoto en Monitor Cloud** — SU - Day (Dayana) pide tomar pedidos y cobrar desde el celular. Análisis DEV + Ventas completados en `obsidian/07-Features Sugeridas/`. Recomendación: Cola de comandos + PWA, tier nuevo Pro+ ($220K) o Suscripción Premium ($12-15K/mes). NO aprobada aún para desarrollo. | 🧑 HUMANO + Dispatcher |
 | 2026-07-23 | **Quick wins seguridad (4 fixes)**: (1) `backup_enabled: False` en plan Pro (feature no existe), (2) JWT_SECRET obligatorio al startup con sys.exit si vacío, (3) CORS restringido a 4 orígenes específicos (tustocksoft.com.ar, monitor subdomain, localhost:5174, localhost:8090), (4) `configurar.bat` crea `server/.env` con valores por defecto si no existe. Auditoría de calidad. | 🖥 DEV |
+| 2026-07-25 | **POS Remoto Fase 1 — APROBADO Y DESPLEGADO**: Feature completa validada end-to-end con Dayana. Venta remota desde Monitor Cloud funciona: CommandQueue → agent local → server → venta + stock descontado + push real-time. 6 endpoints cloud + 1 local. Tier: Pro ($160K) o Suscripción Pro ($15K/mes). Dayana pagaba $24K/mes por feature similar — nuestro precio es 37% más barato. | 🧑 HUMANO + 📢 Ventas |
+| 2026-07-25 | **register-from-install fix**: Endpoint ahora retorna API key existente cuando el email ya está registrado (en vez de 409). Configurar.bat funciona con cuentas existentes. Fix cmd.exe quoting (`curl -d @file`). | 🖥 DEV + Dispatcher |
 
 ---
 ## 13. EQUIPO LEGAL
@@ -724,7 +735,7 @@ La clienta manifestó dos necesidades concretas:
 
 ---
 
-*Última actualización: 24 de Julio de 2026 (Inventario Monitor Cloud + Webhook MP firma + EXE crash fix)*
+*Última actualización: 25 de Julio de 2026 (POS Remoto Fase 1 + 4 bugs fixes + pricing validation)*
 
 ---
 
