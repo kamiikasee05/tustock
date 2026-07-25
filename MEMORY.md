@@ -14,6 +14,8 @@
 >
 > **Rol del Dispatcher (🧑‍💻 YO):** Coordino los agentes, actualizo MEMORY.md, sincronizo Obsidian, y soy el **único propietario de TELENOTAS** (`E:\TELENOTAS\`). Reviso el inbox al inicio de cada sesión y decido qué ideas procesar. Ni DEV, ni Ventas, ni Legal, ni Marketing tocan TELENOTAS.
 >
+> **Rol secundario del Dispatcher — Programador:** Como actividad secundaria, programo junto a DEV cuando la situación lo requiere. Dos perspectivas distintas en el código. Mi rol primario SIEMPRE es coordinador. Programo copiando el estilo de DEV (Python con type hints, TypeScript sin strict, inline styles). Si necesito delegar, uso el subagent_type "general" para DEV.
+>
 > **Regla especial — Cliente Premium:** La clienta que paga $60K entry + $6K/mes tiene un plan híbrido legacy (pago único + suscripción). Tiene acceso al Monitor Cloud, updates continuos y soporte prioritario. Su tier en código es `premium`. Ningún cliente nuevo accede a este precio ni a este tier. Es la primera clienta y cierra antes del lanzamiento oficial.
 
 **Regla de legacy pricing:** Si un referido pregunta cuánto pagó ella, la respuesta es: *"Fue la primera cliente y compró antes del lanzamiento oficial. Esos precios ya no están disponibles."*
