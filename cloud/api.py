@@ -153,8 +153,15 @@ def register_from_install(data: dict, request: Request, db: Session = Depends(ge
     if len(name) > 200:
         raise HTTPException(400, "Nombre muy largo (max 200 caracteres)")
 
-    if db.query(Business).filter(Business.email == email).first():
-        raise HTTPException(409, "El email ya está registrado")
+    existing = db.query(Business).filter(Business.email == email).first()
+    if existing:
+        return {
+            "ok": True,
+            "api_key": existing.api_key,
+            "email": email,
+            "password": "",
+            "message": "Email ya registrado. Usá la api_key existente.",
+        }
 
     auto_password = f"TUSTOCK-{secrets.token_hex(4).upper()}"
 
