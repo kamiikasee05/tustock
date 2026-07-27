@@ -307,20 +307,93 @@ def cloud_setup_wizard():
     """Asistente para configurar el Monitor Cloud."""
     title("Configurar Monitor Cloud")
     import json
+    import urllib.request
+    import urllib.error
+
     cfg_path = BASE / "config" / "cloud.json"
-    print("Necesitás:")
-    print("  1. Una cuenta en tustock-monitor.com (o la URL de tu cloud)")
-    print("  2. La API key que te dió el registro")
+    cloud_url = "https://tustock.up.railway.app"
+
+    print("¿Tenés ya una cuenta en el Monitor Cloud?")
     print()
-    api_url = input("URL del Monitor Cloud: ").strip().rstrip("/")
-    if not api_url:
-        api_url = "https://tustock-monitor.com"
-    api_key = input("API key del negocio: ").strip()
-    if not api_key:
-        print("Configuración cancelada.")
-        return
-    cfg_path.write_text(json.dumps({"api_url": api_url, "api_key": api_key}, indent=2), "utf-8")
-    print(f"Guardado en {cfg_path}")
+    print("  1. No, crear cuenta nueva (automático)")
+    print("  2. Sí, tengo API key (manual)")
+    print()
+    choice = input("Elegí una opción [1]: ").strip() or "1"
+
+    if choice == "1":
+        email = input("Email del negocio: ").strip()
+        if not email:
+            print("Configuración cancelada.")
+            return
+        biz_name = input("Nombre del negocio: ").strip()
+        if not biz_name:
+            print("Configuración cancelada.")
+            return
+
+        print()
+        print("  Creando cuenta en el Monitor Cloud...")
+
+        body = json.dumps({"email": email, "name": biz_name}).encode("utf-8")
+        req = urllib.request.Request(
+            f"{cloud_url}/api/register-from-install",
+            data=body,
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            resp = urllib.request.urlopen(req, timeout=15)
+            result = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode("utf-8", errors="replace")
+            if e.code == 409:
+                print(f"  El email {email} ya está registrado.")
+                print("  Usá la opción 2 con tu API key existente.")
+            else:
+                print(f"  Error {e.code}: {err_body}")
+            input("  Presioná Enter para volver...")
+            return
+        except Exception as e:
+            print(f"  Error de conexión: {e}")
+            print("  Verificá tu conexión a internet.")
+            input("  Presioná Enter para volver...")
+            return
+
+        if not result.get("ok"):
+            print(f"  Error: {result.get('message', 'Respuesta inesperada')}")
+            input("  Presioná Enter para volver...")
+            return
+
+        api_key = result["api_key"]
+        auto_password = result["password"]
+
+        print()
+        print("  Cuenta creada!")
+        print(f"  Email:       {email}")
+        print(f"  API Key:     {api_key}")
+        print(f"  Contraseña:  {auto_password}")
+        print()
+        print("  GUARDÁ ESTOS DATOS. La contraseña se muestra una sola vez.")
+        print()
+
+        cfg_path.write_text(json.dumps({"api_url": cloud_url, "api_key": api_key}, indent=2), "utf-8")
+        print(f"  Configurado en {cfg_path}")
+        print()
+        print(f"  Para acceder al Monitor Cloud:")
+        print(f"    URL:       {cloud_url}")
+        print(f"    Email:     {email}")
+        print(f"    Contraseña: {auto_password}")
+
+    else:
+        api_url = input(f"URL del Monitor Cloud [{cloud_url}]: ").strip().rstrip("/")
+        if not api_url:
+            api_url = cloud_url
+        api_key = input("API key del negocio: ").strip()
+        if not api_key:
+            print("Configuración cancelada.")
+            return
+        cfg_path.write_text(json.dumps({"api_url": api_url, "api_key": api_key}, indent=2), "utf-8")
+        print(f"Guardado en {cfg_path}")
+
+    print()
     if ask("Iniciar agente ahora?"):
         start_cloud_agent()
     print("El agente se inicia automáticamente con TUSTOCK.")

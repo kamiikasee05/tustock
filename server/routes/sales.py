@@ -9,6 +9,7 @@ from models.product import Product
 from models.customer import Customer, CustomerTransaction
 from models.stock import CurrentStock, StockMovement
 from schemas import SaleCreate, SaleItemData
+from cloud_push import push_async
 
 router = APIRouter(prefix="/api/sales", tags=["sales"])
 
@@ -133,6 +134,7 @@ def create_sale(data: SaleCreate, db: Session = Depends(get_db)):
 
     db.commit()
     db.refresh(sale)
+    push_async()
     return {"id": sale.id, "total": sale.total, "items_count": len(data.items)}
 
 @router.get("/today/summary")

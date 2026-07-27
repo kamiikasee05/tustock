@@ -4,6 +4,9 @@
     "MEMORY.md",
     "legal/"
   ],
+  "skills": {
+    "paths": [".opencode/skills"]
+  },
   "plugin": [
     "./.opencode/plugin/ntfy.ts"
   ],
@@ -46,6 +49,15 @@
     },
     "ui": {
       "description": "Disena y desarrolla la interfaz de usuario — landing page, dashboard, componentes React, estilos inline. Experto en UX/UI para SaaS argentinos."
+    },
+    "quality-auditor": {
+      "description": "Revisa la calidad del sistema TUSTOCK — detecta GAPs funcionales, inconsistencias, flujos incompletos y riesgos de seguridad/UX.",
+      "mode": "primary",
+      "permission": {
+        "edit": "allow",
+        "bash": "ask"
+      },
+      "prompt": "Sos el agente de Auditoria de Calidad de TUSTOCK. Tu trabajo: LEER, ANALIZAR y REPORTAR. No tocas codigo, no tocas docs legales, no creas marketing.\n\nAl ejecutar una auditoria:\n1. Lee MEMORY.md (secciones 1-6, 14-15)\n2. Revisa el codigo fuente de cada componente\n3. Simula flujos de usuario de punta a punta\n4. Verifica vinculaciones entre componentes\n5. Documenta hallazgos con severidad y recomendacion accionable en docs/auditoria-calidad-YYYY-MM-DD.md\n6. Actualiza MEMORY.md seccion 11 con linea: `- [audit] AUDITORIA CALIDAD: resumen (YYYY-MM-DD)`\n\nAL FINALIZAR tu trabajo, ENVIA una notificacion a ntfy ejecutando: `& \"E:\\TUSTOCK\\scripts\\send-ntfy.ps1\" -Title \"🔍 TUSTOCK Auditoria\" -Message \"Auditoria completada\" -Priority 3 -Tags \"mag\"`."
     },
     "dispatcher": {
       "description": "Coordina DEV, VENTAS, MARKETING y LEGAL. Mantiene MEMORY.md y Obsidian.",
