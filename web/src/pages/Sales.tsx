@@ -222,20 +222,23 @@ export default function Sales() {
                           <span style={{ fontFamily: 'var(--font-data)', fontSize: 11, color: 'var(--outline)' }}>{item.code}</span>
                         </td>
                         <td style={{ paddingTop: 6, paddingBottom: 6, textAlign: 'center' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                            <button onClick={() => setCart(cart.map(i => i.product_id === item.product_id ? { ...i, quantity: Math.max(1, i.quantity - 1) } : i))} style={{
-                              width: 28, height: 28, borderRadius: 'var(--radius-full)',
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                            <button onClick={() => setCart(cart.map(i => i.product_id === item.product_id ? { ...i, quantity: Math.max(0.01, i.quantity - 1) } : i))} style={{
+                              width: 26, height: 26, borderRadius: 'var(--radius-full)',
                               border: '1px solid var(--outline-variant)',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               color: 'var(--on-surface)', transition: 'background var(--transition)',
-                            }}><MaterialIcon name="remove" size={16} /></button>
-                            <span style={{ fontFamily: 'var(--font-data)', fontSize: 13, fontWeight: 500, minWidth: 20, textAlign: 'center' }}>{item.quantity}</span>
+                            }}><MaterialIcon name="remove" size={14} /></button>
+                            <input type="number" step="any" min="0.01" value={item.quantity}
+                              onChange={e => { const v = parseFloat(e.target.value); if (v > 0) setCart(cart.map(i => i.product_id === item.product_id ? { ...i, quantity: v } : i)) }}
+                              style={{ width: 52, textAlign: 'center', padding: '2px 4px', background: 'var(--surface)', border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius)', fontSize: 12, fontFamily: 'var(--font-data)', fontWeight: 500, color: 'var(--on-surface)' }}
+                            />
                             <button onClick={() => setCart(cart.map(i => i.product_id === item.product_id ? { ...i, quantity: i.quantity + 1 } : i))} style={{
-                              width: 28, height: 28, borderRadius: 'var(--radius-full)',
+                              width: 26, height: 26, borderRadius: 'var(--radius-full)',
                               border: '1px solid var(--outline-variant)',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               color: 'var(--on-surface)', transition: 'background var(--transition)',
-                            }}><MaterialIcon name="add" size={16} /></button>
+                            }}><MaterialIcon name="add" size={14} /></button>
                           </div>
                         </td>
                         <td style={{ paddingTop: 6, paddingBottom: 6, textAlign: 'right', fontFamily: 'var(--font-data)', fontSize: 13, fontWeight: 500 }}>
@@ -288,7 +291,7 @@ export default function Sales() {
                 border: '1px solid rgba(66,71,84,0.3)',
               }}>
                 <span style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>$</span>
-                <input type="number" value={discount} onChange={e => setDiscount(+e.target.value)}
+                <input type="number" step="0.01" value={discount} onChange={e => setDiscount(+e.target.value)}
                   style={{ width: 80, background: 'transparent', border: 'none', color: 'var(--on-surface)', fontSize: 14, fontFamily: 'var(--font-data)', textAlign: 'right', outline: 'none', padding: 0 }} />
               </div>
             </div>

@@ -1,5 +1,34 @@
 # MEMORY — TUSTOCK
 
+## RESUMEN EJECUTIVO (lee esto primero)
+
+- **Qué es:** Sistema de gestión de stock y ventas para polirrubros argentinos (kioscos, librerías, almacenes). Sin internet, pago único o suscripción, 15 min de instalación.
+- **Estado:** Fase 1 (licencias + trial + gating) ✅. Monitor Cloud desplegado ✅. POS Remoto Fase 1 ✅. 2 clientes activos.
+- **Stack:** Python/FastAPI/SQLite (backend) + React/Vite/TS (frontend) + Kotlin/ML Kit (Android, congelado).
+- **Clientes:**
+  1. Librería — plan premium ($60K entry + $6K/mes, legacy). Monitor Premium + Cloud.
+  2. SU-Day (Dayana) — plan Suscripción ($8K/mes). Monitor Cloud + POS Remoto validado end-to-end.
+- **Próximas prioridades (orden):**
+  1. Evaluar multi-sucursal para polirrubro lead (3 sucursales, ~38h dev, $240K+ potencial)
+  2. Activar Programa Despegue ML ($45K recuperable, $45K publicidad gratis)
+  3. Registrar bases de datos en AAIP (obligación legal Ley 25.326)
+  4. Railway a Hobby cuando se acaben créditos gratis ($5/mes)
+  5. Tests automatizados (postergado hasta 5+ clientes)
+- **Lo que NO existe (no prometer):** Backup en la nube ❌ | Multi-sucursal ❌ | Múltiples cajeros ❌
+- **Reglas críticas para agentes:**
+  - NO tocar Android (congelado). NO internationalizar (solo español).
+  - NO prometer features inexistentes — publicidad engañosa (Ley 24.240 art. 8-9).
+  - Directivas de Legal son VINCULANTES sobre cualquier desarrollo.
+  - SIN MCPs — regla permanente desde 12/7/2026.
+  - NO codificar si sos Dispatcher/Marketing/Legal — delegar a DEV.
+- **Precios (congelados):** Trial 30d gratis (100 prod) | Básico $80K único | Suscripción $8K/mes | Pro $160K único
+- **Archivos clave:** `server/` backend | `web/src/` frontend React | `cloud/` monitor cloud + API | `legal/` docs legales | `obsidian/` vault de documentación
+- **Monitor Cloud:** `monitor.tustocksoft.com.ar` (Railway). Push-based. Login JWT. 3 tabs (Dashboard/Inventario/Pedidos). POS Remoto.
+- **Admin:** Independiente en `E:\TUSTOCK_ADMIN\`. Habla SOLO a cloud API (Railway). Tray icon púrpura.
+- **Última acción:** Fix decimales frontend completado (26/7). Sin bugs activos conocidos.
+
+---
+
 > Este archivo es la fuente de verdad compartida entre el **Agente de Ventas**, el **Agente de Desarrollo (DEV)**, el **Agente Legal**, el **Agente de Marketing** y el **Agente UX/UI**. Lo leo al inicio de cada sesión para saber el estado actual.
 >
 > **Rol de Ventas (YO):** Conozco el producto, el mercado, los precios. Organizo, coordino y le asigno tareas humanas al usuario para vender.
@@ -19,6 +48,17 @@
 > **Regla especial — Cliente Premium:** La clienta que paga $60K entry + $6K/mes tiene un plan híbrido legacy (pago único + suscripción). Tiene acceso al Monitor Cloud, updates continuos y soporte prioritario. Su tier en código es `premium`. Ningún cliente nuevo accede a este precio ni a este tier. Es la primera clienta y cierra antes del lanzamiento oficial.
 
 **Regla de legacy pricing:** Si un referido pregunta cuánto pagó ella, la respuesta es: *"Fue la primera cliente y compró antes del lanzamiento oficial. Esos precios ya no están disponibles."*
+
+### Fuentes de verdad (convención de sincronización)
+
+| Qué | Dónde vive | Quién lo lee | Cuándo se actualiza |
+|-----|------------|:------------:|-------------------|
+| Estado del proyecto, features, bugs, roadmap | **MEMORY.md** (este archivo) | Agentes (DEV, Ventas, Legal, Marketing, QA) | Después de cada cambio significativo |
+| Dashboard visual para el humano | **obsidian/TU STOCK/Dashboard.md** | Humano | Sincronizado via `scripts/sync-obsidian.ps1` |
+| Documentación detallada por área | **obsidian/TU STOCK/0X-*/** | Humano + agentes cuando buscan algo | Cuando el contenido correspondiente cambia |
+| Código fuente | **server/, web/src/, cloud/** | DEV | En cada commit |
+
+> **Regla:** MEMORY.md es la fuente primaria. Obsidian es una vista. Si hay conflicto, MEMORY.md gana. El Dispatcher sincroniza después de cada cambio importante usando `scripts/sync-obsidian.ps1`.
 
 > **Cuentas de MP y ML dedicadas al proyecto (Julio 2026):** TUSTOCK tiene cuenta propia de Mercado Pago y Mercado Libre. Antes se usaba la cuenta personal del humano. Las apps de MP (Checkout Pro y Suscripciones) deben crearse desde la cuenta nueva del proyecto para tener tokens exclusivos. La cuenta personal ya no se usa para TUSTOCK.
 >
@@ -355,7 +395,7 @@ La clienta manifestó dos necesidades concretas:
 | ✅ | **Implementar rediseño Stitch en frontend React** | 🎨 UI + 🖥 DEV | Completado 18/7. 44 archivos, 13 páginas rediseñadas con Stitch dark theme, glass effects, Geist Mono, Material Icons. |
 | ✅ | **Dominio para Monitor Cloud** | 🖥 DEV + 🧑 HUMANO | `monitor.tustocksoft.com.ar` configurado via Railway CLI + Cloudflare DNS. Puerto interno: 8080. SSL automático. |
 | 🔥 3.5 | **Evaluar multi-sucursal para polirrubro** — 3 sucursales, lead potencial | 📢 Ventas + 🖥 DEV | Cliente real. Si desarrollamos multi-sucursal básica (~38h), podemos cerrar $240K+ |
-| 🔥 11 | **Fix campos numéricos sin decimales** — no permiten coma, imposible vender por kilo/litro | 🖥 DEV | Bug bloqueante para Dayana y cualquier negocio que venda por peso/volumen. Verificar input de precios, cantidades y stock. |
+| ✅ | **Fix campos numéricos sin decimales** — 9 inputs en 5 archivos + POS quantity + stock adjust | 🖥 DEV + 🔍 QA | Completado 26/7. Step="0.01" en precios, step="any" en cantidades. POS ahora tiene input directo de cantidad. QA PASS. |
 | 🟢 9 | **Tests automatizados** | 🖥 DEV | Postergado hasta tener 5+ clientes |
 | 🟢 10 | **Docker / CI/CD** | 🖥 DEV | Postergado hasta tener 10+ clientes |
 
@@ -514,6 +554,7 @@ La clienta manifestó dos necesidades concretas:
 - [fix] REGISTER-FROM-INSTALL: Endpoint ahora retorna API key existente cuando el email ya está registrado (en vez de 409). Permite re-ejecutar configurar.bat sin perder acceso. (2026-07-25)
 - [fix] CONFIGURAR.BAT JSON: Fix cmd.exe tritura comillas y {}. Ahora usa curl -d @file. (2026-07-25)
 - [fix] 4 BUGS SEGURIDAD: (1) backup_enabled False en Pro, (2) remote_orders con auth, (3) push_async post-venta remota, (4) agent pushea pending_orders. (2026-07-25)
+- [fix] DECIMALES FRONTEND: 9 inputs numéricos agregado step (0.01 en precios, 1 en min_stock, any en cantidades). POS Sales.tsx: input directo de cantidad con step="any" (antes solo +/-1). Products.tsx: input de cantidad en stock quick-adjust. Presupuestos: min="0.01". Customers: step="0.01" en pago. ScannerConnect: step="0.01" en precios. Backend sin cambios (ya era Float). QA PASS. (2026-07-26)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
@@ -805,4 +846,4 @@ La clienta manifestó dos necesidades concretas:
 
 ---
 
-*Última actualización: 24 de Julio de 2026 (Inventario Monitor Cloud + Webhook MP firma)*
+*Última actualización: 26 de Julio de 2026 (Resumen ejecutivo agregado + Fix decimales frontend + QA verification)*

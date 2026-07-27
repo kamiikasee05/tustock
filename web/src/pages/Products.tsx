@@ -252,15 +252,15 @@ export default function Products() {
             </div>
             <div>
               <label style={labelStyle}>Precio costo</label>
-              <input type="number" value={form.cost_price} onChange={e => setForm({ ...form, cost_price: +e.target.value })} style={inputStyle} />
+              <input type="number" step="0.01" value={form.cost_price} onChange={e => setForm({ ...form, cost_price: +e.target.value })} style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Precio venta</label>
-              <input type="number" value={form.selling_price} onChange={e => setForm({ ...form, selling_price: +e.target.value })} style={inputStyle} />
+              <input type="number" step="0.01" value={form.selling_price} onChange={e => setForm({ ...form, selling_price: +e.target.value })} style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Stock mínimo</label>
-              <input type="number" value={form.min_stock} onChange={e => setForm({ ...form, min_stock: +e.target.value })} style={inputStyle} />
+              <input type="number" step="1" value={form.min_stock} onChange={e => setForm({ ...form, min_stock: +e.target.value })} style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Unidad</label>
@@ -410,10 +410,14 @@ export default function Products() {
                       </button>
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}>
-                        <button onClick={() => handleStockAdjust(p.id, 1, 'exit')} style={actionBtnStyle}>
+                        <input type="number" step="any" min="0.01" defaultValue={1}
+                          style={{ width: 56, textAlign: 'center', padding: '3px 4px', background: 'var(--surface)', border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius)', fontSize: 12, fontFamily: 'var(--font-data)', color: 'var(--on-surface)' }}
+                          id={`stock-adj-${p.id}`}
+                        />
+                        <button onClick={() => { const inp = document.getElementById(`stock-adj-${p.id}`) as HTMLInputElement; const qty = parseFloat(inp?.value || '1'); if (qty > 0) handleStockAdjust(p.id, qty, 'exit') }} style={actionBtnStyle}>
                           <MaterialIcon name="remove" size={16} />
                         </button>
-                        <button onClick={() => handleStockAdjust(p.id, 1, 'entry')} style={actionBtnStyle}>
+                        <button onClick={() => { const inp = document.getElementById(`stock-adj-${p.id}`) as HTMLInputElement; const qty = parseFloat(inp?.value || '1'); if (qty > 0) handleStockAdjust(p.id, qty, 'entry') }} style={actionBtnStyle}>
                           <MaterialIcon name="add" size={16} />
                         </button>
                         <button onClick={() => handleEdit(p)} style={actionBtnStyle}>

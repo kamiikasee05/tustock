@@ -178,7 +178,7 @@ export default function Presupuestos() {
                     <td style={tdsty}><span style={{ fontWeight: 600, color: 'var(--on-surface)' }}>{item.name}</span><br /><span style={{ fontSize: 11, color: 'var(--on-surface-variant)' }}>{item.code}</span></td>
                     <td style={{ ...tdsty, textAlign: 'right', fontFamily: 'var(--font-data)' }}>${item.unit_price.toLocaleString()}</td>
                     <td style={{ ...tdsty, textAlign: 'center' }}>
-                      <input type="number" min={1} value={item.quantity} onChange={e => setCart(cart.map(i => i.product_id === item.product_id ? { ...i, quantity: +e.target.value } : i))} style={{ width: 60, textAlign: 'center', padding: '4px 6px' }} />
+                      <input type="number" step="any" min="0.01" value={item.quantity} onChange={e => setCart(cart.map(i => i.product_id === item.product_id ? { ...i, quantity: +e.target.value } : i))} style={{ width: 60, textAlign: 'center', padding: '4px 6px' }} />
                     </td>
                     <td style={{ ...tdsty, textAlign: 'right', fontWeight: 600, fontFamily: 'var(--font-data)' }}>${(item.quantity * item.unit_price).toLocaleString()}</td>
                     <td style={tdsty}><button onClick={() => removeFromCart(item.product_id)} style={{ color: 'var(--error)', background: 'none', border: 'none', cursor: 'pointer' }}><MaterialIcon name="close" size={20} /></button></td>

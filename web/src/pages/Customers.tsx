@@ -205,6 +205,7 @@ export default function Customers() {
               </h3>
               <input
                 type="number"
+                step="0.01"
                 placeholder="Monto del pago"
                 value={paymentAmount}
                 onChange={e => setPaymentAmount(e.target.value)}

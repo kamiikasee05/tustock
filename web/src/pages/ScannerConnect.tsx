@@ -211,16 +211,16 @@ export default function ScannerConnect() {
             </div>
             <div>
               <label style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>Precio de venta</label>
-              <input type="number" value={newProduct.selling_price} onChange={e => setNewProduct({ ...newProduct, selling_price: +e.target.value })} style={{ width: '100%', boxSizing: 'border-box' }} />
+              <input type="number" step="0.01" value={newProduct.selling_price} onChange={e => setNewProduct({ ...newProduct, selling_price: +e.target.value })} style={{ width: '100%', boxSizing: 'border-box' }} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <div>
                 <label style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>Precio costo</label>
-                <input type="number" value={newProduct.cost_price} onChange={e => setNewProduct({ ...newProduct, cost_price: +e.target.value })} style={{ width: '100%', boxSizing: 'border-box' }} />
+                <input type="number" step="0.01" value={newProduct.cost_price} onChange={e => setNewProduct({ ...newProduct, cost_price: +e.target.value })} style={{ width: '100%', boxSizing: 'border-box' }} />
               </div>
               <div>
                 <label style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>Stock mínimo</label>
-                <input type="number" value={newProduct.min_stock} onChange={e => setNewProduct({ ...newProduct, min_stock: +e.target.value })} style={{ width: '100%', boxSizing: 'border-box' }} />
+                <input type="number" step="1" value={newProduct.min_stock} onChange={e => setNewProduct({ ...newProduct, min_stock: +e.target.value })} style={{ width: '100%', boxSizing: 'border-box' }} />
               </div>
             </div>
             <button onClick={registerProduct} style={{
