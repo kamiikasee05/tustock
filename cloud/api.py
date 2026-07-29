@@ -588,24 +588,6 @@ def delete_account(data: dict, business: Business = Depends(_get_current_busines
     return {"ok": True, "message": "Cuenta eliminada correctamente"}
 
 
-@app.post("/api/admin/reset-password")
-def admin_reset_password(data: dict, request: Request, db: Session = Depends(get_db)):
-    verify_admin(request)
-    email = data.get("email", "").strip().lower()
-    new_password = data.get("password", "")
-    if not email or not new_password:
-        raise HTTPException(400, "Faltan campos: email, password")
-    if len(new_password) < 6:
-        raise HTTPException(400, "Password debe tener al menos 6 caracteres")
-    biz = db.query(Business).filter(Business.email == email, Business.is_active == True).first()
-    if not biz:
-        raise HTTPException(404, "Business no encontrado")
-    biz.password_hash = _hash_password(new_password)
-    db.commit()
-    log_event("admin_reset_password", {"email": email, "business_id": biz.id})
-    return {"ok": True, "message": f"Password actualizada para {email}"}
-
-
 @app.post("/api/payments/create")
 def create_payment(data: dict, db: Session = Depends(get_db)):
     if not MP_ACCESS_TOKEN:
