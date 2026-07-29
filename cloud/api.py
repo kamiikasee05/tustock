@@ -338,6 +338,218 @@ def admin_stats(request: Request, db: Session = Depends(get_db)):
     }
 
 
+@app.get("/api/admin/analytics/weekly")
+def admin_analytics_weekly(request: Request, db: Session = Depends(get_db)):
+    verify_admin(request)
+    now = datetime.now(timezone.utc)
+    week_ago = now - timedelta(days=7)
+    week_ago_str = week_ago.strftime("%Y-%m-%d")
+
+    biz_list = (
+        db.query(Business)
+        .filter(Business.is_active == True)
+        .all()
+    )
+
+    businesses_data = []
+    summary_total_pushes = 0
+    summary_total_sales = 0
+    summary_total_revenue = 0.0
+    summary_total_inventory_value = 0.0
+    summary_active = 0
+
+    for biz in biz_list:
+        pushes = (
+            db.query(MetricsPush)
+            .filter(
+                MetricsPush.business_id == biz.id,
+                MetricsPush.pushed_at >= week_ago,
+            )
+            .order_by(MetricsPush.pushed_at)
+            .all()
+        )
+
+        if not pushes:
+            continue
+
+        total_pushes = len(pushes)
+        first_push = pushes[0].pushed_at
+        last_push = pushes[-1].pushed_at
+
+        span = (last_push - first_push).total_seconds()
+        avg_interval = span / max(total_pushes - 1, 1)
+
+        hours_since_last = (now - last_push).total_seconds() / 3600
+        is_active = hours_since_last < 1
+
+        pushes_by_date = {}
+        for p in pushes:
+            d = p.payload.get("date", "")
+            if d and (d not in pushes_by_date or p.pushed_at > pushes_by_date[d].pushed_at):
+                pushes_by_date[d] = p
+
+        total_sales_count = 0
+        total_sales_revenue = 0.0
+        payment_methods = {}
+        top_products_map = {}
+        last_inventory = None
+        last_debtors = []
+        last_customers_list = []
+        last_pending_orders = []
+        daily_sales_counts = 0
+
+        for d_key in sorted(pushes_by_date.keys()):
+            p = pushes_by_date[d_key]
+            payload = p.payload
+
+            st = payload.get("sales_today", {}) or {}
+            count = st.get("count", 0) or 0
+            total = st.get("total", 0) or 0
+            total_sales_count += count
+            total_sales_revenue += float(total)
+            if count > 0:
+                daily_sales_counts += 1
+
+            for m in payload.get("by_method", []) or []:
+                method = m.get("method", "sin metodo")
+                cnt = m.get("count", 0) or 0
+                tot = float(m.get("total", 0) or 0)
+                if method not in payment_methods:
+                    payment_methods[method] = {"count": 0, "total": 0.0}
+                payment_methods[method]["count"] += cnt
+                payment_methods[method]["total"] += tot
+
+            for tp in payload.get("top_products", []) or []:
+                name = tp.get("name", "")
+                qty = tp.get("quantity", 0) or 0
+                rev = float(tp.get("total", 0) or 0)
+                if name:
+                    if name not in top_products_map:
+                        top_products_map[name] = {"name": name, "quantity": 0, "revenue": 0.0}
+                    top_products_map[name]["quantity"] += qty
+                    top_products_map[name]["revenue"] += rev
+
+            last_inventory = payload.get("inventory")
+            last_debtors = payload.get("debtors", []) or []
+            last_customers_list = payload.get("customers", []) or []
+            last_pending_orders = payload.get("pending_orders", []) or []
+
+        inventory_value = 0.0
+        product_count = 0
+        low_stock_count = 0
+        zero_stock_count = 0
+
+        if last_inventory and isinstance(last_inventory, dict):
+            products_list = last_inventory.get("products", []) or []
+            product_count = last_inventory.get("total", len(products_list))
+            for prod in products_list:
+                price = float(prod.get("price", 0) or 0)
+                stock = float(prod.get("stock", 0) or 0)
+                inventory_value += price * stock
+                if stock <= prod.get("min_stock", 0):
+                    low_stock_count += 1
+                if stock == 0:
+                    zero_stock_count += 1
+
+        customers_count = len(last_customers_list)
+        debtors_count = len(last_debtors)
+        total_debt = sum(float(d.get("balance", 0) or 0) for d in last_debtors)
+        pending_orders_count = len(last_pending_orders)
+
+        top_products_sorted = sorted(
+            top_products_map.values(),
+            key=lambda x: x["quantity"],
+            reverse=True,
+        )[:10]
+
+        health_status = "healthy"
+        health_issues = []
+
+        if hours_since_last > 24 * 7:
+            health_status = "inactive"
+            health_issues.append("Sin datos en 7 dias")
+        elif hours_since_last > 1:
+            health_status = "warning"
+            health_issues.append(f"Ultimo push hace mas de 1 hora")
+
+        related_key = (
+            db.query(AuthorizedKey)
+            .filter(
+                AuthorizedKey.customer_name.ilike(f"%{biz.name}%")
+                | AuthorizedKey.customer_name.ilike(f"%{biz.email.split('@')[0]}%")
+            )
+            .first()
+        )
+        plan = related_key.plan if related_key else "desconocido"
+
+        summary_total_pushes += total_pushes
+        summary_total_sales += total_sales_count
+        summary_total_revenue += total_sales_revenue
+        summary_total_inventory_value += inventory_value
+        if is_active:
+            summary_active += 1
+
+        avg_ticket = round(total_sales_revenue / total_sales_count, 2) if total_sales_count > 0 else 0
+
+        businesses_data.append(
+            {
+                "id": biz.id,
+                "name": biz.name,
+                "email": biz.email,
+                "plan": plan,
+                "metrics": {
+                    "total_pushes": total_pushes,
+                    "avg_push_interval_seconds": round(avg_interval, 1),
+                    "last_push": last_push.isoformat() if last_push else None,
+                    "is_active": is_active,
+                    "days_with_data": daily_sales_counts,
+                    "total_sales_count": total_sales_count,
+                    "total_sales_revenue": total_sales_revenue,
+                    "avg_ticket": avg_ticket,
+                    "payment_methods": payment_methods,
+                    "top_products": top_products_sorted,
+                    "total_products_inventory": product_count,
+                    "inventory_value": round(inventory_value, 2),
+                    "low_stock_count": low_stock_count,
+                    "zero_stock_count": zero_stock_count,
+                    "customers_count": customers_count,
+                    "debtors_count": debtors_count,
+                    "total_debt": total_debt,
+                    "pending_orders_count": pending_orders_count,
+                },
+                "health": {
+                    "status": health_status,
+                    "issues": health_issues,
+                },
+            }
+        )
+
+    unhealthy_biz_names = [
+        b["name"]
+        for b in businesses_data
+        if b["health"]["status"] != "healthy"
+    ]
+
+    return {
+        "ok": True,
+        "generated_at": now.isoformat(),
+        "period": {
+            "from": week_ago_str,
+            "to": now.strftime("%Y-%m-%d"),
+        },
+        "businesses": businesses_data,
+        "summary": {
+            "total_businesses": len(businesses_data),
+            "active_businesses": summary_active,
+            "total_pushes": summary_total_pushes,
+            "total_sales": summary_total_sales,
+            "total_revenue": round(summary_total_revenue, 2),
+            "total_inventory_value": round(summary_total_inventory_value, 2),
+            "unhealthy_businesses": unhealthy_biz_names,
+        },
+    }
+
+
 @app.get("/api/licenses/terms")
 def legal_terms():
     return _legal_page("Términos y Condiciones de Uso + EULA", """

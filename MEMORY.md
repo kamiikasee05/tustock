@@ -595,6 +595,7 @@ La clienta manifestó dos necesidades concretas:
 - [fix] 4 BUGS SEGURIDAD: (1) backup_enabled False en Pro, (2) remote_orders con auth, (3) push_async post-venta remota, (4) agent pushea pending_orders. (2026-07-25)
 - [fix] DECIMALES FRONTEND: 9 inputs numéricos agregado step (0.01 en precios, 1 en min_stock, any en cantidades). POS Sales.tsx: input directo de cantidad con step="any" (antes solo +/-1). Products.tsx: input de cantidad en stock quick-adjust. Presupuestos: min="0.01". Customers: step="0.01" en pago. ScannerConnect: step="0.01" en precios. Backend sin cambios (ya era Float). QA PASS. (2026-07-26)
 - [feature] FECHAS DE VENCIMIENTO: Product model con campo `expiry_date` (Date, nullable). Schemas actualizados (ProductCreate, ProductUpdate, ProductOut). Endpoint GET /api/products?near_expiry=N. Dashboard alerta productos próximos a vencer. Columna "Vence" en tabla Products con badges naranja/rojo. Filtro de próximos a vencer. Cloud push incluye near_expiry_count. (2026-07-29)
+- [feature] ANALYTICS SEMANALES: Endpoint `GET /api/admin/analytics/weekly` en cloud API con data de todos los negocios (7 días). Métricas por negocio: pushes, ventas, métodos de pago, top productos, inventario, stock bajo/cero, clientes, deudores, pedidos pendientes. Health status (healthy/warning/inactive). Script `scripts/weekly_report.py` genera markdown con resumen, salud, ranking, top global y alertas + ntfy. (2026-07-29)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
@@ -895,4 +896,10 @@ La clienta manifestó dos necesidades concretas:
 
 ---
 
-*Última actualización: 28 de Julio de 2026 (Instalación Librería completada + 2 nuevos prospectos: polirrubro y cosmética)*
+*Última actualización: 29 de Julio de 2026 (Analytics semanales implementados — endpoint cloud + script reporte)*
+
+---
+## 16. ACCIONES DEL DISPATCHER (29/7)
+
+- [fix] CONTRASEÑA MONITOR CLOUD LIBRERÍA: Reseteada en Railway PostgreSQL vía TCP proxy. Nueva contraseña: `25976027PG` (asignada por el humano para la clienta). Login verificado exitosamente. (2026-07-29)
+- [check] DASHBOARD LIBRERÍA VERIFICADO: 605 pushes de métricas recibidas, última push hace minutos. 1 venta hoy ($3.500 fiado). 78 productos en inventario. Agente local funcionando correctamente. (2026-07-29)
