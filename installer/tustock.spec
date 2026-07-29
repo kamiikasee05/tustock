@@ -3,10 +3,14 @@
 # Modo one-folder. Entry point: installer/tustock_entry.py (wrapper)
 
 import os
+import sys
 from pathlib import Path
 
 SPEC_DIR = os.path.dirname(os.path.abspath(SPEC))
 PROJECT_ROOT = Path(SPEC_DIR).parent
+
+import barcode as _barcode
+_BARCODE_DIR = os.path.dirname(os.path.abspath(_barcode.__file__))
 
 a = Analysis(
     [str(PROJECT_ROOT / "installer" / "tustock_entry.py")],
@@ -27,6 +31,8 @@ a = Analysis(
         (str(PROJECT_ROOT / "server" / ".env"), "server"),
         # .env.example como fallback
         (str(PROJECT_ROOT / "server" / ".env.example"), "server"),
+        # Fuentes de barcode (necesario para ImageWriter en runtime)
+        (os.path.join(_BARCODE_DIR, "fonts"), "barcode" + os.sep + "fonts"),
     ],
     hiddenimports=[
         "pystray",
@@ -51,8 +57,34 @@ a = Analysis(
         "reportlab.lib",
         "reportlab.pdfgen",
         "reportlab.platypus",
+        "reportlab.graphics",
+        "reportlab.graphics.barcode",
+        "reportlab.graphics.barcode.code128",
+        "reportlab.graphics.barcode.code39",
+        "reportlab.graphics.barcode.code93",
+        "reportlab.graphics.barcode.common",
+        "reportlab.graphics.barcode.widgets",
+        "reportlab.graphics.barcode.eanbc",
+        "reportlab.graphics.barcode.qr",
+        "reportlab.graphics.barcode.qrencoder",
+        "reportlab.graphics.barcode.dmtx",
+        "reportlab.graphics.barcode.ecc200datamatrix",
+        "reportlab.graphics.barcode.usps",
+        "reportlab.graphics.barcode.usps4s",
+        "reportlab.graphics.renderPDF",
         "barcode",
         "barcode.writer",
+        "barcode.codex",
+        "barcode.base",
+        "barcode.charsets",
+        "barcode.charsets.code128",
+        "barcode.charsets.code39",
+        "barcode.charsets.ean",
+        "barcode.ean",
+        "barcode.upc",
+        "barcode.itf",
+        "barcode.codabar",
+        "barcode.isxn",
         "PIL",
         "PIL.Image",
         "PIL.ImageDraw",

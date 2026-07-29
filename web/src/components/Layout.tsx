@@ -20,6 +20,7 @@ const navItems: NavItem[] = [
   { to: '/pedidos', label: 'Pedidos', icon: 'shopping_cart' },
   { to: '/presupuestos', label: 'Presupuestos', icon: 'description' },
   { to: '/products', label: 'Productos', icon: 'inventory_2' },
+  { to: '/barcodes', label: 'Códigos', icon: 'label' },
   { to: '/audits', label: 'Auditorias', icon: 'history_edu' },
   { to: '/customers', label: 'Clientes', icon: 'group' },
   { to: '/vendors', label: 'Vendedores', icon: 'badge' },

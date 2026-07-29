@@ -108,6 +108,12 @@ def collect_metrics() -> dict:
 
     inventory = collect_inventory()
 
+    near_expiry_cutoff = str(date.today() + timedelta(days=30))
+    near_expiry_count = _scalar(LOCAL_DB, """
+        SELECT COUNT(*) FROM products
+        WHERE is_active = 1 AND expiry_date IS NOT NULL AND expiry_date <= :cutoff
+    """, {"cutoff": near_expiry_cutoff})
+
     return {
         "date": today,
         "server_time": datetime.now(timezone.utc).isoformat(),
@@ -123,6 +129,7 @@ def collect_metrics() -> dict:
         "customers": customers,
         "pending_orders": pending_orders,
         "inventory": inventory,
+        "near_expiry_count": near_expiry_count,
     }
 
 

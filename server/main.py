@@ -133,7 +133,10 @@ def public_barcode_image(product_id: int, db: Session = Depends(get_db)):
         label.save(buf, format="PNG")
         buf.seek(0)
         return Response(content=buf.getvalue(), media_type="image/png")
-    except:
+    except Exception as e:
+        print(f"[BARCODE] Error generando barcode para producto {product_id} (code={code}): {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(400, "No se pudo generar la imagen del codigo")
 
 app.include_router(products_router, dependencies=[Depends(verify_token)])

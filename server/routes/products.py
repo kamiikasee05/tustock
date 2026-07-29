@@ -1,6 +1,9 @@
 """Consulta y gestión de productos y categorías."""
 
+from datetime import date, timedelta
+from io import BytesIO
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from database import get_db
 from models.product import Product, Category
@@ -16,6 +19,7 @@ def to_product_out(p: Product) -> dict:
         category_id=p.category_id, cost_price=p.cost_price,
         selling_price=p.selling_price, min_stock=p.min_stock,
         unit=p.unit, is_active=p.is_active, barcode=p.barcode,
+        expiry_date=p.expiry_date,
     ).model_dump()
     data["category_name"] = p.category.name if p.category else None
     return data
@@ -26,8 +30,9 @@ def list_products(
     search: str = Query(default="", max_length=200),
     category_id: int = None,
     include_inactive: bool = False,
+    near_expiry: int = None,
 ):
-    """Lista todos los productos activos con filtros opcionales de búsqueda y categoría."""
+    """Lista todos los productos activos con filtros opcionales de búsqueda, categoría y próximos a vencer."""
     q = db.query(Product)
     if not include_inactive:
         q = q.filter(Product.is_active == True)
@@ -35,6 +40,9 @@ def list_products(
         q = q.filter(Product.name.ilike(f"%{search}%") | Product.code.ilike(f"%{search}%"))
     if category_id:
         q = q.filter(Product.category_id == category_id)
+    if near_expiry:
+        cutoff = date.today() + timedelta(days=near_expiry)
+        q = q.filter(Product.expiry_date <= cutoff)
     return [to_product_out(p) for p in q.order_by(Product.name).all()]
 
 @router.get("/generate-code")
@@ -170,6 +178,78 @@ def reactivate_product(product_id: int, db: Session = Depends(get_db)):
     p.is_active = True
     db.commit()
     return {"ok": True}
+
+@router.get("/barcodes/pdf")
+def barcodes_pdf(
+    db: Session = Depends(get_db),
+    search: str = Query(default="", max_length=200),
+    category_id: int = Query(default=None),
+):
+    """Genera un PDF imprimible A4 con etiquetas de código de barras en grilla 3×N."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+    from reportlab.pdfgen import canvas
+    from reportlab.graphics.barcode import createBarcodeDrawing
+
+    q = db.query(Product).filter(Product.barcode.isnot(None), Product.is_active == True)
+    if search:
+        s = search
+        q = q.filter(Product.name.ilike(f"%{s}%") | Product.barcode.ilike(f"%{s}%"))
+    if category_id:
+        q = q.filter(Product.category_id == category_id)
+    products = q.order_by(Product.name).all()
+    if not products:
+        raise HTTPException(404, {"error": "No hay productos con código de barras"})
+
+    buf = BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    pw, ph = A4
+
+    mx = 8 * mm
+    my = 8 * mm
+    lw = (pw - 2 * mx) / 3
+    lh = 27 * mm
+    gap = 2 * mm
+    cols = 3
+    rows = int((ph - 2 * my) / (lh + gap))
+
+    for i, p in enumerate(products):
+        pi = i % (cols * rows)
+        if pi == 0 and i > 0:
+            c.showPage()
+        col = pi % cols
+        row = pi // cols
+        x = mx + col * (lw + gap)
+        y = ph - my - (row + 1) * (lh + gap)
+
+        c.setStrokeColorRGB(0.85, 0.85, 0.85)
+        c.rect(x, y, lw, lh)
+
+        code_val = p.barcode or p.code
+        try:
+            d = createBarcodeDrawing('Code128', value=code_val, barHeight=9*mm, barWidth=0.2*mm)
+            d.drawOn(c, x + 1.5*mm, y + lh - 13.5*mm)
+        except Exception:
+            pass
+
+        c.setFont("Helvetica", 5)
+        c.drawCentredString(x + lw / 2, y + lh - 15.5*mm, code_val)
+
+        c.setFont("Helvetica", 6.5)
+        name = p.name[:48] if p.name else ""
+        c.drawCentredString(x + lw / 2, y + 5.5*mm, name)
+
+        c.setFont("Helvetica-Bold", 8)
+        price = f"${p.selling_price:,.0f}"
+        c.drawCentredString(x + lw / 2, y + 1*mm, price)
+
+    c.save()
+    buf.seek(0)
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'inline; filename="etiquetas.pdf"'},
+    )
 
 @router.post("/categories")
 def create_category(data: CategoryCreate, db: Session = Depends(get_db)):

@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, selectinload
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from database import get_db
 from models.sale import Sale, SaleItem
 from models.product import Product
@@ -139,16 +139,23 @@ def create_sale(data: SaleCreate, db: Session = Depends(get_db)):
 
 @router.get("/today/summary")
 def today_summary(db: Session = Depends(get_db)):
-    """Resumen de ventas del día actual: total, cantidad, items y ticket promedio."""
+    """Resumen de ventas del día actual: total, cantidad, items, ticket promedio y próximos a vencer."""
     today = date.today()
     sales = db.query(Sale).options(selectinload(Sale.items)).filter(Sale.sale_date == today).all()
     total = sum(s.total for s in sales)
     count = len(sales)
     items = sum(len(s.items) for s in sales)
+    near_expiry_cutoff = today + timedelta(days=30)
+    near_expiry_count = db.query(Product).filter(
+        Product.is_active == True,
+        Product.expiry_date != None,
+        Product.expiry_date <= near_expiry_cutoff,
+    ).count()
     return {
         "date": str(today),
         "total_sales": total,
         "transaction_count": count,
         "items_sold": items,
         "average_ticket": total / count if count > 0 else 0,
+        "near_expiry_products": near_expiry_count,
     }

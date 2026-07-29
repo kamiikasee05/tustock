@@ -5,16 +5,19 @@ import { api, LowStockItem } from '../api/client'
 export default function Dashboard() {
   const [lowStock, setLowStock] = useState<LowStockItem[]>([])
   const [todaySummary, setTodaySummary] = useState<any>(null)
+  const [nearExpiry, setNearExpiry] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
       api.get<LowStockItem[]>('/products/alerts/low-stock'),
       api.get<any>('/sales/today/summary'),
+      api.get<any[]>('/products?near_expiry=30&limit=5'),
     ])
-      .then(([alerts, summary]) => {
+      .then(([alerts, summary, expiry]) => {
         setLowStock(alerts)
         setTodaySummary(summary)
+        setNearExpiry(expiry)
       })
       .finally(() => setLoading(false))
   }, [])
@@ -32,6 +35,23 @@ export default function Dashboard() {
         <KPICard label="Artículos vendidos" value={todaySummary?.items_sold || 0} sub={`${todaySummary?.transaction_count || 0} ventas`} color="#4ade80" />
         <KPICard label="Ticket promedio" value={`$${todaySummary?.average_ticket?.toFixed(0) || '0'}`} sub="por transacción" color="#fbbf24" />
       </div>
+
+      {nearExpiry.length > 0 && (
+        <div style={{
+          background: 'rgba(251,191,36,0.08)',
+          border: '1px solid rgba(251,191,36,0.2)',
+          borderRadius: 12, padding: '14px 20px', marginBottom: 16,
+          display: 'flex', alignItems: 'center', gap: 12,
+        }}>
+          <span className="material-icons" style={{ fontSize: 20, color: '#fbbf24' }}>event</span>
+          <div style={{ flex: 1 }}>
+            <span style={{ fontWeight: 700, fontSize: 13, color: '#fbbf24' }}>
+              {todaySummary?.near_expiry_products || nearExpiry.length} producto{(todaySummary?.near_expiry_products || nearExpiry.length) !== 1 ? 's' : ''} próximo{(todaySummary?.near_expiry_products || nearExpiry.length) !== 1 ? 's' : ''} a vencer
+            </span>
+            <Link to="/products" style={{ marginLeft: 12, fontSize: 12, color: '#4d8eff', textDecoration: 'none' }}>Ver en productos →</Link>
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
         <div style={{

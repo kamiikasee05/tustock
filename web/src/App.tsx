@@ -12,6 +12,7 @@ import Presupuestos from './pages/Presupuestos'
 import Vendors from './pages/Vendors'
 import Upgrade from './pages/Upgrade'
 import Settings from './pages/Settings'
+import Barcodes from './pages/Barcodes'
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/pedidos" element={<Pedidos />} />
             <Route path="/presupuestos" element={<Presupuestos />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/barcodes" element={<Barcodes />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="/vendors" element={<Vendors />} />

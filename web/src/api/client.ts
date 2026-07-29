@@ -40,6 +40,7 @@ export interface Product {
   unit: string
   is_active: boolean
   barcode?: string | null
+  expiry_date?: string | null
 }
 
 export interface StockItem {

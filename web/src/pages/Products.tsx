@@ -12,6 +12,7 @@ export default function Products() {
   const [categories, setCategories] = useState<Category[]>([])
   const [search, setSearch] = useState('')
   const [filterCat, setFilterCat] = useState<number | ''>('')
+  const [filterNearExpiry, setFilterNearExpiry] = useState(false)
   const [showInactive, setShowInactive] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -19,13 +20,14 @@ export default function Products() {
   const [loading, setLoading] = useState(true)
 
   const [form, setForm] = useState({
-    code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '' as number | '', barcode: '' as string
+    code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '' as number | '', barcode: '' as string, expiry_date: '' as string
   })
 
   const load = () => {
     setLoading(true)
     let qs = `?search=${encodeURIComponent(search)}&include_inactive=${showInactive}`
     if (filterCat !== '') qs += `&category_id=${filterCat}`
+    if (filterNearExpiry) qs += `&near_expiry=30`
     Promise.all([
       api.get<Product[]>(`/products${qs}`),
       api.get<StockItem[]>('/stock'),
@@ -36,14 +38,15 @@ export default function Products() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [search, showInactive, filterCat])
+  useEffect(() => { load() }, [search, showInactive, filterCat, filterNearExpiry])
 
   const getStock = (id: number) => stock.find(s => s.id === id)?.quantity || 0
 
   const handleSubmit = async () => {
     setSubmitting(true)
     try {
-      const body = form.category_id !== '' ? { ...form, category_id: form.category_id } : { ...form, category_id: null }
+      const body: any = form.category_id !== '' ? { ...form, category_id: form.category_id } : { ...form, category_id: null }
+      body.expiry_date = body.expiry_date || null
       if (editing) {
         await api.put(`/products/${editing.id}`, body)
       } else {
@@ -51,7 +54,7 @@ export default function Products() {
       }
       setShowForm(false)
       setEditing(null)
-      setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '', barcode: '' })
+      setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '', barcode: '', expiry_date: '' })
       load()
     } catch (e: any) {
       toast('Error: ' + e.message, 'error')
@@ -62,7 +65,7 @@ export default function Products() {
 
   const handleEdit = (p: Product) => {
     setEditing(p)
-    setForm({ code: p.code, name: p.name, description: p.description || '', cost_price: p.cost_price, selling_price: p.selling_price, min_stock: p.min_stock, unit: p.unit, category_id: p.category_id ?? '', barcode: p.barcode || '' })
+    setForm({ code: p.code, name: p.name, description: p.description || '', cost_price: p.cost_price, selling_price: p.selling_price, min_stock: p.min_stock, unit: p.unit, category_id: p.category_id ?? '', barcode: p.barcode || '', expiry_date: p.expiry_date ? p.expiry_date.split('T')[0] : '' })
     setShowForm(true)
   }
 
@@ -148,7 +151,7 @@ export default function Products() {
             </button>
           </div>
           <button
-            onClick={() => { setEditing(null); setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '', barcode: '' }); setShowForm(!showForm) }}
+            onClick={() => { setEditing(null); setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '', barcode: '', expiry_date: '' }); setShowForm(!showForm) }}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               background: 'var(--primary-container)', color: 'var(--on-primary-container)',
@@ -183,14 +186,17 @@ export default function Products() {
             <option value="">Todas las categorías</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          <button style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            padding: '8px 12px', border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius)',
-            color: 'var(--secondary)', fontSize: 13, fontWeight: 500,
-            background: 'transparent', transition: 'background var(--transition)',
-          }}>
-            <MaterialIcon name="filter_list" size={18} />
-            <span>Más filtros</span>
+          <button
+            onClick={() => setFilterNearExpiry(!filterNearExpiry)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              padding: '8px 12px', border: `1px solid ${filterNearExpiry ? 'var(--tertiary)' : 'var(--outline-variant)'}`, borderRadius: 'var(--radius)',
+              color: filterNearExpiry ? 'var(--tertiary)' : 'var(--secondary)', fontSize: 13, fontWeight: 500,
+              background: filterNearExpiry ? 'var(--warning-bg)' : 'transparent', transition: 'background var(--transition)',
+            }}
+          >
+            <MaterialIcon name="event" size={18} />
+            <span>Próximo a vencer</span>
           </button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -279,6 +285,10 @@ export default function Products() {
                 </button>
               </div>
             </div>
+            <div>
+              <label style={labelStyle}>Fecha de vencimiento</label>
+              <input type="date" value={form.expiry_date} onChange={e => setForm({ ...form, expiry_date: e.target.value })} style={inputStyle} />
+            </div>
           </div>
           <div style={{ marginTop: 12 }}>
             <label style={labelStyle}>Descripción</label>
@@ -316,6 +326,7 @@ export default function Products() {
               <th style={thStyle}>Producto / Descripción</th>
               <th style={{ ...thStyle, textAlign: 'right' }}>Precio</th>
               <th style={{ ...thStyle, textAlign: 'center' }}>Stock</th>
+              <th style={{ ...thStyle, textAlign: 'center' }}>Vence</th>
               <th style={{ ...thStyle, textAlign: 'center' }}>Estado</th>
               <th style={{ ...thStyle, textAlign: 'right' }}>Acciones</th>
             </tr>
@@ -339,9 +350,9 @@ export default function Products() {
                 >
                   {/* Barcode */}
                   <td style={tdStyle}>
-                    <div style={{ width: 48, height: 32, background: 'rgba(255,255,255,0.04)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(66,71,84,0.2)', overflow: 'hidden' }}>
+                    <div style={{ width: 48, height: 32, background: '#fff', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(66,71,84,0.2)', overflow: 'hidden' }}>
                       {p.barcode ? (
-                        <img src={`/api/products/${p.id}/barcode.png`} alt={p.barcode} style={{ height: '100%', objectFit: 'contain', mixBlendMode: 'screen', opacity: 0.8 }} />
+                        <img src={`/api/products/${p.id}/barcode.png`} alt={p.barcode} style={{ height: '100%', objectFit: 'contain' }} />
                       ) : (
                         <button
                           onClick={async () => { try { await api.post(`/products/${p.id}/barcode`); load() } catch (e) {} }}
@@ -384,6 +395,24 @@ export default function Products() {
                     }}>
                       {String(qty).padStart(2, '0')}
                     </span>
+                  </td>
+
+                  {/* Expiry date */}
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    {p.expiry_date ? (() => {
+                      const today = new Date()
+                      const exp = new Date(p.expiry_date + 'T00:00:00')
+                      const diffDays = Math.ceil((exp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+                      const formatted = `${String(exp.getDate()).padStart(2, '0')}/${String(exp.getMonth() + 1).padStart(2, '0')}/${exp.getFullYear()}`
+                      if (diffDays < 0) {
+                        return <span style={badgeStyle('rgba(248,113,113,0.15)', '#f87171')}>Vencido</span>
+                      } else if (diffDays <= 30) {
+                        return <span title={`Vence el ${formatted}`} style={badgeStyle('rgba(251,191,36,0.15)', '#fbbf24')}>Próx. {formatted}</span>
+                      }
+                      return <span style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>{formatted}</span>
+                    })() : (
+                      <span style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>—</span>
+                    )}
                   </td>
 
                   {/* Status badge */}
@@ -434,7 +463,7 @@ export default function Products() {
             })}
             {products.length === 0 && (
               <tr>
-                <td colSpan={6} style={{ padding: 48, textAlign: 'center', color: 'var(--on-surface-variant)', fontSize: 14 }}>
+                <td colSpan={7} style={{ padding: 48, textAlign: 'center', color: 'var(--on-surface-variant)', fontSize: 14 }}>
                   {showInactive ? 'No hay productos inactivos' : 'No se encontraron productos'}
                 </td>
               </tr>

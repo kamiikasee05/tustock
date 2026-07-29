@@ -1,5 +1,6 @@
 """Esquemas Pydantic para validación y serialización de datos en requests/responses."""
 
+from datetime import date
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -14,6 +15,7 @@ class ProductCreate(BaseModel):
     min_stock: int = Field(default=5, ge=0)
     unit: str = Field(default="unidad", max_length=20)
     barcode: Optional[str] = Field(default=None, max_length=50)
+    expiry_date: Optional[date] = None
 
 class ProductUpdate(BaseModel):
     """Datos para actualizar un producto existente (todos los campos son opcionales)."""
@@ -26,6 +28,7 @@ class ProductUpdate(BaseModel):
     unit: Optional[str] = Field(default=None, max_length=20)
     is_active: Optional[bool] = None
     barcode: Optional[str] = Field(default=None, max_length=50)
+    expiry_date: Optional[date] = None
 
 class ProductOut(BaseModel):
     """Respuesta pública con los datos de un producto."""
@@ -40,6 +43,7 @@ class ProductOut(BaseModel):
     unit: str
     is_active: bool
     barcode: Optional[str] = None
+    expiry_date: Optional[date] = None
 
 class CategoryCreate(BaseModel):
     """Datos para crear una nueva categoría."""

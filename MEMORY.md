@@ -3,17 +3,18 @@
 ## RESUMEN EJECUTIVO (lee esto primero)
 
 - **Qué es:** Sistema de gestión de stock y ventas para polirrubros argentinos (kioscos, librerías, almacenes). Sin internet, pago único o suscripción, 15 min de instalación.
-- **Estado:** Fase 1 (licencias + trial + gating) ✅. Monitor Cloud desplegado ✅. POS Remoto Fase 1 ✅. 2 clientes activos.
+- **Estado:** Fase 1 (licencias + trial + gating) ✅. Monitor Cloud desplegado ✅. POS Remoto Fase 1 ✅. 2 clientes activos. 1 instalación in-situ completada (28/7). 2 nuevos prospectos.
 - **Stack:** Python/FastAPI/SQLite (backend) + React/Vite/TS (frontend) + Kotlin/ML Kit (Android, congelado).
 - **Clientes:**
-  1. Librería — plan premium ($60K entry + $6K/mes, legacy). Monitor Premium + Cloud.
+  1. Librería — plan premium ($60K entry + $6K/mes, legacy). Monitor Premium + Cloud. ✅ Instalación in-situ completada (28/7). Key: `TST-A921-C581-9F20-4B43`. Email cloud: `libreria-tustock@temp.tustocksoft.com.ar`
   2. SU-Day (Dayana) — plan Suscripción ($8K/mes). Monitor Cloud + POS Remoto validado end-to-end.
 - **Próximas prioridades (orden):**
   1. Evaluar multi-sucursal para polirrubro lead (3 sucursales, ~38h dev, $240K+ potencial)
   2. Activar Programa Despegue ML ($45K recuperable, $45K publicidad gratis)
   3. Registrar bases de datos en AAIP (obligación legal Ley 25.326)
   4. Railway a Hobby cuando se acaben créditos gratis ($5/mes)
-  5. Tests automatizados (postergado hasta 5+ clientes)
+  5. Evaluar feature Fechas de Vencimiento (detectado por prospectos cosmética + polirrubro — necesario para comestibles y cosmética, ver Feature Gaps)
+  6. Tests automatizados (postergado hasta 5+ clientes)
 - **Lo que NO existe (no prometer):** Backup en la nube ❌ | Multi-sucursal ❌ | Múltiples cajeros ❌
 - **Reglas críticas para agentes:**
   - NO tocar Android (congelado). NO internationalizar (solo español).
@@ -25,7 +26,7 @@
 - **Archivos clave:** `server/` backend | `web/src/` frontend React | `cloud/` monitor cloud + API | `legal/` docs legales | `obsidian/` vault de documentación
 - **Monitor Cloud:** `monitor.tustocksoft.com.ar` (Railway). Push-based. Login JWT. 3 tabs (Dashboard/Inventario/Pedidos). POS Remoto.
 - **Admin:** Independiente en `E:\TUSTOCK_ADMIN\`. Habla SOLO a cloud API (Railway). Tray icon púrpura.
-- **Última acción:** Fix decimales frontend completado (26/7). Sin bugs activos conocidos.
+- **Última acción:** Instalación Librería in-situ completada (28/7). 2 nuevos prospectos: polirrubro (3 sucursales) + cosmética. Feature Fechas de Vencimiento implementado (29/7). USB preparado para instalación.
 
 ---
 
@@ -75,15 +76,15 @@
 
 > **Cliente potencial:** Polirrubro con 3 sucursales que vende desde bebidas hasta verduras. Maneja todo en cuaderno, Mercado Pago para transferencias, caja para efectivo. Quiere digitalizar.
 
-**Estado:** 🟡 Estrategia de acercamiento definida — Social Proof (caso librería)
+**Estado:** 🟢 Social Proof validado — Instalación Librería completada. Listo para approach.
 
-**Estrategia aprobada (23/7):** Acercamiento psicológico. Primero instalar en la librería (semana del 28/7), validar que funciona, y usar ese caso como estandarte para polirrubro. "Ella ya lo tiene, ¿por qué vos no?"
+**Estrategia aprobada (23/7):** Acercamiento psicológico. Primero instalar en la librería (semana del 28/7), validar que funciona, y usar ese caso como estandarte para polirrubro. "Ella ya lo tiene, ¿por qué vos no?" — ✅ VALIDACIÓN COMPLETADA.
 
 **Acciones tomadas:**
 1. ✅ Análisis comercial (Ventas)
 2. ✅ Análisco técnico (DEV)
 3. ✅ Estrategia definida: Social Proof vía librería
-4. ⬜ Instalación en librería (semana del 28/7) — VALIDACIÓN
+4. ✅ Instalación en librería completada (28/7) — VALIDACIÓN ✅
 5. ✅ Material de testimonio (Marketing) — `docs/marketing/social-proof-polirrubro.md`
 6. ⬜ Approach al polirrubro con caso de éxito — `docs/marketing/estrategia-polirrubro.md`
 
@@ -121,6 +122,43 @@
 - **Limitación:** Catálogo de productos no se sincroniza en tiempo real (periódico o manual)
 
 **Decisión pendiente del humano:** ¿Avanzamos con entrevista al cliente? ¿O esperamos?
+
+---
+
+## LEAD POTENCIAL: Cosmética (Julio 2026)
+
+> **Cliente potencial:** Gretel — dueña de cosmética + tienda de blancos. 2 locales.
+
+**Estado:** 🟡 Contacto casual — se va a comunicar.
+
+**Datos relevados:**
+- **Nombre:** Gretel
+- **Negocio:** Cosmética + Tienda de blancos (2 locales)
+- **Origen:** Oportunidad casual, no planeada. Se le comentó muy por encima el sistema.
+- **Contacto:** Se va a poner en contacto ella.
+
+**Necesidad identificada:** Fechas de vencimiento — tanto cosmética como comestibles necesitan tracking de vencimiento. Feature que TUSTOCK no tiene hoy. Ver sección "Feature Gaps".
+
+**Próximo paso:** Cuando se contacte → entrevista formal de necesidades → demo → propuesta.
+
+---
+
+## FEATURE GAPS DETECTADOS (por prospectos reales)
+
+> Feature gaps documentados que surgen de interacciones con prospectos reales. No son features planeados, son necesidades del mercado que TUSTOCK no cubre hoy.
+
+### Fechas de Vencimiento (detectado 28/7)
+
+| Aspecto | Detalle |
+|---------|---------|
+| **Origen** | Prospecto cosmética (Gretel) + prospecto polirrubro (3 sucursales) |
+| **Qué pide** | Poder registrar y trackear la fecha de vencimiento de productos |
+| **A quién afecta** | Comestibles (bebidas, snacks, verdulería), cosmética (cremas, maquillaje), cualquier producto perecedero |
+| **Estado actual** | ✅ Implementado (29/7). Product model tiene campo `expiry_date`. Dashboard alerta próximos a vencer. Columna en tabla de productos con badges. |
+| **Esfuerzo estimado** | Pendiente evaluación de DEV |
+| **Prioridad** | 🟡 Alta — necesario para cerrar prospectos de cosmética y polirrubro |
+
+**Próximo paso:** Verificado con prospectos reales. Feature implementado y listo para usar.
 
 ---
 
@@ -228,6 +266,7 @@ Todo esto FUNCIONA y lo vendemos como parte del sistema:
 | Baja de cuenta cloud (endpoint + UI) | — | ✅ Construido | Endpoint `POST /api/business/delete-account` con confirmación por email. Soft-delete del Business + eliminación de MetricsPush. UI en dashboard con botón "Eliminar mi cuenta". |
 | EULA clickwrap en primera ejecución | — | ✅ Construido | Modal de aceptación de Términos y Condiciones en primera ejecución. Backend: `POST /api/license/accept-eula`. Frontend: EulaModal en Layout bloquea toda interacción hasta aceptar. |
 | Registro de bases de datos AAIP | — | ❌ No existe | No se registró la base de datos de usuarios cloud ante la Agencia de Acceso a la Información Pública. Postergado (Legal — Semana 2). |
+| Fechas de vencimiento | — | ✅ Implementado (28/7) | Producto ahora tiene campo `expiry_date`. Alertas de productos próximos a vencer en Dashboard + columna en tabla de productos. MVP completo. |
 
 ---
 
@@ -555,6 +594,7 @@ La clienta manifestó dos necesidades concretas:
 - [fix] CONFIGURAR.BAT JSON: Fix cmd.exe tritura comillas y {}. Ahora usa curl -d @file. (2026-07-25)
 - [fix] 4 BUGS SEGURIDAD: (1) backup_enabled False en Pro, (2) remote_orders con auth, (3) push_async post-venta remota, (4) agent pushea pending_orders. (2026-07-25)
 - [fix] DECIMALES FRONTEND: 9 inputs numéricos agregado step (0.01 en precios, 1 en min_stock, any en cantidades). POS Sales.tsx: input directo de cantidad con step="any" (antes solo +/-1). Products.tsx: input de cantidad en stock quick-adjust. Presupuestos: min="0.01". Customers: step="0.01" en pago. ScannerConnect: step="0.01" en precios. Backend sin cambios (ya era Float). QA PASS. (2026-07-26)
+- [feature] FECHAS DE VENCIMIENTO: Product model con campo `expiry_date` (Date, nullable). Schemas actualizados (ProductCreate, ProductUpdate, ProductOut). Endpoint GET /api/products?near_expiry=N. Dashboard alerta productos próximos a vencer. Columna "Vence" en tabla Products con badges naranja/rojo. Filtro de próximos a vencer. Cloud push incluye near_expiry_count. (2026-07-29)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
@@ -658,6 +698,15 @@ La clienta manifestó dos necesidades concretas:
 | 2026-07-23 | **Quick wins seguridad (4 fixes)**: (1) `backup_enabled: False` en plan Pro (feature no existe), (2) JWT_SECRET obligatorio al startup con sys.exit si vacío, (3) CORS restringido a 4 orígenes específicos (tustocksoft.com.ar, monitor subdomain, localhost:5174, localhost:8090), (4) `configurar.bat` crea `server/.env` con valores por defecto si no existe. Auditoría de calidad. | 🖥 DEV |
 | 2026-07-25 | **POS Remoto Fase 1 — APROBADO Y DESPLEGADO**: Feature completa validada end-to-end con Dayana. Venta remota desde Monitor Cloud funciona: CommandQueue → agent local → server → venta + stock descontado + push real-time. 6 endpoints cloud + 1 local. Tier: Pro ($160K) o Suscripción Pro ($15K/mes). Dayana pagaba $24K/mes por feature similar — nuestro precio es 37% más barato. | 🧑 HUMANO + 📢 Ventas |
 | 2026-07-25 | **register-from-install fix**: Endpoint ahora retorna API key existente cuando el email ya está registrado (en vez de 409). Configurar.bat funciona con cuentas existentes. Fix cmd.exe quoting (`curl -d @file`). | 🖥 DEV + Dispatcher |
+| 2026-07-28 | **Instalación Librería completada**: Setup in-situ para cliente premium. Social Proof validado para approach al polirrubro. | 🧑 HUMANO + Dispatcher |
+| 2026-07-28 | **Nuevos prospectos**: Polirrubro (3 sucursales, confirmado) + Cosmética (nuevo, sin datos) documentados en MEMORY.md. | 🧑 HUMANO + Dispatcher |
+| 2026-07-28 | **Feature Gap detectado**: Fechas de vencimiento — necesario para cosmética y comestibles. Gretel (cosmética) lo señaló. Documentado en nueva sección Feature Gaps. Pendiente evaluación de DEV. | 🧑 HUMANO + Dispatcher |
+| 2026-07-29 | **Feature Fechas de Vencimiento IMPLEMENTADO**: Product model + schemas + alerts + Dashboard + Products column + cloud push. Build exitoso. (DEV) | 🖥 DEV |
+| 2026-07-29 | **USB preparado para instalación Librería**: License key `TST-A921-C581-9F20-4B43` generada y sync al cloud. Email cloud `libreria-tustock@temp.tustocksoft.com.ar`. EXE 10.94 MB con vencimientos incluido. APKs + PDF + LEEME. | Dispatcher |
+| 2026-07-29 | **Fix barcode images**: `mixBlendMode: 'screen'` eliminado de Products.tsx, `except:` reemplazado por `except Exception as e:` con logging en endpoint, spec de PyInstaller actualizado con hiddenimports de barcode. EXE rebuild con barcode package incluido. | 🖥 DEV |
+| 2026-07-29 | **Feature página Códigos**: Nueva ruta `/barcodes` con grilla de etiquetas imprimibles, filtros, botón Imprimir con `@media print`. Link "Códigos" en sidebar. | 🖥 DEV |
+| 2026-07-29 | **Feature PDF de códigos de barras**: Endpoint `GET /api/products/barcodes/pdf` genera PDF A4 con grilla 3 columnas usando reportlab. Botón "Descargar PDF" en página Códigos. Filtros por search y category_id. | 🖥 DEV |
+| 2026-07-29 | **Fix PDF en EXE**: hiddenimport `reportlab.graphics.barcode.ecc200datamatrix` faltante en PyInstaller causaba `ModuleNotFoundError` al generar PDF desde el EXE. Agregado al spec. Frontend cambió `window.open()` (sin token) por `fetch()` con Authorization header para evitar 401. DB de productos copiada a `_internal/tustock.db`. (Dispatcher + DEV) | Dispatcher 🧑‍💻 |
 
 ---
 ## 13. EQUIPO LEGAL
@@ -846,4 +895,4 @@ La clienta manifestó dos necesidades concretas:
 
 ---
 
-*Última actualización: 26 de Julio de 2026 (Resumen ejecutivo agregado + Fix decimales frontend + QA verification)*
+*Última actualización: 28 de Julio de 2026 (Instalación Librería completada + 2 nuevos prospectos: polirrubro y cosmética)*

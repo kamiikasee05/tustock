@@ -30,3 +30,15 @@ def init_db():
     """Crea todas las tablas definidas en los modelos si no existen."""
     import models
     Base.metadata.create_all(bind=engine)
+    _run_migrations()
+
+def _run_migrations():
+    """Agrega columnas faltantes en tablas existentes para evitar errores con DBs viejas."""
+    import sqlalchemy as sa
+    from sqlalchemy import inspect
+    inspector = inspect(engine)
+    columns = [c["name"] for c in inspector.get_columns("products")]
+    if "expiry_date" not in columns:
+        with engine.connect() as conn:
+            conn.execute(sa.text("ALTER TABLE products ADD COLUMN expiry_date DATE"))
+            conn.commit()

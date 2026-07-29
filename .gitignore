@@ -79,3 +79,13 @@ scripts/cloudflared.exe
 
 # Obsidian vault (contiene secrets del proyecto - tokens MP, etc)
 obsidian/
+
+# Temp y working dirs
+TUSTOCK_DEV/
+USB_TUSTOCK/
+temp/
+.env_cliente.txt
+
+# Documentos generados para clientes
+Guia*.pdf
+LEEME.txt
