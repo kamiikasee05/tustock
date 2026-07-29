@@ -16,6 +16,7 @@ class ProductCreate(BaseModel):
     unit: str = Field(default="unidad", max_length=20)
     barcode: Optional[str] = Field(default=None, max_length=50)
     expiry_date: Optional[date] = None
+    initial_stock: float = Field(default=0.0, ge=0)
 
 class ProductUpdate(BaseModel):
     """Datos para actualizar un producto existente (todos los campos son opcionales)."""

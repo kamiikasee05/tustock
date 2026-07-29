@@ -596,6 +596,8 @@ La clienta manifestó dos necesidades concretas:
 - [fix] DECIMALES FRONTEND: 9 inputs numéricos agregado step (0.01 en precios, 1 en min_stock, any en cantidades). POS Sales.tsx: input directo de cantidad con step="any" (antes solo +/-1). Products.tsx: input de cantidad en stock quick-adjust. Presupuestos: min="0.01". Customers: step="0.01" en pago. ScannerConnect: step="0.01" en precios. Backend sin cambios (ya era Float). QA PASS. (2026-07-26)
 - [feature] FECHAS DE VENCIMIENTO: Product model con campo `expiry_date` (Date, nullable). Schemas actualizados (ProductCreate, ProductUpdate, ProductOut). Endpoint GET /api/products?near_expiry=N. Dashboard alerta productos próximos a vencer. Columna "Vence" en tabla Products con badges naranja/rojo. Filtro de próximos a vencer. Cloud push incluye near_expiry_count. (2026-07-29)
 - [feature] ANALYTICS SEMANALES: Endpoint `GET /api/admin/analytics/weekly` en cloud API con data de todos los negocios (7 días). Métricas por negocio: pushes, ventas, métodos de pago, top productos, inventario, stock bajo/cero, clientes, deudores, pedidos pendientes. Health status (healthy/warning/inactive). Script `scripts/weekly_report.py` genera markdown con resumen, salud, ranking, top global y alertas + ntfy. (2026-07-29)
+- [feature] STOCK INICIAL AL CREAR PRODUCTO: Nuevo campo `initial_stock` en formulario de creación. Schema ProductCreate con `initial_stock: float = 0.0`. Backend: si >0 llama `adjust_stock()` con movement_type="adjustment". Frontend: input numérico con subtext, toast con nombre + unidades, foco vuelve a Nombre. Build verificado. (2026-07-29)
+- [feature] ANALYTICS SEMANALES: Endpoint `GET /api/admin/analytics/weekly` en cloud API con data de todos los negocios (7 días). Métricas por negocio: pushes, ventas, métodos de pago, top productos, inventario, stock bajo/cero, clientes, deudores, pedidos pendientes. Health status (healthy/warning/inactive). Script `scripts/weekly_report.py` genera markdown con resumen, salud, ranking, top global y alertas + ntfy. (2026-07-29)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
@@ -896,10 +898,14 @@ La clienta manifestó dos necesidades concretas:
 
 ---
 
-*Última actualización: 29 de Julio de 2026 (Analytics semanales implementados — endpoint cloud + script reporte)*
+*Última actualización: 29 de Julio de 2026 (Analytics semanales endpoint + script + reporte generado + TUSTOCK_ADMIN_TOKEN configurado + Stock inicial al crear producto)*
 
 ---
 ## 16. ACCIONES DEL DISPATCHER (29/7)
 
 - [fix] CONTRASEÑA MONITOR CLOUD LIBRERÍA: Reseteada en Railway PostgreSQL vía TCP proxy. Nueva contraseña: `25976027PG` (asignada por el humano para la clienta). Login verificado exitosamente. (2026-07-29)
 - [check] DASHBOARD LIBRERÍA VERIFICADO: 605 pushes de métricas recibidas, última push hace minutos. 1 venta hoy ($3.500 fiado). 78 productos en inventario. Agente local funcionando correctamente. (2026-07-29)
+- [feature] ANALYTICS SEMANALES: Endpoint `GET /api/admin/analytics/weekly` en cloud API con data de todos los negocios (7 días). Métricas por negocio: pushes, ventas, métodos de pago, top productos, inventario, stock bajo/cero, clientes, deudores, pedidos pendientes. Health status (healthy/warning/inactive). Script `scripts/weekly_report.py` genera markdown con resumen, salud, ranking, top global y alertas + ntfy. Primer reporte generado exitosamente. (2026-07-29)
+- [fix] TZ CRASH ANALYTICS: `datetime.now(timezone.utc)` retorna offset-aware, timestamps de PostgreSQL offset-naive → crash al restar. Fix: `.replace(tzinfo=None)` en now y last_push. (2026-07-29)
+- [ops] TUSTOCK_ADMIN_TOKEN configurado: Token `nwkf0GsJ1VQDEzT2tjypmXuKrqW349ZRFS5oO6Ia` seteado en Railway + server/.env. Pendiente desde 22/7. (2026-07-29)
+- [feature] STOCK INICIAL AL CREAR PRODUCTO: Nuevo campo `initial_stock` en formulario de creación. Schema ProductCreate con `initial_stock: float = 0.0`. Backend: si >0 llama `adjust_stock()` con movement_type="adjustment". Frontend: input numérico con subtext, toast con nombre + unidades, foco vuelve a Nombre. Build verificado. (2026-07-29)

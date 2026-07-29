@@ -123,6 +123,7 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 @router.post("")
 def create_product(data: ProductCreate, db: Session = Depends(get_db)):
     from services.license_service import can_add_product
+    from services.stock_service import adjust_stock
     from sqlalchemy.exc import IntegrityError
     ok, msg = can_add_product(db)
     if not ok:
@@ -133,6 +134,7 @@ def create_product(data: ProductCreate, db: Session = Depends(get_db)):
     payload = data.model_dump()
     if payload.get("barcode") == "":
         payload["barcode"] = None
+    initial_stock_val = payload.pop("initial_stock", 0) or 0
     p = Product(**payload)
     db.add(p)
     try:
@@ -141,6 +143,8 @@ def create_product(data: ProductCreate, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(400, "El código o código de barras ya está en uso")
     db.refresh(p)
+    if initial_stock_val > 0:
+        adjust_stock(db, p.id, float(initial_stock_val), "adjustment", notes="Stock inicial")
     return to_product_out(p)
 
 @router.put("/{product_id}")

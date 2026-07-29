@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { api, Product, StockItem } from '../api/client'
 import { useToast } from '../components/Toast'
 import MaterialIcon from '../components/ui/MaterialIcon'
@@ -19,8 +19,10 @@ export default function Products() {
   const [editing, setEditing] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const nameRef = useRef<HTMLInputElement>(null)
+
   const [form, setForm] = useState({
-    code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '' as number | '', barcode: '' as string, expiry_date: '' as string
+    code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '' as number | '', barcode: '' as string, expiry_date: '' as string, initial_stock: 0
   })
 
   const load = () => {
@@ -45,7 +47,11 @@ export default function Products() {
   const handleSubmit = async () => {
     setSubmitting(true)
     try {
-      const body: any = form.category_id !== '' ? { ...form, category_id: form.category_id } : { ...form, category_id: null }
+      const body: any = { ...form }
+      if (editing) {
+        delete body.initial_stock
+      }
+      body.category_id = body.category_id !== '' ? body.category_id : null
       body.expiry_date = body.expiry_date || null
       if (editing) {
         await api.put(`/products/${editing.id}`, body)
@@ -53,9 +59,13 @@ export default function Products() {
         await api.post('/products', body)
       }
       setShowForm(false)
+      const createdName = form.name
+      const createdStock = form.initial_stock
       setEditing(null)
-      setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '', barcode: '', expiry_date: '' })
+      setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '', barcode: '', expiry_date: '', initial_stock: 0 })
       load()
+      toast(`${createdName} creado${createdStock > 0 ? ` con ${createdStock} unidades de stock` : ''}`, 'success')
+      nameRef.current?.focus()
     } catch (e: any) {
       toast('Error: ' + e.message, 'error')
     } finally {
@@ -151,7 +161,7 @@ export default function Products() {
             </button>
           </div>
           <button
-            onClick={() => { setEditing(null); setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '', barcode: '', expiry_date: '' }); setShowForm(!showForm) }}
+            onClick={() => { setEditing(null); setForm({ code: '', name: '', description: '', cost_price: 0, selling_price: 0, min_stock: 5, unit: 'unidad', category_id: '', barcode: '', expiry_date: '', initial_stock: 0 }); setShowForm(!showForm) }}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               background: 'var(--primary-container)', color: 'var(--on-primary-container)',
@@ -254,7 +264,7 @@ export default function Products() {
             </div>
             <div>
               <label style={labelStyle}>Nombre</label>
-              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputStyle} />
+              <input ref={nameRef} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Precio costo</label>
@@ -284,6 +294,11 @@ export default function Products() {
                   + Nueva
                 </button>
               </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Stock inicial</label>
+              <input type="number" step="any" min="0" placeholder="0" value={form.initial_stock} onChange={e => setForm({ ...form, initial_stock: +e.target.value })} style={inputStyle} disabled={!!editing} />
+              <span style={{ fontSize: 11, color: 'var(--outline)', marginTop: 4, display: 'block' }}>Cargá cuántos tenés ahora. Si no, dejalo en 0.</span>
             </div>
             <div>
               <label style={labelStyle}>Fecha de vencimiento</label>
