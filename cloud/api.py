@@ -341,7 +341,7 @@ def admin_stats(request: Request, db: Session = Depends(get_db)):
 @app.get("/api/admin/analytics/weekly")
 def admin_analytics_weekly(request: Request, db: Session = Depends(get_db)):
     verify_admin(request)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     week_ago = now - timedelta(days=7)
     week_ago_str = week_ago.strftime("%Y-%m-%d")
 
@@ -379,7 +379,8 @@ def admin_analytics_weekly(request: Request, db: Session = Depends(get_db)):
         span = (last_push - first_push).total_seconds()
         avg_interval = span / max(total_pushes - 1, 1)
 
-        hours_since_last = (now - last_push).total_seconds() / 3600
+        last_push_dt = last_push.replace(tzinfo=None) if last_push.tzinfo else last_push
+        hours_since_last = (now - last_push_dt).total_seconds() / 3600
         is_active = hours_since_last < 1
 
         pushes_by_date = {}
