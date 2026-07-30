@@ -26,7 +26,7 @@
 - **Archivos clave:** `server/` backend | `web/src/` frontend React | `cloud/` monitor cloud + API | `legal/` docs legales | `obsidian/` vault de documentación
 - **Monitor Cloud:** `monitor.tustocksoft.com.ar` (Railway). Push-based. Login JWT. 3 tabs (Dashboard/Inventario/Pedidos). POS Remoto.
 - **Admin:** Independiente en `E:\TUSTOCK_ADMIN\`. Habla SOLO a cloud API (Railway). Tray icon púrpura.
-- **Última acción:** Instalación Librería in-situ completada (28/7). 2 nuevos prospectos: polirrubro (3 sucursales) + cosmética. Feature Fechas de Vencimiento implementado (29/7). USB preparado para instalación.
+- **Última acción:** Analytics semanales endpoint + script (29/7). Stock inicial al crear producto (29/7). TUSTOCK_ADMIN_TOKEN configurado (29/7). PDF presentación (el de Gemini, `TUSTOCK - Presentación del Sistema.pdf` — Marketing NO hace PDFs).
 
 ---
 
@@ -828,10 +828,11 @@ La clienta manifestó dos necesidades concretas:
 - [feature] INVENTARIO MONITOR CLOUD: Inventario completo visible en el Monitor Cloud. `collect_inventory()` en `cloud_push.py` y `cloud/agent.py` pushea productos con stock (max 500, query SQL con products+categories+current_stock). Endpoint `GET /api/inventory` con JWT auth, paginación, búsqueda por nombre/código, filtro por categoría, filtro stock bajo. `dashboard.html` con 3 tabs (Dashboard/Inventario/Pedidos), tabla responsive con badges (🟢 OK/🟡 Bajo/🔴 Sin stock), KPI total productos, categorías dinámicas. Gating: solo planes Suscripción/Pro/Premium. (2026-07-24)
 - [feature] WEBHOOK MP FIRMA: Verificación HMAC-SHA256 en webhook de Mercado Pago. `verify_mp_signature()` parsea header `x-signature` (formato `ts=<ms>,v1=<hash>`), construye manifest `id:;request-id:;ts:;`, calcula HMAC-SHA256 con secret, compara con `hmac.compare_digest()`. Modo warn (log pero no rechaza). Dual secret: `MP_WEBHOOK_SECRET` (Checkout Pro) + `MP_WEBHOOK_SECRET_SUBS` (Suscripciones) con fallback. Replay check (>5min = warning). `notification_url` actualizado con `?source_news=webhooks` para recibir solo webhooks (no IPN legacy). Env vars pendientes de configurar en Railway. (2026-07-24)
 - [fix] EXE MODELS IMPORT CRASH: `sys.path.insert(0, agent_path)` en `tustock_entry.py` insertaba `cloud/` en sys.path, causando que `cloud/models.py` sombree al package `server/models/` (race condition entre threads). Eliminada línea innecesaria (agent.py se carga con importlib.util). Exe reconstruido y verificado. (2026-07-24)
+- [android] STOCK INITIAL + MODO AUDITORÍA EN APK: 3 archivos modificados. ApiClient.kt: `CreateProductRequest` ahora incluye `initial_stock` + 4 métodos de auditoría (create, start, updateItem, complete). activity_stock_main.xml: barra superior con Switch toggle "Auditoría". StockMainActivity.kt: lógica dual — modo normal (registro con stock initial en 1 llamada, sin ajuste posterior) y modo auditoría (toggle ON crea auditoría → escanea producto y guarda conteo real → toggle OFF completa y aplica correcciones). Workflow GitHub Actions actualizado para compilar ambos APKs automáticamente al pushear cambios en `android/**`. (2026-07-30)
 
 ---
 
-*Última actualización: 25 de Julio de 2026 (POS Remoto Fase 1 + 4 bugs fixes + pricing validation)*
+*Última actualización: 30 de Julio de 2026 (APK Stock modificado: initial_stock + modo auditoría. Pendiente compilar)*
 
 ---
 
@@ -898,10 +899,10 @@ La clienta manifestó dos necesidades concretas:
 
 ---
 
-*Última actualización: 29 de Julio de 2026 (Analytics semanales endpoint + script + reporte generado + TUSTOCK_ADMIN_TOKEN configurado + Stock inicial al crear producto)*
+*Última actualización: 30 de Julio de 2026 (APK Stock modificado: initial_stock + modo auditoría. Pendiente compilar)*
 
 ---
-## 16. ACCIONES DEL DISPATCHER (29/7)
+## 16. ACCIONES DEL DISPATCHER (30/7)
 
 - [fix] CONTRASEÑA MONITOR CLOUD LIBRERÍA: Reseteada en Railway PostgreSQL vía TCP proxy. Nueva contraseña: `25976027PG` (asignada por el humano para la clienta). Login verificado exitosamente. (2026-07-29)
 - [check] DASHBOARD LIBRERÍA VERIFICADO: 605 pushes de métricas recibidas, última push hace minutos. 1 venta hoy ($3.500 fiado). 78 productos en inventario. Agente local funcionando correctamente. (2026-07-29)
@@ -909,3 +910,4 @@ La clienta manifestó dos necesidades concretas:
 - [fix] TZ CRASH ANALYTICS: `datetime.now(timezone.utc)` retorna offset-aware, timestamps de PostgreSQL offset-naive → crash al restar. Fix: `.replace(tzinfo=None)` en now y last_push. (2026-07-29)
 - [ops] TUSTOCK_ADMIN_TOKEN configurado: Token `nwkf0GsJ1VQDEzT2tjypmXuKrqW349ZRFS5oO6Ia` seteado en Railway + server/.env. Pendiente desde 22/7. (2026-07-29)
 - [feature] STOCK INICIAL AL CREAR PRODUCTO: Nuevo campo `initial_stock` en formulario de creación. Schema ProductCreate con `initial_stock: float = 0.0`. Backend: si >0 llama `adjust_stock()` con movement_type="adjustment". Frontend: input numérico con subtext, toast con nombre + unidades, foco vuelve a Nombre. Build verificado. (2026-07-29)
+- [android] APK STOCK MODIFICADO: 3 archivos con initial_stock + toggle auditoría. Workflow `.github/workflows/build-apk.yml` actualizado para compilar ambos APKs (Stock + POS) via GitHub Actions. Disparo automático al pushear cambios en `android/**`. (2026-07-30)

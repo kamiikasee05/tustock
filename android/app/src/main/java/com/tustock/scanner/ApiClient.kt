@@ -42,7 +42,8 @@ data class CreateProductRequest(
     val selling_price: Double = 0.0,
     val min_stock: Int = 5,
     val unit: String = "unidad",
-    val barcode: String? = null
+    val barcode: String? = null,
+    val initial_stock: Double = 0.0
 )
 
 data class ErrorResponse(val detail: String?)
@@ -185,6 +186,102 @@ object ApiClient {
                 Result.success(result)
             } else {
                 Result.failure(Exception("Error al enviar pedido"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Error: ${e.message}"))
+        }
+    }
+
+    // --- Audits ---
+
+    data class AuditCreateResponse(
+        val id: Int,
+        val status: String,
+        val items_count: Int
+    )
+
+    data class AuditItemUpdateRequest(
+        val product_id: Int,
+        val counted_qty: Double
+    )
+
+    data class AuditItemUpdateResponse(
+        val product_id: Int,
+        val theoretical: Double,
+        val counted: Double,
+        val difference: Double
+    )
+
+    data class AuditCompleteResponse(
+        val id: Int,
+        val status: String,
+        val corrections_applied: Boolean
+    )
+
+    suspend fun createAudit(): Result<AuditCreateResponse> = withContext(Dispatchers.IO) {
+        try {
+            val json = gson.toJson(mapOf("created_by" to "app-stock"))
+            val request = authorizedBuilder()
+                .url("$baseUrl/api/audits")
+                .post(json.toRequestBody(jsonType))
+                .build()
+            val response = client.newCall(request).execute()
+            if (response.isSuccessful) {
+                val body = response.body?.string() ?: throw Exception("Respuesta vacia")
+                Result.success(gson.fromJson(body, AuditCreateResponse::class.java))
+            } else {
+                Result.failure(Exception("Error al crear auditoria"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Error: ${e.message}"))
+        }
+    }
+
+    suspend fun startAudit(auditId: Int): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val request = authorizedBuilder()
+                .url("$baseUrl/api/audits/$auditId/start")
+                .post("{}".toRequestBody(jsonType))
+                .build()
+            val response = client.newCall(request).execute()
+            if (response.isSuccessful) Result.success(Unit)
+            else Result.failure(Exception("Error al iniciar auditoria"))
+        } catch (e: Exception) {
+            Result.failure(Exception("Error: ${e.message}"))
+        }
+    }
+
+    suspend fun updateAuditItem(auditId: Int, productId: Int, countedQty: Double): Result<AuditItemUpdateResponse> = withContext(Dispatchers.IO) {
+        try {
+            val json = gson.toJson(AuditItemUpdateRequest(product_id = productId, counted_qty = countedQty))
+            val request = authorizedBuilder()
+                .url("$baseUrl/api/audits/$auditId/items")
+                .put(json.toRequestBody(jsonType))
+                .build()
+            val response = client.newCall(request).execute()
+            if (response.isSuccessful) {
+                val body = response.body?.string() ?: throw Exception("Respuesta vacia")
+                Result.success(gson.fromJson(body, AuditItemUpdateResponse::class.java))
+            } else {
+                Result.failure(Exception("Error al guardar conteo"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Error: ${e.message}"))
+        }
+    }
+
+    suspend fun completeAudit(auditId: Int): Result<AuditCompleteResponse> = withContext(Dispatchers.IO) {
+        try {
+            val request = authorizedBuilder()
+                .url("$baseUrl/api/audits/$auditId/complete?apply_corrections=true")
+                .post("{}".toRequestBody(jsonType))
+                .build()
+            val response = client.newCall(request).execute()
+            if (response.isSuccessful) {
+                val body = response.body?.string() ?: throw Exception("Respuesta vacia")
+                Result.success(gson.fromJson(body, AuditCompleteResponse::class.java))
+            } else {
+                Result.failure(Exception("Error al completar auditoria"))
             }
         } catch (e: Exception) {
             Result.failure(Exception("Error: ${e.message}"))

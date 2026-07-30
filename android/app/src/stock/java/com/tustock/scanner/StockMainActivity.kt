@@ -26,6 +26,12 @@ class StockMainActivity : AppCompatActivity() {
     private var imageAnalysis: ImageAnalysis? = null
     private val prefs by lazy { getSharedPreferences("tustock_prefs", MODE_PRIVATE) }
 
+    // Audit mode
+    private var auditMode = false
+    private var currentAuditId: Int? = null
+    private var isSettingToggle = false
+    private var auditScannedCount = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_stock_main)
@@ -37,6 +43,12 @@ class StockMainActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
 
+        val auditToggle = findViewById<Switch>(R.id.auditToggle)
+        auditToggle.setOnCheckedChangeListener { _, isChecked ->
+            if (isSettingToggle) return@setOnCheckedChangeListener
+            if (isChecked) startAuditMode() else finishAuditMode()
+        }
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 300)
@@ -45,13 +57,69 @@ class StockMainActivity : AppCompatActivity() {
         }
     }
 
+    private fun startAuditMode() {
+        scope.launch {
+            val result = ApiClient.createAudit()
+            result.onSuccess { audit ->
+                // Start the audit (status → in_progress)
+                ApiClient.startAudit(audit.id)
+                currentAuditId = audit.id
+                auditMode = true
+                auditScannedCount = 0
+                Toast.makeText(this@StockMainActivity,
+                    "Auditoría #${audit.id} iniciada — escaneá y decí cuántos hay",
+                    Toast.LENGTH_LONG).show()
+                hideAllCards()
+                findViewById<TextView>(R.id.scanHint).visibility = View.VISIBLE
+            }
+            result.onFailure {
+                isSettingToggle = true
+                findViewById<Switch>(R.id.auditToggle).isChecked = false
+                isSettingToggle = false
+                Toast.makeText(this@StockMainActivity,
+                    "Error al crear auditoría: ${it.message}",
+                    Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun finishAuditMode() {
+        val auditId = currentAuditId ?: run {
+            auditMode = false
+            return
+        }
+        scope.launch {
+            val result = ApiClient.completeAudit(auditId)
+            result.onSuccess { response ->
+                val msg = if (response.corrections_applied)
+                    "✅ Auditoría #$auditId completada — stock corregido"
+                    else "Auditoría #$auditId completada (sin correcciones)"
+                Toast.makeText(this@StockMainActivity, msg, Toast.LENGTH_LONG).show()
+                auditMode = false
+                currentAuditId = null
+                auditScannedCount = 0
+                hideAllCards()
+                findViewById<TextView>(R.id.scanHint).visibility = View.VISIBLE
+            }
+            result.onFailure {
+                Toast.makeText(this@StockMainActivity,
+                    "Error al completar: ${it.message}",
+                    Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         isProcessing = false
         lastScannedCode = null
+        hideAllCards()
+        findViewById<TextView>(R.id.scanHint).visibility = View.VISIBLE
+    }
+
+    private fun hideAllCards() {
         findViewById<View>(R.id.resultCard).visibility = View.GONE
         findViewById<View>(R.id.notFoundCard).visibility = View.GONE
-        findViewById<TextView>(R.id.scanHint).visibility = View.VISIBLE
     }
 
     override fun onRequestPermissionsResult(
@@ -100,30 +168,58 @@ class StockMainActivity : AppCompatActivity() {
             scanHint.visibility = View.VISIBLE
         }
 
+        // --- Button: add stock (normal) OR save count (audit) ---
         addStockBtn.setOnClickListener {
             val qtyStr = quantityInput.text.toString()
-            val qty = qtyStr.toDoubleOrNull() ?: 1.0
+            val qty = qtyStr.toDoubleOrNull() ?: if (auditMode) 0.0 else 1.0
             val product = lastScanned ?: return@setOnClickListener
 
             addStockBtn.isEnabled = false
-            addStockBtn.text = "Cargando..."
 
-            scope.launch {
-                val result = ApiClient.adjustStock(product.id, qty)
-                result.onSuccess {
-                    val newStock = product.stock + qty
-                    productStock.text = "Stock: $newStock ${product.unit}"
-                    quantityInput.text.clear()
-                    Toast.makeText(this@StockMainActivity, "+${qty.toInt()} ${product.name}", Toast.LENGTH_SHORT).show()
+            if (auditMode && currentAuditId != null) {
+                // AUDIT MODE: save counted quantity
+                addStockBtn.text = "Guardando..."
+                scope.launch {
+                    val result = ApiClient.updateAuditItem(currentAuditId!!, product.id, qty)
+                    result.onSuccess { response ->
+                        auditScannedCount++
+                        val diff = response.difference
+                        val sign = if (diff > 0) "+" else ""
+                        Toast.makeText(this@StockMainActivity,
+                            "${product.name}: ${qty.toInt()} (${sign}${diff.toInt()})",
+                            Toast.LENGTH_SHORT).show()
+                        resultCard.visibility = View.GONE
+                        lastScannedCode = null
+                        isProcessing = false
+                        scanHint.visibility = View.VISIBLE
+                    }
+                    result.onFailure {
+                        Toast.makeText(this@StockMainActivity, "Error: ${it.message}", Toast.LENGTH_LONG).show()
+                    }
+                    addStockBtn.isEnabled = true
+                    addStockBtn.text = "Guardar conteo"
                 }
-                result.onFailure {
-                    Toast.makeText(this@StockMainActivity, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
+            } else {
+                // NORMAL MODE: add stock
+                addStockBtn.text = "Cargando..."
+                scope.launch {
+                    val result = ApiClient.adjustStock(product.id, qty)
+                    result.onSuccess {
+                        val newStock = product.stock + qty
+                        productStock.text = "Stock: $newStock ${product.unit}"
+                        quantityInput.text.clear()
+                        Toast.makeText(this@StockMainActivity, "+${qty.toInt()} ${product.name}", Toast.LENGTH_SHORT).show()
+                    }
+                    result.onFailure {
+                        Toast.makeText(this@StockMainActivity, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
+                    }
+                    addStockBtn.isEnabled = true
+                    addStockBtn.text = "Agregar al stock"
                 }
-                addStockBtn.isEnabled = true
-                addStockBtn.text = "Agregar al stock"
             }
         }
 
+        // --- Button: register new product (both modes) ---
         regSubmitBtn.setOnClickListener {
             val code = lastScannedCode ?: return@setOnClickListener
             val name = regNameInput.text.toString().trim()
@@ -140,12 +236,15 @@ class StockMainActivity : AppCompatActivity() {
 
             scope.launch {
                 val result = ApiClient.createProduct(
-                    CreateProductRequest(code = "TST-${System.currentTimeMillis()}", name = name, selling_price = price, barcode = code)
+                    CreateProductRequest(
+                        code = "TST-${System.currentTimeMillis()}",
+                        name = name,
+                        selling_price = price,
+                        barcode = code,
+                        initial_stock = qty
+                    )
                 )
                 result.onSuccess { product ->
-                    if (qty > 0) {
-                        ApiClient.adjustStock(product.id, qty)
-                    }
                     Toast.makeText(this@StockMainActivity, "${product.name} registrado", Toast.LENGTH_SHORT).show()
                     notFoundCard.visibility = View.GONE
                     lastScannedCode = null
@@ -160,6 +259,7 @@ class StockMainActivity : AppCompatActivity() {
             }
         }
 
+        // --- Camera + ML Kit setup ---
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
@@ -203,9 +303,24 @@ class StockMainActivity : AppCompatActivity() {
 
                                                 productName.text = product.name
                                                 productCode.text = "Codigo: ${product.code}"
-                                                productPrice.text = "Precio: $${product.selling_price}"
-                                                productStock.text = "Stock: ${product.stock} ${product.unit}"
-                                                quantityInput.text.clear()
+
+                                                if (auditMode && currentAuditId != null) {
+                                                    // AUDIT: show theoretical stock, ask "cuantos hay?"
+                                                    productPrice.text = "Stock en sistema: ${product.stock.toInt()}"
+                                                    productStock.visibility = View.GONE
+                                                    quantityInput.hint = "Cuantos hay?"
+                                                    quantityInput.setText("")
+                                                    addStockBtn.text = "Guardar conteo"
+                                                } else {
+                                                    // NORMAL: show price + stock
+                                                    productPrice.text = "Precio: $${product.selling_price}"
+                                                    productStock.visibility = View.VISIBLE
+                                                    productStock.text = "Stock: ${product.stock} ${product.unit}"
+                                                    quantityInput.hint = "Cant."
+                                                    quantityInput.setText("1")
+                                                    addStockBtn.text = "Agregar al stock"
+                                                }
+
                                                 resultCard.visibility = View.VISIBLE
                                                 scanHint.visibility = View.GONE
                                                 isProcessing = false

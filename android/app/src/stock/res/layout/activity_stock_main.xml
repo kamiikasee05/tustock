@@ -9,18 +9,46 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Top config button -->
-    <Button
-        android:id="@+id/configButton"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:text="⚙"
-        android:textSize="16sp"
-        android:layout_gravity="end|top"
+    <!-- Top bar: toggle + config -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="top"
         android:layout_margin="12dp"
-        android:backgroundTint="#334155"
-        android:textColor="#94a3b8"
-        android:padding="0dp" />
+        android:gravity="center_vertical">
+
+        <Switch
+            android:id="@+id/auditToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:thumbTint="#4d8eff"
+            android:trackTint="#334155" />
+
+        <TextView
+            android:id="@+id/auditLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Auditoría"
+            android:textColor="#94a3b8"
+            android:textSize="13sp"
+            android:layout_marginStart="6dp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/configButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:text="⚙"
+            android:textSize="16sp"
+            android:backgroundTint="#334155"
+            android:textColor="#94a3b8"
+            android:padding="0dp" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/scanHint"
