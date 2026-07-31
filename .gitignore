@@ -32,6 +32,8 @@ android/build/
 android/.gradle/
 *.jks
 *.keystore
+keystore.properties
+keystore-base64.txt
 .idea/
 
 # OS
