@@ -12,14 +12,14 @@ setlocal
 REM Verificar keystore
 if not exist "app\tustock-release.jks" (
     echo [ERROR] No se encuentra app\tustock-release.jks
-    echo Ejecuta primero: keytool -genkey ...
+    echo Ejecuta primero desde android/: keytool -genkey ...
     exit /b 1
 )
 
-REM Verificar keystore.properties
+REM Verificar keystore.properties (en android/, rootProject level)
 if not exist keystore.properties (
     echo [ERROR] No se encuentra keystore.properties
-    echo Crea el archivo con:
+    echo Crea el archivo en android/ con:
     echo   storeFile=app/tustock-release.jks
     echo   storePassword=TU_PASSWORD
     echo   keyAlias=tustock-release

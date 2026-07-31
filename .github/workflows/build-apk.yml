@@ -52,6 +52,7 @@ jobs:
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo ">>> Keystore encontrado, compilando APKs Release..."
+            # keystore en app/ (proyecto Gradle), properties en android/ (rootProject)
             echo "$KEYSTORE_BASE64" | base64 -d > app/tustock-release.jks
             echo "storeFile=app/tustock-release.jks" > keystore.properties
             echo "storePassword=$KEYSTORE_PASSWORD" >> keystore.properties
