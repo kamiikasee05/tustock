@@ -36,31 +36,32 @@ jobs:
         working-directory: android
         run: chmod +x gradlew
 
-      # --- Release signing setup ---
-      - name: Decode keystore from secrets
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
-        working-directory: android/app
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > tustock-release.jks
-
-      - name: Create keystore.properties
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
-        working-directory: android
-        run: |
-          echo "storeFile=app/tustock-release.jks" > keystore.properties
-          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> keystore.properties
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> keystore.properties
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> keystore.properties
-
       # --- Build debug APKs (siempre) ---
       - name: Build Debug APKs
         working-directory: android
         run: ./gradlew assembleStockDebug assemblePosDebug
 
-      # --- Build release APKs (solo si hay keystore) ---
-      - name: Build Release APKs
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+      # --- Release signing & build (usa secrets de GitHub si existen) ---
+      - name: Decode keystore and build Release APKs
         working-directory: android
-        run: ./gradlew assembleStockRelease assemblePosRelease
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo ">>> Keystore encontrado, compilando APKs Release..."
+            echo "$KEYSTORE_BASE64" | base64 -d > app/tustock-release.jks
+            echo "storeFile=app/tustock-release.jks" > keystore.properties
+            echo "storePassword=$KEYSTORE_PASSWORD" >> keystore.properties
+            echo "keyAlias=$KEY_ALIAS" >> keystore.properties
+            echo "keyPassword=$KEY_PASSWORD" >> keystore.properties
+            chmod +x gradlew
+            ./gradlew assembleStockRelease assemblePosRelease
+          else
+            echo ">>> Sin keystore, solo debug (release APKs no se generan)"
+          fi
 
       - name: Upload Debug POS APK
         uses: actions/upload-artifact@v4
@@ -75,20 +76,20 @@ jobs:
           path: android/app/build/outputs/apk/stock/debug/app-stock-debug.apk
 
       - name: Upload Release POS APK
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        if: hashFiles('android/app/build/outputs/apk/pos/release/app-pos-release.apk') != ''
         uses: actions/upload-artifact@v4
         with:
           name: tustock-pos-release
           path: android/app/build/outputs/apk/pos/release/app-pos-release.apk
 
       - name: Upload Release Stock APK
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        if: hashFiles('android/app/build/outputs/apk/stock/release/app-stock-release.apk') != ''
         uses: actions/upload-artifact@v4
         with:
           name: tustock-stock-release
           path: android/app/build/outputs/apk/stock/release/app-stock-release.apk
 
-      - name: Create Release
+      - name: Create Release (debug)
         if: github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
@@ -99,6 +100,7 @@ jobs:
             android/app/build/outputs/apk/stock/debug/app-stock-debug.apk
             android/app/build/outputs/apk/pos/release/app-pos-release.apk
             android/app/build/outputs/apk/stock/release/app-stock-release.apk
+          fail_on_unmatched_files: false
           draft: false
           prerelease: false
         env:
