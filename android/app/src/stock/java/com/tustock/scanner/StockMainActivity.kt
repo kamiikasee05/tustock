@@ -31,6 +31,7 @@ class StockMainActivity : AppCompatActivity() {
     private var lastScanTime = 0L
     private var imageAnalysis: ImageAnalysis? = null
     private val prefs by lazy { getSharedPreferences("tustock_prefs", MODE_PRIVATE) }
+    private var lastNewName: String = ""
 
     // CSV take session
     private var csvActive = false
@@ -264,6 +265,7 @@ class StockMainActivity : AppCompatActivity() {
         val quantityInput = findViewById<EditText>(R.id.quantityInput)
         val scanAgainBtn = findViewById<Button>(R.id.scanAgainButton)
         val registerBtn = findViewById<Button>(R.id.registerProductButton)
+        val newNameInput = findViewById<EditText>(R.id.newProductNameInput)
 
         val notFoundCard = findViewById<View>(R.id.notFoundCard)
         val notFoundCode = findViewById<TextView>(R.id.notFoundCode)
@@ -278,6 +280,7 @@ class StockMainActivity : AppCompatActivity() {
 
         scanAgainBtn.setOnClickListener {
             resultCard.visibility = View.GONE
+            newNameInput.visibility = View.GONE
             lastScannedCode = null
             isProcessing = false
             scanHint.visibility = View.VISIBLE
@@ -314,9 +317,19 @@ class StockMainActivity : AppCompatActivity() {
                     Toast.makeText(this, "Ingresá una cantidad válida (mínimo 1)", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
-                appendCsvLine(code, qty, lastScannedName)
-                Toast.makeText(this, "✓ $lastScannedName x$qty", Toast.LENGTH_SHORT).show()
+                val name = if (product == null) {
+                    val typed = newNameInput.text.toString().trim()
+                    if (typed.length < 2) {
+                        Toast.makeText(this, "Ingresá el nombre del producto (mínimo 2 letras)", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+                    lastNewName = typed
+                    typed
+                } else lastScannedName
+                appendCsvLine(code, qty, name)
+                Toast.makeText(this, "✓ $name x$qty", Toast.LENGTH_SHORT).show()
                 resultCard.visibility = View.GONE
+                newNameInput.visibility = View.GONE
                 lastScannedCode = null
                 isProcessing = false
                 quantityInput.setText("")
@@ -424,15 +437,20 @@ class StockMainActivity : AppCompatActivity() {
                                             // TAKE MODE: resolve locally from catalog, no round-trip
                                             val product = catalogByKey[code] ?: catalogByKey[code.lowercase()]
                                             lastScanned = product
-                                            lastScannedName = product?.name ?: "(no registrado)"
+                                            lastScannedName = product?.name ?: ""
                                             resultCard.visibility = View.GONE
                                             notFoundCard.visibility = View.GONE
-                                            productName.text = lastScannedName
+                                            productName.text = product?.name ?: "Producto nuevo"
                                             productCode.text = "Codigo: $code"
                                             if (product != null) {
                                                 productPrice.text = "Stock en sistema: ${product.stock.toInt()}"
+                                                newNameInput.visibility = View.GONE
                                             } else {
-                                                productPrice.text = "No registrado en el catalogo"
+                                                productPrice.text = "No esta en el catalogo - cargá el nombre"
+                                                newNameInput.setText(lastNewName)
+                                                newNameInput.setSelection(0, newNameInput.text.length)
+                                                newNameInput.visibility = View.VISIBLE
+                                                newNameInput.requestFocus()
                                             }
                                             productStock.visibility = View.GONE
                                             quantityInput.hint = "Cuantos hay?"
