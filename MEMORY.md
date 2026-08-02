@@ -11,10 +11,11 @@
 - **Próximas prioridades (orden):**
   1. 🟡 **Multi-sucursal en STANDBY** hasta reunión con encargado/dueño de farmacia (análisis DEV validado 31/7: **~50h MVP ≈ 2 semanas**, ver `docs/analisis-multisucursal-2026-07-30.md`)
   2. 🟢 Reunión polirrubro 1 sucursal — **reprogramada a la semana del 5/8** (horario a confirmar con el cliente). Demo probada exitosa en notebook (2/8). Bundle en `USB_TUSTOCK\TUSTOCK_DEMO\`, guión en `LEEME-DEMO.txt`
-  3. Activar Programa Despegue ML ($45K recuperable, $45K publicidad gratis)
-  4. Registrar bases de datos en AAIP (obligación legal Ley 25.326)
-  5. Railway a Hobby cuando se acaben créditos gratis ($5/mes)
-  6. Tests automatizados (postergado hasta 5+ clientes)
+  3. 🟡 **Opción E (app Stock CSV)** — aprobada (2/8) pero **EN ESPERA hasta reunión polirrubro** (~16h, catálogo offline confirmado)
+  4. Activar Programa Despegue ML ($45K recuperable, $45K publicidad gratis)
+  5. Registrar bases de datos en AAIP (obligación legal Ley 25.326)
+  6. Railway a Hobby cuando se acaben créditos gratis ($5/mes)
+  7. Tests automatizados (postergado hasta 5+ clientes)
 - **Lo que NO existe (no prometer):** Backup en la nube ❌ | Multi-sucursal ❌ | Múltiples cajeros ❌
 - **Reglas críticas para agentes:**
   - NO tocar Android (**congelado — EXCEPCIÓN 2/8: app Stock aprobada para Opción E toma de stock CSV. App POS sigue congelada**). NO internationalizar (solo español).
@@ -791,6 +792,7 @@ La clienta manifestó dos necesidades concretas:
 | 2026-08-02 | **Catálogo offline CONFIRMADO**: El humano aprobó el catálogo offline en la app Stock (descargar `GET /api/products` paginado al iniciar la toma, nombre visible al escanear). Estimación total Opción E: **~16h**. | 🧑 HUMANO |
 | 2026-08-02 | **Reunión polirrubro reprogramada**: Pasa de sábado 2/8 a la **semana del 5/8** (horario a confirmar con el cliente). Demo probada exitosa en notebook (2/8). | 🧑 HUMANO |
 | 2026-08-02 | **B1+B2 web DESCARTADOS**: El humano decidió NO aplicar las mejoras web de refocus + beep. La toma de stock actual funciona y la mejora real llega con la Opción E (upgrade completo). Se evita tocar código web que quedará obsoleto con el CSV. | 🧑 HUMANO |
+| 2026-08-02 | **Opción E en ESPERA hasta reunión polirrubro**: El humano decidió NO arrancar el desarrollo de la app Stock (Opción E, ~16h) hasta tener la reunión con el polirrubro (semana del 5/8). Si el cliente pide algo que cambie prioridades, se ajusta. El upgrade de toma de stock queda agendado para después de la reunión. | 🧑 HUMANO |
 
 ---
 ## 13. EQUIPO LEGAL
