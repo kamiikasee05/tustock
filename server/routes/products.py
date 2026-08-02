@@ -179,16 +179,24 @@ def create_product(data: ProductCreate, db: Session = Depends(get_db)):
 def update_product(product_id: int, data: ProductUpdate, db: Session = Depends(get_db)):
     """Actualiza los campos enviados de un producto existente."""
     from sqlalchemy.exc import IntegrityError
+    from services.stock_service import get_current_stock, adjust_stock
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
         raise HTTPException(404, "Producto no encontrado")
-    for k, v in data.model_dump(exclude_unset=True).items():
+    payload = data.model_dump(exclude_unset=True)
+    initial_stock_val = payload.pop("initial_stock", None)
+    for k, v in payload.items():
         setattr(p, k, v)
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
         raise HTTPException(400, "El código o código de barras ya está en uso")
+    db.refresh(p)
+    if initial_stock_val is not None:
+        current = get_current_stock(db, product_id)
+        if current != initial_stock_val:
+            adjust_stock(db, product_id, float(initial_stock_val), "adjustment", notes="Stock inicial (edición)")
     return to_product_out(p)
 
 @router.delete("/{product_id}")

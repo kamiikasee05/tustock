@@ -75,9 +75,6 @@ export default function Products() {
     setSubmitting(true)
     try {
       const body: any = { ...form }
-      if (editing) {
-        delete body.initial_stock
-      }
       body.category_id = body.category_id !== '' ? body.category_id : null
       body.expiry_date = body.expiry_date || null
       if (editing) {
@@ -102,7 +99,7 @@ export default function Products() {
 
   const handleEdit = (p: Product) => {
     setEditing(p)
-    setForm({ code: p.code, name: p.name, description: p.description || '', cost_price: p.cost_price, selling_price: p.selling_price, min_stock: p.min_stock, unit: p.unit, category_id: p.category_id ?? '', barcode: p.barcode || '', expiry_date: p.expiry_date ? p.expiry_date.split('T')[0] : '' })
+    setForm({ code: p.code, name: p.name, description: p.description || '', cost_price: p.cost_price, selling_price: p.selling_price, min_stock: p.min_stock, unit: p.unit, category_id: p.category_id ?? '', barcode: p.barcode || '', expiry_date: p.expiry_date ? p.expiry_date.split('T')[0] : '', initial_stock: getStock(p.id) })
     setShowForm(true)
   }
 
@@ -335,9 +332,9 @@ export default function Products() {
               </div>
             </div>
             <div>
-              <label style={labelStyle}>Stock inicial</label>
-              <input type="number" step="any" min="0" placeholder="0" value={form.initial_stock} onChange={e => setForm({ ...form, initial_stock: +e.target.value })} style={inputStyle} disabled={!!editing} />
-              <span style={{ fontSize: 11, color: 'var(--outline)', marginTop: 4, display: 'block' }}>Cargá cuántos tenés ahora. Si no, dejalo en 0.</span>
+              <label style={labelStyle}>{editing ? 'Stock actual' : 'Stock inicial'}</label>
+              <input type="number" step="any" min="0" placeholder="0" value={form.initial_stock} onChange={e => setForm({ ...form, initial_stock: +e.target.value })} style={inputStyle} />
+              <span style={{ fontSize: 11, color: 'var(--outline)', marginTop: 4, display: 'block' }}>{editing ? 'Se ajusta el stock a este valor al guardar.' : 'Cargá cuántos tenés ahora. Si no, dejalo en 0.'}</span>
             </div>
             <div>
               <label style={labelStyle}>Fecha de vencimiento</label>

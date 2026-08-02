@@ -30,6 +30,7 @@ class ProductUpdate(BaseModel):
     is_active: Optional[bool] = None
     barcode: Optional[str] = Field(default=None, max_length=50)
     expiry_date: Optional[date] = None
+    initial_stock: Optional[float] = Field(default=None, ge=0)
 
 class ProductOut(BaseModel):
     """Respuesta pública con los datos de un producto."""
