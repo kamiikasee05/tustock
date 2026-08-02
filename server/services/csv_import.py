@@ -114,6 +114,8 @@ def parse_stock_csv(content: bytes) -> dict:
 
         barcode, qty_raw = cleaned[0], cleaned[1]
         name = cleaned[2] if len(cleaned) > 2 else ""
+        if name.strip().lower() in ("(no registrado)", "no registrado"):
+            name = ""
 
         if first_data:
             first_data = False
@@ -207,7 +209,8 @@ def import_stock_csv(db: Session, content: bytes, notes: str = None) -> dict:
 
     audit_id = None
     items = []
-    if matched:
+    registerable = [e for e in errors if e.get("barcode")]
+    if matched or registerable:
         created = create_audit(
             db, notes=notes, created_by="import-csv",
             product_ids=[m["product"].id for m in matched],
@@ -315,3 +318,103 @@ def register_product_from_import(db: Session, audit_id: int, barcode: str, name:
         "counted_qty": float(quantity),
         "difference": float(quantity),
     }
+
+
+def register_products_batch(db: Session, audit_id: int, products: list[dict]) -> dict:
+    """Registra en lote los productos nuevos (barcodes no registrados) del import CSV.
+
+    products: lista de {"barcode", "name", "quantity"}. Todo se hace en una sola
+    transacción. Respeta el límite de productos del plan y responde errores por fila.
+    """
+    import random
+    import string
+
+    from services.license_service import can_add_product, get_license
+
+    audit = db.query(StockAudit).filter(StockAudit.id == audit_id).first()
+    if not audit:
+        raise ValueError("Auditoría no encontrada")
+    if audit.status == "completed":
+        raise ValueError("La auditoría ya fue completada")
+
+    lic = get_license(db)
+    if not lic:
+        raise PermissionError("No hay licencia activa")
+    active_count = db.query(Product).filter(Product.is_active == True).count()
+    allowed = (lic.max_products - active_count) if lic else 0
+
+    seen: OrderedDict = OrderedDict()
+    for item in products:
+        barcode = (item.get("barcode") or "").strip()
+        if not barcode:
+            continue
+        name = (item.get("name") or "").strip()
+        if name.lower() in ("(no registrado)", "no registrado"):
+            name = ""
+        if barcode not in seen:
+            seen[barcode] = {"name": "", "quantity": 0.0}
+        seen[barcode]["quantity"] += float(item.get("quantity") or 0)
+        if not seen[barcode]["name"] and name:
+            seen[barcode]["name"] = name
+
+    existing = resolve_products(db, list(seen.keys()))
+
+    created = []
+    errors = []
+    for barcode, info in seen.items():
+        if barcode in existing:
+            errors.append({
+                "barcode": barcode, "name": info["name"],
+                "message": "El código de barras ya está registrado",
+            })
+            continue
+        if not info["name"]:
+            errors.append({"barcode": barcode, "name": "", "message": "Nombre requerido"})
+            continue
+        if allowed <= 0:
+            errors.append({
+                "barcode": barcode, "name": info["name"],
+                "message": "Límite de productos alcanzado",
+            })
+            continue
+
+        code = "TST" + "".join(random.choices(string.digits, k=10))
+        while db.query(Product).filter(Product.code == code).first():
+            code = "TST" + "".join(random.choices(string.digits, k=10))
+
+        product = Product(
+            code=code,
+            name=info["name"][:200],
+            barcode=barcode,
+            description="",
+            cost_price=0.0,
+            selling_price=0.0,
+            min_stock=0,
+            unit="unidad",
+            is_active=True,
+        )
+        db.add(product)
+        db.flush()
+
+        theoretical = get_current_stock(db, product.id)
+        db.add(AuditItem(
+            audit_id=audit.id,
+            product_id=product.id,
+            theoretical_qty=theoretical,
+            counted_qty=info["quantity"],
+            difference=info["quantity"],
+        ))
+        allowed -= 1
+        created.append({
+            "product_id": product.id,
+            "code": product.code,
+            "barcode": product.barcode,
+            "scanned": barcode,
+            "name": product.name,
+            "theoretical_qty": theoretical,
+            "counted_qty": info["quantity"],
+            "difference": info["quantity"],
+        })
+
+    db.commit()
+    return {"created": created, "errors": errors, "total": len(seen)}

@@ -22,7 +22,7 @@ def create_audit(db: Session, notes: str = None, created_by: str = None, product
     db.flush()
 
     q = db.query(Product).filter(Product.is_active == True)
-    if product_ids:
+    if product_ids is not None:
         q = q.filter(Product.id.in_(product_ids))
     products = q.all()
     for p in products:

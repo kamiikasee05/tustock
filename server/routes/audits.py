@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from sqlalchemy.orm import Session
 from database import get_db
-from schemas import AuditCreate, AuditItemUpdate, ScanRequest, ImportRegister
+from schemas import AuditCreate, AuditItemUpdate, ScanRequest, ImportRegister, ImportRegisterBatch
 from services.audit_service import (
     create_audit, start_audit, update_audit_item,
     complete_audit, get_audit_detail, list_audits, scan_to_audit,
@@ -49,6 +49,19 @@ def import_register(data: ImportRegister, db: Session = Depends(get_db)):
 
     try:
         return register_product_from_import(db, data.audit_id, data.barcode, data.name, data.quantity)
+    except PermissionError as e:
+        raise HTTPException(403, str(e))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+@router.post("/import-register-batch")
+def import_register_batch(data: ImportRegisterBatch, db: Session = Depends(get_db)):
+    """Registra en lote todos los barcodes no registrados del import CSV en una sola
+    transacción (loop server-side). Usa el nombre que vino en el CSV."""
+    from services.csv_import import register_products_batch
+
+    try:
+        return register_products_batch(db, data.audit_id, [p.model_dump() for p in data.products])
     except PermissionError as e:
         raise HTTPException(403, str(e))
     except ValueError as e:

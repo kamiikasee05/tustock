@@ -64,6 +64,8 @@ export default function ImportStock() {
       setPhase('preview')
       if (data.matched === 0 && data.errors.length === 0) {
         toast('El CSV no tiene productos válidos', 'error')
+      } else if (data.matched === 0) {
+        toast('Todos los productos son nuevos — registralos con "Registrar todos"', 'info')
       } else {
         toast(`Importados ${data.matched} productos del CSV`, 'success')
       }
@@ -97,6 +99,37 @@ export default function ImportStock() {
       setItems(prev => [...prev, { ...res, original_qty: res.counted_qty }])
       setErrors(prev => prev.filter(e => e.barcode !== err.barcode))
       toast(`Producto "${res.name}" registrado`, 'success')
+    } catch (e: any) {
+      toast('Error: ' + e.message, 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const registerAll = async () => {
+    if (!preview?.audit_id) return
+    const pendientes = errors.filter(e => !e.malformed && e.barcode && e.name)
+    if (pendientes.length === 0) return
+    if (!confirm(`¿Registrar ${pendientes.length} producto(s) nuevo(s)?\nSe crean con el nombre y el stock contado (precio $0 — lo cargás después en Productos).`)) return
+    setBusy(true)
+    try {
+      const res = await api.post<any>('/audits/import-register-batch', {
+        audit_id: preview.audit_id,
+        products: pendientes.map(e => ({ barcode: e.barcode, name: e.name, quantity: e.quantity ?? 0 })),
+      })
+      const createdBarcodes = new Set((res.created || []).map((c: any) => c.scanned))
+      setItems(prev => [...prev, ...(res.created || []).map((c: any) => ({ ...c, original_qty: c.counted_qty }))])
+      setErrors(prev => {
+        const submitted = new Set(pendientes.map(e => e.barcode))
+        const kept = prev.filter(e => !submitted.has(e.barcode))
+        const map = new Map<string, ImportError>()
+        for (const e of [...kept, ...(res.errors || [])]) {
+          if (e.barcode) map.set(e.barcode, e)
+          else map.set(`line-${e.line}-${kept.length}-${Math.random()}`, e)
+        }
+        return [...map.values()]
+      })
+      toast(`Se registraron ${res.created?.length || 0} producto(s)`, 'success')
     } catch (e: any) {
       toast('Error: ' + e.message, 'error')
     } finally {
@@ -353,9 +386,22 @@ export default function ImportStock() {
                 padding: 'var(--space-md) var(--space-lg)', borderBottom: '1px solid rgba(255,180,171,0.2)',
                 display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
                 color: 'var(--danger)', fontWeight: 600, fontSize: 14,
+                justifyContent: 'space-between', flexWrap: 'wrap',
               }}>
-                <MaterialIcon name="error" size={20} />
-                {errors.length} línea{errors.length !== 1 ? 's' : ''} sin resolver
+                <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                  <MaterialIcon name="error" size={20} />
+                  {errors.length} línea{errors.length !== 1 ? 's' : ''} sin resolver
+                </span>
+                {errors.some(e => !e.malformed && e.barcode && e.name) && (
+                  <button onClick={registerAll} disabled={busy} style={{
+                    ...inputBtn,
+                    background: 'var(--danger)', color: 'var(--bg)',
+                    opacity: busy ? 0.5 : 1, cursor: busy ? 'not-allowed' : 'pointer',
+                  }}>
+                    <MaterialIcon name="playlist_add_check" size={16} />
+                    {busy ? 'Registrando...' : 'Registrar todos los pendientes'}
+                  </button>
+                )}
               </div>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 640 }}>

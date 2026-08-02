@@ -96,6 +96,17 @@ class ImportRegister(BaseModel):
     name: str = Field(..., max_length=200)
     quantity: float = Field(..., ge=0)
 
+class ImportRegisterItem(BaseModel):
+    """Producto nuevo individual dentro de un registro en lote."""
+    barcode: str = Field(..., max_length=50)
+    name: str = Field(..., max_length=200)
+    quantity: float = Field(..., ge=0)
+
+class ImportRegisterBatch(BaseModel):
+    """Registro en lote de productos nuevos desde el import CSV (uno por barcode)."""
+    audit_id: int
+    products: list[ImportRegisterItem]
+
 class VendorCreate(BaseModel):
     """Datos para registrar un nuevo vendedor."""
     dni: str = Field(..., max_length=20)
