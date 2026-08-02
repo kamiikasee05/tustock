@@ -279,20 +279,16 @@ export default function Products() {
               <label style={labelStyle}>Código</label>
               <div style={{ display: 'flex', gap: 6 }}>
                 <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} style={{ ...inputStyle, flex: 1 }} disabled={!!editing} />
-                {!editing || (editing && !form.code) ? (
-                  <button type="button" onClick={async () => {
-                    if (editing && form.code && !confirm('¿Regenerar código? Se perderá el actual.')) return
-                    try {
-                      const data = await api.get<{ code: string }>('/products/generate-code')
-                      setForm({ ...form, code: data.code })
-                    } catch (e) {}
-                  }}
-                    style={{ padding: '8px 14px', background: 'var(--surface-container-highest)', color: 'var(--on-surface)', border: '1px solid var(--outline-variant)', borderRadius: 6, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer' }}>
-                    Generar
-                  </button>
-                ) : (
-                  <span style={{ display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12, color: 'var(--outline)' }}>Código existente</span>
-                )}
+                <button type="button" onClick={async () => {
+                  if (editing && form.code && !confirm('¿Regenerar código? Se perderá el actual.')) return
+                  try {
+                    const data = await api.get<{ code: string }>('/products/generate-code')
+                    setForm({ ...form, code: data.code })
+                  } catch (e) {}
+                }}
+                  style={{ padding: '8px 14px', background: 'var(--surface-container-highest)', color: 'var(--on-surface)', border: '1px solid var(--outline-variant)', borderRadius: 6, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer' }}>
+                  Generar
+                </button>
               </div>
             </div>
             <div>
