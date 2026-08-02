@@ -39,4 +39,4 @@ class Product(Base):
     category = relationship("Category", back_populates="products")
 
 
-Index("idx_products_search", Product.name, Product.code, Product.barcode, sqlite_on_conflict_ignore=True)
+Index("idx_products_search", Product.name, Product.code, Product.barcode)
