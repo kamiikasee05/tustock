@@ -4,7 +4,7 @@
 
 - **Qué es:** Sistema de gestión de stock y ventas para polirrubros argentinos (kioscos, librerías, almacenes). Sin internet, pago único o suscripción, 15 min de instalación.
 - **Estado:** Fase 1 (licencias + trial + gating) ✅. Monitor Cloud desplegado ✅. POS Remoto Fase 1 ✅. 2 clientes activos. 1 instalación in-situ completada (28/7). 3 prospectos activos (farmacia 3 suc, polirrubro 3 suc, polirrubro 1 suc).
-- **Stack:** Python/FastAPI/SQLite (backend) + React/Vite/TS (frontend) + Kotlin/ML Kit (Android, congelado).
+- **Stack:** Python/FastAPI/SQLite (backend) + React/Vite/TS (frontend) + Kotlin/ML Kit (Android — app Stock activa 2/8, app POS congelada).
 - **Clientes:**
   1. Librería — plan premium ($60K entry + $6K/mes, legacy). Monitor Premium + Cloud. ✅ Instalación in-situ completada (28/7). Key: `TST-A921-C581-9F20-4B43`. Email cloud: `libreria-tustock@temp.tustocksoft.com.ar`
   2. SU-Day (Dayana) — plan Suscripción ($8K/mes). Monitor Cloud + POS Remoto validado end-to-end.
@@ -17,7 +17,7 @@
   6. Tests automatizados (postergado hasta 5+ clientes)
 - **Lo que NO existe (no prometer):** Backup en la nube ❌ | Multi-sucursal ❌ | Múltiples cajeros ❌
 - **Reglas críticas para agentes:**
-  - NO tocar Android (congelado). NO internationalizar (solo español).
+  - NO tocar Android (**congelado — EXCEPCIÓN 2/8: app Stock aprobada para Opción E toma de stock CSV. App POS sigue congelada**). NO internationalizar (solo español).
   - NO prometer features inexistentes — publicidad engañosa (Ley 24.240 art. 8-9).
   - Directivas de Legal son VINCULANTES sobre cualquier desarrollo.
   - SIN MCPs — regla permanente desde 12/7/2026.
@@ -541,7 +541,7 @@ La clienta manifestó dos necesidades concretas:
 
 - Backend: Python 3.9+ / FastAPI / SQLAlchemy / SQLite
 - Frontend: React 18 + Vite + TypeScript (estilos inline, sin Tailwind/CSS modules)
-- Android: Kotlin + CameraX + ML Kit (congelado, no tocar)
+- Android: Kotlin + CameraX + ML Kit (**congelado — EXCEPCIÓN desde 2/8: app Stock en desarrollo para Opción E — toma de stock CSV local. App POS sigue congelada.**)
 - Base de datos: SQLite con WAL mode
 - Monitor: Vanilla HTML+CSS+JS (sin build step, sin framework)
 
@@ -787,6 +787,7 @@ La clienta manifestó dos necesidades concretas:
 | 2026-07-30 | **Multi-sucursal a STANDBY**: No desarrollar hasta conseguir reunión con encargado/dueño de farmacia. Se retoma con confirmación del cliente. | 🧑 HUMANO + Dispatcher |
 | 2026-07-30 | **Estrategia farmacia — exprimir con suscripciones**: Priorizar Suscripción Pro ($15K/mes) o suscripciones por sucursal sobre pagos únicos. NO ofrecer Básico/Pro único como primera opción. | 🧑 HUMANO |
 | 2026-07-30 | **Demo probada mañana**: El humano prueba el bundle demo (`USB_TUSTOCK\TUSTOCK_DEMO\`) en su notebook antes de la reunión del sábado. | 🧑 HUMANO |
+| 2026-08-02 | **CONGELAMIENTO ANDROID LEVANTADO (app Stock)**: El humano aprobó levantar el congelamiento de Android SOLO para la app Stock, para la **Opción E — toma de stock CSV local** (escaneo → cantidad → nombre → CSV local → import en PC). La app POS sigue congelada. La toma de stock actual funciona (lenta pero funciona) — es un **upgrade de producto para todos los clientes**, no un fix de emergencia. Regla en §3/§7 actualizada. Pendiente confirmar catálogo offline (pregunta 2 del doc §8). | 🧑 HUMANO |
 
 ---
 ## 13. EQUIPO LEGAL
@@ -1046,7 +1047,7 @@ La clienta manifestó dos necesidades concretas:
 
 - [telenota] Ítem 1 — Paginación + búsqueda: Cliente Librería tiene 309 productos (≈5% del stock real, va a crecer a miles). Pide **50 productos por página** y **búsqueda reactiva** (a medida que escribe, sin botón Buscar).
 - [telenota] Ítem 2 — Botón "Generar code" perdido: El cliente duplica el barcode en el campo code porque al EDITAR un producto no hay botón "Generar" (solo aparecía al crear). La causa raíz: ambos botones (code + barcode) tenían condición `{!editing && ...}`.
-- [telenota] Ítem 3 — Toma de stock masiva: Cliente con miles de productos no puede contar todo a mano. Ideas: import Excel/CSV, o descarga offline en app Stock + envío batch (Android congelado — requeriría levantar congelamiento). Alternativa priorizada: **Import Excel/CSV en web (~4-6h)**.
+- [telenota] Ítem 3 — Toma de stock masiva: Cliente con miles de productos no puede contar todo a mano. **✅ RESUELTO (2/8): Opción E aprobada — app Stock genera CSV local + import.** El humano levantó el congelamiento de Android (solo app Stock). Es un **upgrade de producto para todos los clientes**, no un parche para la librería. Detalles y estimación en `docs/analisis-toma-stock-2026-08-01.md` §6.
 - [fix] BOTÓN GENERAR CODE EN EDICIÓN (1/8): `web/src/pages/Products.tsx:247-256` — botón "Generar" (TST- + 10 dígitos vía `/products/generate-code`) ahora visible en creación Y edición. En edición: solo si `form.code` está vacío (si tiene code muestra "Código existente"); confirmación si regenera con code existente. Botón barcode sigue solo en creación. Causa raíz: ambos botones tenían `{!editing && ...}`. Backend `server/routes/products.py:76-86` ya existía (genera code TST- con chequeo de colisión). (2026-08-01)
 - [feature] PAGINACIÓN SERVER-SIDE + BÚSQUEDA (1/8): `server/routes/products.py:27-74` — endpoint `GET /api/products` ahora acepta `search` (ILIKE en name/code/barcode), `category_id`, `include_inactive`, `near_expiry`, `page` (1-based), `page_size` (1-200, default 50). Responde `{products, total, page, page_size, total_pages}` con offset/limit y orden por nombre. (DEV, 2026-08-01)
 - [feature] UI PAGINACIÓN CONFIGURABLE + DEBOUNCE (1/8): `web/src/pages/Products.tsx` — selector de page size 50/100/200 (default 50, persistido en `localStorage['products_page_size']`), búsqueda reactiva con debounce 300ms + indicador "Buscando...", refetch del backend paginado, botones Anterior/Siguiente, "Página X de Y", "Mostrando N de TOTAL", card TOTAL usa `total` del backend. Nota: "SIN STOCK" sigue calculado sobre página actual (limita conocida, requiere endpoint de stats). Build ✅ (317.91 kB JS, 949ms). (UI, 2026-08-01)
