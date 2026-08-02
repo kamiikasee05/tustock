@@ -451,3 +451,71 @@ barcode;cantidad;nombre;timestamp
 | 10 | **Si se va por la D:** para productos **sin barcode** (verduras, pan, fiambre), ¿el cliente los carga aparte a mano (flujo actual de alta de producto) o los importa por nombre? | Import por nombre (B5, +1-2h) vs alta manual |
 
 **Costo de decidir E:** ~16h de DEV (7.5h app con catálogo + 5.5h import + 2h QA + 1h CI; sin catálogo baja a ~14h) + un ciclo de actualización de clientes (§15, ya probado el 31/7). El import queda como feature permanente ("Import de conteo desde CSV"). **Costo de decidir A:** 12-14h de DEV + 1h de build/empaquetado + un ciclo de actualización de clientes. **Costo de decidir D:** 9.5-10h de DEV (7.5h con CSV real) + sin ciclo Android.
+
+---
+
+## 9. FLUJO UNIFICADO — Carga inicial + auditoría con la app Stock (2/8, IMPLEMENTADO)
+
+> Fases 1-2 de la Opción E completadas (2/8) + el flujo unificado descrito abajo. El punto **C (carga de precios posterior)** está analizado por separado en `docs/analisis-carga-inicial-precios-2026-08-02.md` (~7h con C1+C4, pendiente de aprobación).
+
+### 9.1 Objetivo
+
+Que el mismo flujo sirva para **dos casos de uso** con una sola herramienta:
+
+| Caso | Escenario | Flujo |
+|------|-----------|-------|
+| **A) Carga inicial** | Cliente nuevo / catálogo masivo: el 90%+ de los barcodes NO existen en el sistema | App Stock escanea → CSV local → import → **"Registrar todos"** crea los productos nuevos (precio $0) → aplicar correcciones = stock inicial |
+| **B) Auditoría** | Stock ya cargado: el cliente cuenta lo que hay y el sistema ajusta diferencias | Ídem, pero los barcodes YA existen → el import crea la auditoría con conteo y al completar ajusta el stock |
+
+### 9.2 Flujo completo
+
+```
+App Stock (celular, offline)          PC con TUSTOCK (web)
+─────────────────────────────         ──────────────────────────────────────
+"Toma de stock" → escanear            "Importar stock" (/stock-import)
+  barcode conocido  → nombre del      Subir CSV (barcode;cantidad;nombre;fecha)
+                       catálogo       POST /api/audits/import-csv
+  barcode NUEVO     → "Producto        ├─ matched  → auditoría draft + items
+                       nuevo" +        ├─ nuevo    → errores "Producto no
+                       campo nombre                 registrado"
+  cantidad ≥ 1 → append al CSV        └─ malformed→ errores de formato
+  (sin red, sin cola)
+                    │
+                    ▼ CSV (WhatsApp/USB/Drive)
+                    │
+      Preview editable (cantidades)
+      ├─ "Registrar todos los pendientes" → POST /audits/import-register-batch
+      │    (crea los productos nuevos: code TST+10, precio $0, con el conteo)
+      ├─ registrar individual (por fila, legacy)
+      └─ "Aplicar correcciones" → POST /audits/{id}/complete?apply_corrections=true
+           → stock final = conteo del CSV (carga inicial) o ajuste (auditoría)
+```
+
+### 9.3 Cambios de esta iteración
+
+| Área | Cambio | Archivo |
+|------|--------|---------|
+| Backend | `create_audit` distingue `product_ids=None` (todos) de `[]` (ninguno) | `server/services/audit_service.py:24-27` |
+| Backend | `import_stock_csv` crea la auditoría también cuando el CSV es **100% productos nuevos** (carga inicial) — antes no había `audit_id` y no se podía registrar | `server/services/csv_import.py` |
+| Backend | Normalización de nombre `(no registrado)` → `""` en parser y batch | `server/services/csv_import.py:117,353` |
+| Backend | `register_products_batch()` — lote de altas con suma de duplicados, límite del plan por fila (error por ítem, no 403 global), code `TST`+10 dígitos, `selling_price=0.0` | `server/services/csv_import.py:322` |
+| Backend | `POST /api/audits/import-register-batch` — mapea `PermissionError`→403, `ValueError`→400 | `server/routes/audits.py` |
+| Backend | Schemas `ImportRegisterItem` / `ImportRegisterBatch` | `server/schemas.py` |
+| Web | Botón **"Registrar todos los pendientes"** (solo si hay errores con barcode + nombre válido) con confirmación de precio $0; merge de creados a items; toast "Todos los productos son nuevos" para CSV 100% nuevo | `web/src/pages/ImportStock.tsx` |
+| Android | Al escanear un barcode **fuera del catálogo**: muestra "Producto nuevo" + campo de nombre (`lastNewName` persiste entre escaneos), lo escribe al CSV | `StockMainActivity.kt` + `activity_stock_main.xml` |
+
+### 9.4 Casos validados en QA (DB temporal, plan trial, TestClient)
+
+1. CSV mixto (2 existentes + 2 nuevos con nombre + 1 legacy `(no registrado)` + duplicado aditivo + 1 malformed) → preview con matched/errores/malformed correctos.
+2. Batch registra los 2 nuevos con nombre del CSV y conteo exacto; precio 0.0; code `TST…`.
+3. Registro individual sigue funcionando; duplicado rechazado con 400.
+4. Edición de cantidad en preview → complete aplica stock correcto (existentes 18/5, nuevos 5/7/6/9).
+5. **Carga inicial 100% nueva** → auditoría creada igual (matched=0), batch crea 2, complete aplica 10/20.
+6. **Límite del plan**: con `max_products` justo al límite, el batch responde `errors[].message="Límite de productos alcanzado"` (200), sin 403 global.
+
+### 9.5 Queda pendiente (punto C — ver `analisis-carga-inicial-precios-2026-08-02.md`)
+
+- **C1 (~6h):** import de precios por CSV (`barcode;precio[;costo]`) con preview + apply, mismo patrón que ImportStock.
+- **C4 (~1h):** bloquear/advertir venta a `selling_price <= 0` en el POS (hoy vende a $0 sin aviso) — red de seguridad mientras se cargan precios.
+- QA final en campo + actualización de clientes (Librería) cuando se cierre el punto C.
+
