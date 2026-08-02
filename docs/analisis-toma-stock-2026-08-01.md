@@ -6,6 +6,7 @@
 > **Premisa nueva del humano (1/8):** "que la app almacene los productos al menos 50 productos. Cuando llegue a esa cantidad los envíe al sistema. O como alternativa que la toma de stock que tenemos sea más rápida."
 > **Premisa original (descartada en parte):** import Excel/CSV en web (~4-6h).
 > **Idea nueva del humano (2/8):** el cliente escanea con una app genérica (TeaCapps "QR & Barcode Scanner"), genera el CSV en el terreno y TUSTOCK lo importa → **Opción D** (§5). Investigación web + análisis técnico, sin código.
+> **Idea nueva del humano (2/8, tarde):** en vez de "app → server en vivo" (2 round-trips por ítem) o del batch, la **app Stock genera un CSV local** mientras se toma el stock: escanea → pregunta cantidad → guarda el nombre → append de una línea, **sin tocar la red**. Al terminar, el CSV se pasa a la PC (WhatsApp/Drive/USB) y TUSTOCK lo importa → **Opción E** (§6). Sin cola, sin endpoint batch, sin last-write-wins.
 
 ---
 
@@ -292,42 +293,161 @@ La Opción D **reutiliza casi todo el import de la Opción C** (§4.2: export + 
 
 ---
 
-## 6. Comparación y recomendación
+## 6. Opción E — App Stock genera CSV local + import (nueva variante 2/8)
 
-### 6.1 Tabla comparativa
+> **Origen (2/8, tarde):** idea del humano — en vez de "app → server en vivo" (2 round-trips por ítem) o del batch de la Opción A, la **app Stock genera un CSV local** mientras se toma el stock: escanea → pregunta cantidad → guarda el nombre → append de una línea, **sin tocar la red**. Al terminar, el CSV se pasa a la PC (WhatsApp/Drive/USB) y **TUSTOCK lo importa**. El humano lo ve mucho más rápido porque no hay espera de red por ítem. **Esta sección es solo análisis — no se escribió código.**
+
+### 6.1 Estado actual de la app Stock (verificación en código)
+
+**Flujo de auditoría hoy** (`android/app/src/stock/java/com/tustock/scanner/StockMainActivity.kt`):
+
+| Paso | Código | Round-trips | Qué hace |
+|------|--------|:-----------:|----------|
+| Toggle ON | `startAuditMode` (`:60-84`) | 2 | `POST /api/audits` (crea la auditoría **server-side** con todos los productos activos + stock teórico) + `POST /api/audits/{id}/start` |
+| Escaneo | `:275-346` | 1 | `GET /api/products/scan/{code}`. En modo auditoría muestra "Stock en sistema" y pide "Cuántos hay?" (`quantityInput`) |
+| Guardar conteo | `:179-201` | 1 | `PUT /api/audits/{id}/items` con `{product_id, counted_qty}` — **valor absoluto** (SET), idempotente |
+| Toggle OFF | `finishAuditMode` (`:86-110`) | 1 | `POST /api/audits/{id}/complete?apply_corrections=true` — aplica correcciones |
+
+**→ 2 round-trips por producto** (scan + PUT), más 3 de ciclo de vida (create + start + complete). A "miles de productos" es el cuello de botella que E elimina.
+
+**Offline: NO funciona.** No hay catálogo local; el lookup es contra el server en cada barcode (`ApiClient.kt:69-87`). Si se corta la red, `scanProduct` falla y la app muestra el `notFoundCard` ("registrar producto") — UX confusa offline (`StockMainActivity.kt:328-339`). El conteo del producto en vuelo se pierde (solo toast de error, `:196-198`).
+
+**Cantidad:** input `EditText quantityInput` (`:144`). En auditoría, input vacío → `0.0` (`:174`) — riesgo: un tap con el campo vacío "descuenta" el stock a cero.
+
+**Catálogo cacheado:** NO. `ProductResponse` **ni siquiera tiene el campo `barcode`** (`ApiClient.kt:13-21`): solo `id, code, name, description, selling_price, stock, unit`. El server sí lo manda (`ProductOut.barcode`, `schemas.py:47`) y `GET /api/products` ya es **paginado** (`{products, total, page, page_size, total_pages}`, page_size ≤ 200, `products.py:27-74`) — sirve tal cual para descargar el catálogo a la app.
+
+**Export/share:** NO existe ningún `Intent.ACTION_SEND`, `FileProvider`, `filesDir` ni permiso de storage en el código Android (el manifest solo tiene CAMERA/INTERNET/ACCESS_NETWORK_STATE). → hay que agregar FileProvider + share sheet (estándar, sin permisos runtime).
+
+### 6.2 Viabilidad de la variante
+
+**Sí, es viable y es la más simple de las offline-first.** Escribir en `filesDir` (app-specific storage) no requiere permisos; un `append` síncrono por escaneo es instantáneo. Para sacar el archivo: FileProvider (declaración en manifest + `res/xml/file_paths.xml`) + `Intent.ACTION_SEND`.
+
+**Formato de línea sugerido:**
+
+```
+barcode;cantidad;nombre;timestamp
+7790000123456;5;Manaos Cola 1.5L;2026-08-02T15:30:00
+```
+
+| Detalle | Valor |
+|---------|-------|
+| Separador | `;` — es el default de Excel en ES-AR (la coma es decimal) |
+| Encoding | **UTF-8 con BOM** (`\uFEFF` al inicio) — Excel abre los acentos bien |
+| Quoting | RFC 4180 en campos con `;`, `"` o salto de línea (los nombres pueden traer `;`) |
+| Header | Opcional, recomendado (`barcode;cantidad;nombre;fecha`) |
+| Archivo | `toma-stock-YYYYMMDD-HHMM.csv` en `filesDir/tomas/` |
+| Escritura | `FileOutputStream(file, append=true)` — una línea por escaneo |
+
+**El problema del nombre (punto central):** para mostrar el nombre al escanear **sin red**, la app necesita el catálogo cacheado.
+
+| Opción | Costo app | UX al escanear | ¿Depende el import de esto? |
+|--------|:---------:|----------------|:---------------------------:|
+| **(a) Catálogo offline** — al iniciar la toma (con red) se descarga el catálogo paginado (`GET /api/products`, loop page_size=200) y se cachea en JSON; el nombre se resuelve local | +2h (campo `barcode` en `ProductResponse` + descarga + cache) | ✅ Muestra nombre + "stock en sistema" → verificás que contás el producto correcto | No — el import resuelve igual por barcode (el nombre del CSV es solo referencia legible) |
+| **(b) CSV mínimo `barcode;cantidad`** — el nombre se resuelve en el import (el server ya lo tiene) | 0 | ❌ Sin nombre al escanear → riesgo de contar un producto que no era | No |
+
+**Recomendación: (a).** El catálogo offline es el mismo código que la Opción A (§2.2) y es lo que hace la toma **usable**: ver "Manaos Cola 1.5L" antes de confirmar evita contar el producto equivocado (dos productos parecidos). El nombre en el CSV es un artefacto legible; la verdad la pone el import por barcode. Si se quiere minimizar el toque Android, (b) funciona igual — el import no depende de la columna nombre.
+
+**Barcodes no registrados:** hoy un 404 → `notFoundCard` → alta de producto online (`:222-260`). En CSV offline no se puede crear → se escribe el nombre `(no registrado)` y el import lo lista como fila con error (registrar producto con stock = conteo, o saltar). Misma semántica que D.
+
+**Duplicados → append aditivo:** dos líneas con el mismo barcode se **suman** en el import (escaneás 2 veces con 3 y 4 → 7). Ojo: a diferencia del `update_audit_item` (SET absoluto, idempotente), el import de CSV es **aditivo por diseño** — si el cliente re-escanea "para corregir", suma en vez de reemplazar. **Mitigación:** el preview del import es editable antes de confirmar (ya está en la UI de C/D). Si se quiere idempotencia exacta, la alternativa es que la app agrupe por barcode en memoria y escriba UNA línea por producto (last-write-wins) — pero eso agrega estado; se recomienda append aditivo + preview editable.
+
+### 6.3 Estimación desglosada
+
+**App Stock (Kotlin) — requiere levantar el congelamiento Android para el flavor `stock`:**
+
+| Tarea | Horas | Detalle |
+|-------|:-----:|---------|
+| `barcode` en `ProductResponse` + data class de respuesta paginada | 0.5 | El server ya manda el campo; falta parsear el wrapper `{products, total, ...}` |
+| Catálogo local (descarga paginada + cache JSON + refresh al abrir) | 1.5 | Loop `page_size=200`; mismo código que Opción A |
+| CSV writer (append, separador `;`, UTF-8 BOM, quoting RFC 4180) | 1 | Sin dependencias |
+| Flujo escaneo → cantidad → append CSV (sin espera de red) | 1.5 | Reemplaza scan+PUT por append local; reusa el input de cantidad existente (`quantityInput`) |
+| Resolución de nombre desde catálogo + fallback `(no registrado)` | 0.5 | |
+| Share sheet (FileProvider en manifest + `file_paths.xml` + `ACTION_SEND`) | 1 | Estándar Android |
+| Sesión persistente + UI (ruta CSV y contador en prefs, botón "Exportar/Enviar", reset, resumen) | 1.5 | Retomar tras crash |
+| **Subtotal App** | **~7.5h** | Sin catálogo (opción b): **~5.5h** |
+
+**Import CSV en server + web UI — formato CONOCIDO (se simplifica vs D):**
+
+| Tarea | Horas | Detalle |
+|-------|:-----:|---------|
+| Endpoint import: `UploadFile` + parse del formato propio (`;`, BOM, quoting, header opcional) | 1.5 | Sin heurística de columna (la app lo genera) → ahorra las 2.5h del parser tolerante de D |
+| Semántica de conteo: agrupar por barcode + **sumar** (append aditivo); resolver product por barcode | 1 | Reusa el lookup por barcode que ya existe (`scan_product`) |
+| Crear auditoría con items + barcodes no registrados como errores por fila | 1 | Reusa `create_audit` / `update_audit_item` / `complete_audit` |
+| Web UI: upload + preview editable + confirmar → `complete` | 2 | |
+| **Subtotal Import** | **~5.5h** | |
+
+**QA (app + import):** ~2h — crash a mitad de toma, reabrir la app, duplicados, nombres con `;`/acentos, archivo vacío, líneas mal formadas, no registrados, BOM/encoding.
+
+**CI + empaquetado:** ~1h (el workflow ya compila ambos APKs).
+
+**TOTAL Opción E: ~16h con catálogo (a) / ~14h sin catálogo (b).** El import es **compartido** con C/D: si se construye para E queda disponible para la D después (solo habría que añadir el parser tolerante, +2.5h).
+
+### 6.4 Comparación E vs A vs D
+
+| Punto | **E — App Stock genera CSV** | **A — Batch 50 + endpoint** | **D — TeaCapps externa** |
+|-------|------------------------------|------------------------------|---------------------------|
+| Esfuerzo | ~16h (catálogo) / ~14h (sin) | ~12-14h | ~9.5-10h (7.5h con CSV real) |
+| ¿Levanta Android? | Sí (flavor stock) | Sí (flavor stock) | No |
+| Complejidad | **Baja** — append local + import. Sin cola, sin endpoint batch, sin last-write-wins | Alta — cola, flush por umbral, retry, estado de sync | Media — parser tolerante (formato de terceros) |
+| UX al escanear | ✅ Pregunta cantidad + muestra nombre (con catálogo) | ✅ Pregunta cantidad + muestra nombre | ❌ No pide cantidad (1 scan = 1 unidad) ni muestra nombre |
+| Offline | ✅ **100%** — cero red durante toda la toma | ✅ 100% en el terreno (flushea cuando hay red) | ✅ 100% |
+| Espera de red por ítem | ❌ Ninguna (append local instantáneo) | ❌ Ninguna durante el conteo | ❌ Ninguna |
+| Sincronización | Manual: WhatsApp/Drive/USB → PC (el negocio tiene la PC con TUSTOCK) | Automática: batch push cuando hay red | Manual: WhatsApp/Drive/USB |
+| Dependencia de terceros | ❌ Ninguna | ❌ Ninguna | ✅ TeaCapps (app con anuncios, formato no documentado) |
+| Riesgo de formato | ✅ **Lo controla nuestra app** (formato documentado) | N/A (API) | ⚠️ Alto — CSV "sucio", celdas mezcladas |
+| Artefacto auditable | ✅ CSV legible en Excel (BOM + `;`) para revisar antes de importar | ❌ Datos solo en el server | ⚠️ CSV pero sucio |
+| Duplicados / correcciones | Import **aditivo** + preview editable | PUT SET idempotente | Conteo por repetición + preview editable |
+
+### 6.5 Recomendación de esta opción
+
+1. **E es la mejor opción si el humano levanta el congelamiento de Android** (solo flavor `stock`): es más simple que A (nada de cola/endpoint/estado de sync), offline total real, sin terceros, formato controlado, y el CSV queda como artefacto revisable. Costo ~16h.
+2. **E es la única que resuelve el caso del cliente con cero fricción de red:** el negocio tiene la PC con TUSTOCK en el local; pasar el CSV por USB/WhatsApp es trivial.
+3. E **no reemplaza** a B1+B2 (web, 0.5-2.5h): eso descomprime hoy, sin tocar Android.
+4. Si no se levanta Android → **D sigue siendo el mejor plan B** (~9.5-10h), con el Paso 0 del CSV real pendiente.
+
+---
+
+## 7. Comparación y recomendación
+
+### 7.1 Tabla comparativa
 
 | Opción | Esfuerzo | ¿Levanta Android? | ¿Acelera el conteo físico? | Offline | Esfuerzo humano durante el conteo |
 |--------|:--------:|:------------------:|:--------------------------:|:-------:|------------------------------------|
+| **E — App Stock genera CSV local + import** | ~16h (con catálogo) / ~14h (sin) | Sí (decisión) | **Alta** — contás y registrás en el mismo gesto, **100% offline**, append local instantáneo | ✅ Sí (total) | Caminar el local con el celular; pasar el CSV a la PC al final |
 | **A — Batch en app** (premisa del humano) | ~12-14h | Sí (decisión) | **Alta** — contás y registrás en el mismo gesto, sin espera de red por item | ✅ Sí | Caminar el local con el celular |
 | **B — Web + mínimos app** | ~5.5-6.5h (web) / +1.5h (app) | Solo para los retoques de app | Media — sin espera de red por item, pero hay que estar en la PC con lector | ❌ No | En la PC con lector USB |
 | **C — Import Excel/CSV** | ~6-7h | No | Baja — no acelera el conteo, solo la carga de datos | No aplica | Contar en papel/Excel y transcribir después |
 | **D — Escaneo con app genérica (TeaCapps CSV)** | ~9.5-10h | **No** | **Alta** — contás y registrás en el mismo gesto, offline, con el celular que ya tiene (sin desarrollo Android) | ✅ Sí (en el terreno) | Caminar el local con el celular |
 
-### 6.2 Recomendación técnica
+### 7.2 Recomendación técnica
 
 1. **Inmediato y casi gratis (0.5-2.5h, hoy mismo):** aplicar **B1 + B2** en la web. El cliente Librería cuenta en la PC; arreglar el foco del input + feedback sonoro hace el conteo con lector USB usable ya mismo. Es valor real sin tocar Android y sin esperar nada.
 
-2. **La premisa del humano (app que acumula y envía en batch) es técnicamente la más sólida para "miles de productos":** es la única opción que combina conteo físico + registro en un solo gesto y aguanta un local sin wifi estable. **Recomiendo desarrollarla si el humano levanta el congelamiento de Android** — es el camino de mayor beneficio real. Costo: ~12-14h + operación de CI (~1h).
+2. **Si el humano levanta el congelamiento de Android → la Opción E es la mejor de las offline-first (~16h con catálogo / ~14h sin).** Es más simple que A (no hay cola, ni endpoint batch, ni estado de sincronización — solo append local + import), **100% offline** durante toda la toma, sin dependencia de terceros, y el formato del CSV lo controla nuestra propia app (riesgo de parsing ≈ 0). El costo extra vs A (~2-4h) se paga en robustez y en un artefacto auditable (el CSV se puede abrir en Excel y revisar). **Recomendado el catálogo offline (opción a):** ver el nombre al escanear evita contar el producto equivocado.
 
-3. **Si NO se quiere tocar Android: la Opción D (~9.5-10h) es el mejor plan B.** Da la experiencia "caminar el local con el celular, offline" de la A **sin desarrollo Android**, con una app gratuita. Reemplaza y mejora a la C para el caso de uso real (elimina la transcripción, que era la debilidad de C). La C queda como opción para **carga de datos inicial** (stock inicial masivo), no para conteo.
+3. **La Opción A (~12-14h) queda como alternativa** si se prefiere sincronización automática (sin transferencia manual del CSV): la toma es offline y el batch se envía cuando hay red. A costo similar que E, pero con más complejidad de sincronización. Si el negocio tiene la PC con TUSTOCK en el mismo local (caso Librería), la transferencia manual de E por USB/WhatsApp es trivial → E gana.
 
-4. La Opción B completa (web mejorada + retoques de app) es un paso intermedio razonable para descomprimir el dolor actual mientras se decide lo de Android.
+4. **Si NO se quiere tocar Android: la Opción D (~9.5-10h) es el mejor plan B.** Da la experiencia "caminar el local con el celular, offline" **sin desarrollo Android**, con una app gratuita — con las limitaciones de siempre: sin nombre en vivo, sin cantidad por escaneo, formato de terceros "sucio".
 
-5. **Paso 0 obligatorio antes de desarrollar la D:** pedirle al humano que escanee 5 productos con la app y comparta el CSV real. El formato no está documentado y las reviews lo muestran "sucio"; una muestra real elimina la única incertidumbre técnica fuerte (y baja la estimación de 9.5-10h a ~7.5h). Construir el import como **"Import de conteo desde CSV" genérico** (sirve para TeaCapps, DataScan o cualquier CSV), para no quedar atados a un proveedor.
+5. La Opción C queda como opción para **carga de datos inicial** (stock inicial masivo), no para conteo. La B completa es un paso intermedio para descomprimir mientras se decide lo de Android.
+
+6. **El import de E es un "Import de conteo desde CSV" genérico:** construido con formato conocido, se puede hacer tolerante después y servir también para la D (no duplica trabajo).
 
 ---
 
-## 7. Decisión para el humano
+## 8. Decisión para el humano
 
 | # | Pregunta | Opciones |
 |---|----------|----------|
-| 1 | ¿Levantás el congelamiento de Android **solo para la app Stock** y el feature de batch? | (a) Sí → Opción A (12-14h). (b) No → **Opción D (9.5-10h)** o solo web |
-| 2 | ¿Aplica la mejora inmediata de la web (B1+B2, 0.5-2.5h) mientras tanto? | (a) Sí, ya. (b) No, esperar la decisión grande |
-| 3 | ¿El conteo lo hace el cliente en la **PC con lector** o **caminando el local con el celular**? | PC → priorizar B web. Celular → priorizar A (si Android) o D (si no) |
-| 4 | ¿La escala real es "miles" o "centenares"? | Miles → A o D. Centenares → B/C alcanza |
-| 5 | Si se hace la A: ¿inicio de sesión simple (requiere red para iniciar) o 100% local-first? | Simplificado (recomendado) vs completo (+2-3h) |
-| 6 | **Si se va por la D:** ¿podés escanear 5 productos con la app TeaCapps y compartir el CSV real? | Es el paso 0 que desbloquea la estimación exacta (~7.5h vs ~9.5-10h). Mientras tanto no conviene desarrollar el parser "a ciegas" |
-| 7 | **Si se va por la D:** ¿preferís que el import funcione también con **DataScan** (CSV configurable con cantidad, app paga) o solo con el CSV de TeaCapps? | Genérico (recomendado, +0.5-1h) vs solo TeaCapps |
-| 8 | **Si se va por la D:** para productos **sin barcode** (verduras, pan, fiambre), ¿el cliente los carga aparte a mano (flujo actual de alta de producto) o los importa por nombre? | Import por nombre (B5, +1-2h) vs alta manual |
+| 1 | ¿Levantás el congelamiento de Android **solo para la app Stock**? | (a) Sí → **Opción E (~16h)** — recomendada — o A (12-14h). (b) No → **Opción D (9.5-10h)** o solo web |
+| 2 | **Si se va por E:** ¿catálogo offline con nombre al escanear (opción a, +2h de app) o CSV mínimo sin nombre (opción b)? | (a) **Catálogo offline (recomendado)** — el nombre evita contar el producto equivocado. (b) CSV `barcode;cantidad` nomás |
+| 3 | **Si se va por E:** ¿cómo pasa el cliente el CSV a la PC? | USB, WhatsApp web o Drive — el negocio tiene la PC con TUSTOCK en el local; cualquiera sirve (no bloqueante) |
+| 4 | ¿Aplica la mejora inmediata de la web (B1+B2, 0.5-2.5h) mientras tanto? | (a) Sí, ya. (b) No, esperar la decisión grande |
+| 5 | ¿El conteo lo hace el cliente en la **PC con lector** o **caminando el local con el celular**? | PC → priorizar B web. Celular → priorizar E (si Android) o D (si no) |
+| 6 | ¿La escala real es "miles" o "centenares"? | Miles → E/A/D. Centenares → B/C alcanza |
+| 7 | Si se hace la A: ¿inicio de sesión simple (requiere red para iniciar) o 100% local-first? | Simplificado (recomendado) vs completo (+2-3h) |
+| 8 | **Si se va por la D:** ¿podés escanear 5 productos con la app TeaCapps y compartir el CSV real? | Es el paso 0 que desbloquea la estimación exacta (~7.5h vs ~9.5-10h). Mientras tanto no conviene desarrollar el parser "a ciegas" |
+| 9 | **Si se va por la D:** ¿preferís que el import funcione también con **DataScan** (CSV configurable con cantidad, app paga) o solo con el CSV de TeaCapps? | Genérico (recomendado, +0.5-1h) vs solo TeaCapps |
+| 10 | **Si se va por la D:** para productos **sin barcode** (verduras, pan, fiambre), ¿el cliente los carga aparte a mano (flujo actual de alta de producto) o los importa por nombre? | Import por nombre (B5, +1-2h) vs alta manual |
 
-**Costo de decidir A:** 12-14h de DEV + 1h de build/empaquetado + un ciclo de actualización de clientes (§15, ya probado el 31/7). **Costo de decidir D:** 9.5-10h de DEV (7.5h con CSV real) + sin ciclo Android.
+**Costo de decidir E:** ~16h de DEV (7.5h app con catálogo + 5.5h import + 2h QA + 1h CI; sin catálogo baja a ~14h) + un ciclo de actualización de clientes (§15, ya probado el 31/7). El import queda como feature permanente ("Import de conteo desde CSV"). **Costo de decidir A:** 12-14h de DEV + 1h de build/empaquetado + un ciclo de actualización de clientes. **Costo de decidir D:** 9.5-10h de DEV (7.5h con CSV real) + sin ciclo Android.
