@@ -10,7 +10,7 @@
   2. SU-Day (Dayana) — plan Suscripción ($8K/mes). Monitor Cloud + POS Remoto validado end-to-end.
 - **Próximas prioridades (orden):**
   1. 🟡 **Multi-sucursal en STANDBY** hasta reunión con encargado/dueño de farmacia (análisis DEV validado 31/7: **~50h MVP ≈ 2 semanas**, ver `docs/analisis-multisucursal-2026-07-30.md`)
-  2. 🟢 Reunión sábado 2/8: polirrubro 1 sucursal (demo lista en `USB_TUSTOCK\TUSTOCK_DEMO\`, guión en `LEEME-DEMO.txt`)
+  2. 🟢 Reunión polirrubro 1 sucursal — **reprogramada a la semana del 5/8** (horario a confirmar con el cliente). Demo probada exitosa en notebook (2/8). Bundle en `USB_TUSTOCK\TUSTOCK_DEMO\`, guión en `LEEME-DEMO.txt`
   3. Activar Programa Despegue ML ($45K recuperable, $45K publicidad gratis)
   4. Registrar bases de datos en AAIP (obligación legal Ley 25.326)
   5. Railway a Hobby cuando se acaben créditos gratis ($5/mes)
@@ -175,15 +175,15 @@
 
 ## LEAD POTENCIAL: Polirrubro 1 sucursal (Agosto 2026)
 
-> **Cliente potencial:** Polirrubro de barrio con 1 sucursal. Reunión agendada para el sábado 2/8.
+> **Cliente potencial:** Polirrubro de barrio con 1 sucursal. Reunión reprogramada a la semana del 5/8 (fue sábado 2/8).
 
-**Estado:** 🟢 Reunión confirmada para el fin de semana.
+**Estado:** 🟢 Reunión reprogramada a la semana del 5/8 — horario a confirmar con el cliente. **Demo probada exitosa en notebook (2/8).**
 
 **Datos relevados:**
 - **Origen:** Nuevo contacto, no registrado antes
 - **Negocio:** Polirrubro de barrio (probablemente bebidas, comestibles, limpieza)
 - **Sucursales:** 1
-- **Reunión:** Sábado (presencial/virtual a confirmar)
+- **Reunión:** Semana del 5/8 (presencial/virtual a confirmar, horario pendiente)
 
 **Necesidades probables (a confirmar en reunión):**
 - Stock y ventas POS
@@ -787,7 +787,10 @@ La clienta manifestó dos necesidades concretas:
 | 2026-07-30 | **Multi-sucursal a STANDBY**: No desarrollar hasta conseguir reunión con encargado/dueño de farmacia. Se retoma con confirmación del cliente. | 🧑 HUMANO + Dispatcher |
 | 2026-07-30 | **Estrategia farmacia — exprimir con suscripciones**: Priorizar Suscripción Pro ($15K/mes) o suscripciones por sucursal sobre pagos únicos. NO ofrecer Básico/Pro único como primera opción. | 🧑 HUMANO |
 | 2026-07-30 | **Demo probada mañana**: El humano prueba el bundle demo (`USB_TUSTOCK\TUSTOCK_DEMO\`) en su notebook antes de la reunión del sábado. | 🧑 HUMANO |
-| 2026-08-02 | **CONGELAMIENTO ANDROID LEVANTADO (app Stock)**: El humano aprobó levantar el congelamiento de Android SOLO para la app Stock, para la **Opción E — toma de stock CSV local** (escaneo → cantidad → nombre → CSV local → import en PC). La app POS sigue congelada. La toma de stock actual funciona (lenta pero funciona) — es un **upgrade de producto para todos los clientes**, no un fix de emergencia. Regla en §3/§7 actualizada. Pendiente confirmar catálogo offline (pregunta 2 del doc §8). | 🧑 HUMANO |
+| 2026-08-02 | **CONGELAMIENTO ANDROID LEVANTADO (app Stock)**: El humano aprobó levantar el congelamiento de Android SOLO para la app Stock, para la **Opción E — toma de stock CSV local** (escaneo → cantidad → nombre → CSV local → import en PC). La app POS sigue congelada. La toma de stock actual funciona (lenta pero funciona) — es un **upgrade de producto para todos los clientes**, no un fix de emergencia. Regla en §3/§7 actualizada. | 🧑 HUMANO |
+| 2026-08-02 | **Catálogo offline CONFIRMADO**: El humano aprobó el catálogo offline en la app Stock (descargar `GET /api/products` paginado al iniciar la toma, nombre visible al escanear). Estimación total Opción E: **~16h**. | 🧑 HUMANO |
+| 2026-08-02 | **Reunión polirrubro reprogramada**: Pasa de sábado 2/8 a la **semana del 5/8** (horario a confirmar con el cliente). Demo probada exitosa en notebook (2/8). | 🧑 HUMANO |
+| 2026-08-02 | **B1+B2 web DESCARTADOS**: El humano decidió NO aplicar las mejoras web de refocus + beep. La toma de stock actual funciona y la mejora real llega con la Opción E (upgrade completo). Se evita tocar código web que quedará obsoleto con el CSV. | 🧑 HUMANO |
 
 ---
 ## 13. EQUIPO LEGAL
@@ -1047,7 +1050,7 @@ La clienta manifestó dos necesidades concretas:
 
 - [telenota] Ítem 1 — Paginación + búsqueda: Cliente Librería tiene 309 productos (≈5% del stock real, va a crecer a miles). Pide **50 productos por página** y **búsqueda reactiva** (a medida que escribe, sin botón Buscar).
 - [telenota] Ítem 2 — Botón "Generar code" perdido: El cliente duplica el barcode en el campo code porque al EDITAR un producto no hay botón "Generar" (solo aparecía al crear). La causa raíz: ambos botones (code + barcode) tenían condición `{!editing && ...}`.
-- [telenota] Ítem 3 — Toma de stock masiva: Cliente con miles de productos no puede contar todo a mano. **✅ RESUELTO (2/8): Opción E aprobada — app Stock genera CSV local + import.** El humano levantó el congelamiento de Android (solo app Stock). Es un **upgrade de producto para todos los clientes**, no un parche para la librería. Detalles y estimación en `docs/analisis-toma-stock-2026-08-01.md` §6.
+- [telenota] Ítem 3 — Toma de stock masiva: Cliente con miles de productos no puede contar todo a mano. **✅ RESUELTO (2/8): Opción E aprobada — app Stock genera CSV local + import + catálogo offline.** El humano levantó el congelamiento de Android (solo app Stock), confirmó catálogo offline, y descartó B1+B2 web (mejora real llega con E). Es un **upgrade de producto para todos los clientes**, no un parche para la librería. Estimación ~16h. Detalles en `docs/analisis-toma-stock-2026-08-01.md` §6.
 - [fix] BOTÓN GENERAR CODE EN EDICIÓN (1/8): `web/src/pages/Products.tsx:247-256` — botón "Generar" (TST- + 10 dígitos vía `/products/generate-code`) ahora visible en creación Y edición. En edición: solo si `form.code` está vacío (si tiene code muestra "Código existente"); confirmación si regenera con code existente. Botón barcode sigue solo en creación. Causa raíz: ambos botones tenían `{!editing && ...}`. Backend `server/routes/products.py:76-86` ya existía (genera code TST- con chequeo de colisión). (2026-08-01)
 - [feature] PAGINACIÓN SERVER-SIDE + BÚSQUEDA (1/8): `server/routes/products.py:27-74` — endpoint `GET /api/products` ahora acepta `search` (ILIKE en name/code/barcode), `category_id`, `include_inactive`, `near_expiry`, `page` (1-based), `page_size` (1-200, default 50). Responde `{products, total, page, page_size, total_pages}` con offset/limit y orden por nombre. (DEV, 2026-08-01)
 - [feature] UI PAGINACIÓN CONFIGURABLE + DEBOUNCE (1/8): `web/src/pages/Products.tsx` — selector de page size 50/100/200 (default 50, persistido en `localStorage['products_page_size']`), búsqueda reactiva con debounce 300ms + indicador "Buscando...", refetch del backend paginado, botones Anterior/Siguiente, "Página X de Y", "Mostrando N de TOTAL", card TOTAL usa `total` del backend. Nota: "SIN STOCK" sigue calculado sobre página actual (limita conocida, requiere endpoint de stats). Build ✅ (317.91 kB JS, 949ms). (UI, 2026-08-01)
