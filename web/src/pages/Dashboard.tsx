@@ -12,12 +12,12 @@ export default function Dashboard() {
     Promise.all([
       api.get<LowStockItem[]>('/products/alerts/low-stock'),
       api.get<any>('/sales/today/summary'),
-      api.get<any[]>('/products?near_expiry=30&limit=5'),
+      api.get<{ products: any[]; total: number }>('/products?near_expiry=30&page=1&page_size=5'),
     ])
       .then(([alerts, summary, expiry]) => {
         setLowStock(alerts)
         setTodaySummary(summary)
-        setNearExpiry(expiry)
+        setNearExpiry(expiry.products)
       })
       .finally(() => setLoading(false))
   }, [])

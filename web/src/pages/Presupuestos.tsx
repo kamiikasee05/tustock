@@ -23,7 +23,25 @@ export default function Presupuestos() {
   }, [])
 
   useEffect(() => { loadBudgets() }, [loadBudgets])
-  useEffect(() => { api.get<Product[]>('/products').then(setProducts).catch(() => {}) }, [])
+  useEffect(() => {
+    const loadProducts = async () => {
+      const all: Product[] = []
+      let page = 1
+      let totalPages = 1
+      try {
+        do {
+          const data = await api.get<{ products: Product[]; total: number; total_pages: number }>(
+            `/products?page=${page}&page_size=200`
+          )
+          all.push(...data.products)
+          totalPages = data.total_pages
+          page++
+        } while (page <= totalPages)
+        setProducts(all)
+      } catch {}
+    }
+    loadProducts()
+  }, [])
 
   const addToCart = (code: string) => {
     const prod = products.find(p => p.code === code || p.barcode === code)

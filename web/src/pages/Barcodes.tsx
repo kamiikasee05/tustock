@@ -11,15 +11,25 @@ export default function Barcodes() {
   const [filterCat, setFilterCat] = useState<number | ''>('')
   const [loading, setLoading] = useState(true)
 
-  const load = () => {
+  const load = async () => {
     setLoading(true)
-    Promise.all([
-      api.get<Product[]>('/products?include_inactive=true'),
-      api.get<Category[]>('/products/categories'),
-    ])
-      .then(([prods, cats]) => { setProducts(prods); setCategories(cats) })
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    try {
+      const cats = await api.get<Category[]>('/products/categories')
+      let all: Product[] = []
+      let page = 1
+      let totalPages = 1
+      do {
+        const data = await api.get<{ products: Product[]; total: number; total_pages: number }>(
+          `/products?include_inactive=true&page=${page}&page_size=200`
+        )
+        all = [...all, ...data.products]
+        totalPages = data.total_pages
+        page++
+      } while (page <= totalPages)
+      setProducts(all)
+      setCategories(cats)
+    } catch (e) {}
+    finally { setLoading(false) }
   }
 
   useEffect(() => { load() }, [])

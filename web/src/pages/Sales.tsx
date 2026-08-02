@@ -30,9 +30,24 @@ export default function Sales() {
     api.get<Sale[]>('/sales?limit=50').then(setSales).catch(() => {})
   }
 
+  const loadAllProducts = async (): Promise<Product[]> => {
+    const all: Product[] = []
+    let page = 1
+    let totalPages = 1
+    do {
+      const data = await api.get<{ products: Product[]; total: number; total_pages: number }>(
+        `/products?page=${page}&page_size=200`
+      )
+      all.push(...data.products)
+      totalPages = data.total_pages
+      page++
+    } while (page <= totalPages)
+    return all
+  }
+
   useEffect(() => {
     Promise.all([
-      api.get<Product[]>('/products'),
+      loadAllProducts(),
       api.get<StockItem[]>('/stock'),
       api.get<Sale[]>('/sales?limit=50'),
       api.get<CustomerBrief[]>('/customers'),
