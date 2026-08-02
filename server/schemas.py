@@ -109,3 +109,12 @@ class PendingOrderCreate(BaseModel):
     """Datos para crear un nuevo pedido pendiente a un vendedor."""
     vendor_id: int
     items: list[PendingOrderItem]
+
+
+class ProductListResponse(BaseModel):
+    """Respuesta paginada de productos."""
+    products: list[ProductOut]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

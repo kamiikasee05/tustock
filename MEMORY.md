@@ -3,17 +3,17 @@
 ## RESUMEN EJECUTIVO (lee esto primero)
 
 - **Qué es:** Sistema de gestión de stock y ventas para polirrubros argentinos (kioscos, librerías, almacenes). Sin internet, pago único o suscripción, 15 min de instalación.
-- **Estado:** Fase 1 (licencias + trial + gating) ✅. Monitor Cloud desplegado ✅. POS Remoto Fase 1 ✅. 2 clientes activos. 1 instalación in-situ completada (28/7). 2 nuevos prospectos.
+- **Estado:** Fase 1 (licencias + trial + gating) ✅. Monitor Cloud desplegado ✅. POS Remoto Fase 1 ✅. 2 clientes activos. 1 instalación in-situ completada (28/7). 3 prospectos activos (farmacia 3 suc, polirrubro 3 suc, polirrubro 1 suc).
 - **Stack:** Python/FastAPI/SQLite (backend) + React/Vite/TS (frontend) + Kotlin/ML Kit (Android, congelado).
 - **Clientes:**
   1. Librería — plan premium ($60K entry + $6K/mes, legacy). Monitor Premium + Cloud. ✅ Instalación in-situ completada (28/7). Key: `TST-A921-C581-9F20-4B43`. Email cloud: `libreria-tustock@temp.tustocksoft.com.ar`
   2. SU-Day (Dayana) — plan Suscripción ($8K/mes). Monitor Cloud + POS Remoto validado end-to-end.
 - **Próximas prioridades (orden):**
-  1. Evaluar multi-sucursal para polirrubro lead (3 sucursales, ~38h dev, $240K+ potencial)
-  2. Activar Programa Despegue ML ($45K recuperable, $45K publicidad gratis)
-  3. Registrar bases de datos en AAIP (obligación legal Ley 25.326)
-  4. Railway a Hobby cuando se acaben créditos gratis ($5/mes)
-  5. Evaluar feature Fechas de Vencimiento (detectado por prospectos cosmética + polirrubro — necesario para comestibles y cosmética, ver Feature Gaps)
+  1. 🟡 **Multi-sucursal en STANDBY** hasta reunión con encargado/dueño de farmacia (análisis DEV validado 31/7: **~50h MVP ≈ 2 semanas**, ver `docs/analisis-multisucursal-2026-07-30.md`)
+  2. 🟢 Reunión sábado 2/8: polirrubro 1 sucursal (demo lista en `USB_TUSTOCK\TUSTOCK_DEMO\`, guión en `LEEME-DEMO.txt`)
+  3. Activar Programa Despegue ML ($45K recuperable, $45K publicidad gratis)
+  4. Registrar bases de datos en AAIP (obligación legal Ley 25.326)
+  5. Railway a Hobby cuando se acaben créditos gratis ($5/mes)
   6. Tests automatizados (postergado hasta 5+ clientes)
 - **Lo que NO existe (no prometer):** Backup en la nube ❌ | Multi-sucursal ❌ | Múltiples cajeros ❌
 - **Reglas críticas para agentes:**
@@ -22,7 +22,9 @@
   - Directivas de Legal son VINCULANTES sobre cualquier desarrollo.
   - SIN MCPs — regla permanente desde 12/7/2026.
   - NO codificar si sos Dispatcher/Marketing/Legal — delegar a DEV.
-- **Precios (congelados):** Trial 30d gratis (100 prod) | Básico $80K único | Suscripción $8K/mes | Pro $160K único
+- **Precios (congelados para clientes actuales, nuevos en revisión por Ventas):** Trial 30d gratis (100 prod) | Básico $80K único | Suscripción $8K/mes | Pro $160K único
+- **Recomendación Ventas (30/7):** Básico $100K único | Suscripción $12K/mes | Pro $200K único | Multi-Sucursal $300K único o $20K/mes (ver `docs/analisis-precios-2026-07-30.md`). Pendiente aprobación del humano.
+- **Demo reunión sábado (30/7):** Bundle `USB_TUSTOCK\TUSTOCK_DEMO\` con DB demo de polirrubro (48 productos, 8 ventas hoy $114.300, vencimientos, fiado). Seed: `server/seed_demo_polirrubro.py`. Guión: `USB_TUSTOCK\LEEME-DEMO.txt`. Análisis multi-sucursal: `docs/analisis-multisucursal-2026-07-30.md` (MVP ~40-45h, instancias independientes + coordinador cloud).
 - **Archivos clave:** `server/` backend | `web/src/` frontend React | `cloud/` monitor cloud + API | `legal/` docs legales | `obsidian/` vault de documentación
 - **Monitor Cloud:** `monitor.tustocksoft.com.ar` (Railway). Push-based. Login JWT. 3 tabs (Dashboard/Inventario/Pedidos). POS Remoto.
 - **Admin:** Independiente en `E:\TUSTOCK_ADMIN\`. Habla SOLO a cloud API (Railway). Tray icon púrpura.
@@ -122,6 +124,74 @@
 - **Limitación:** Catálogo de productos no se sincroniza en tiempo real (periódico o manual)
 
 **Decisión pendiente del humano:** ¿Avanzamos con entrevista al cliente? ¿O esperamos?
+
+**Nuevo (30/7):** El dueño confirmó interés. Se suma a los prospectos activos.
+
+**Análisis DEV 30/7 — Tier Multi-Sucursal (stock entre sucursales con fiabilidad):**
+- **Caso de uso real:** "Cliente llega y pregunta por un producto. Si no está, llaman por teléfono a la otra sucursal. Si el sistema funciona ven el stock de la otra sucursal — pero si no se actualizó o la venta no se registró, no hay fiabilidad."
+- **Recomendación DEV:** Instancias SQLite independientes por sucursal + coordinador de catálogo/stock en el cloud (PostgreSQL/Railway), reutilizando agente/push/snapshot/CommandQueue existentes. Offline preservado, no toca clientes actuales (flag `multisucursal_enabled`).
+- **MVP ~1 semana (40-45h):** sync de catálogo + stock remoto visible con badge de frescura ("actualizado hace 12s"). Fiabilidad = snapshot completo + push real-time (≤31s, ya existe) + nunca mentir: dato viejo se muestra viejo. Venta cruzada/reserva FUERA del MVP.
+- **Fase 2 (~20-30h):** transferencias/venta remota vía CommandQueue (requiere `operation_id` para idempotencia — hoy un comando puede quedar en `executing` si el agente crashea).
+- **Riesgos top 3:** (1) stock desactualizado si sucursal offline → badge de frescura; (2) conflictos de catálogo/IDs → `product_uuid` global + sync versionado + soft-delete; (3) mercado: 1 solo prospecto real ($240-300K vs ~46h dev).
+- Documento completo: `docs/analisis-multisucursal-2026-07-30.md`
+
+**Decisión del humano (30/7):** 🟡 **STANDBY** — no desarrollar multi-sucursal hasta conseguir la reunión con el encargado/dueño de la farmacia. Se retoma cuando haya confirmación del cliente.
+
+---
+
+## LEAD POTENCIAL: Farmacia 3 sucursales (Julio 2026)
+
+> **Cliente potencial:** Cadena de 3 farmacias (1 central + 2 sucursales).
+
+**Estado:** 🟡 Contacto inicial — las chicas de atención al cliente compartieron la necesidad.
+
+**Decisión del humano (30/7):** 🟡 **STANDBY** hasta conseguir reunión con el encargado y el dueño. NO desarrollar multi-sucursal aún.
+
+**Estimación DEV validada (31/7):** El humano consultó cuánto llevaría el feature aunque no haya reunión aún. DEV validó el análisis del 30/7 contra el código actual: **MVP ~50h ≈ 2 semanas** (leve ajuste de 46→50h por: `product_uuid` NO existe y requiere backfill en DBs de clientes vivos, cloud NO tiene sistema de migraciones propio (`MetricsPush.branch_id` sobre tabla con datos reales), y flag `multisucursal_enabled` hay que crearlo en 4 puntos del código). Cero bloqueantes técnicos (PostgreSQL ya en Railway). Recomendación técnica: **esperar la reunión** — el riesgo no es de desarrollo, es de mercado (1 solo prospecto). Si el dueño confirma, el MVP read-only de ~50h mata el caso de uso sin necesitar Fase 2. Desglose por hitos en sección 16.
+
+**Estrategia de venta (30/7):** 💰 **Exprimir al cliente — priorizar SUSCRIPCIONES sobre pagos únicos.** Para la farmacia: plantear Suscripción Pro ($15K/mes) o suscripciones por sucursal, NO ofrecer Básico/Pro pago único como primera opción. Multi-sucursal como argumento de upgrade (cuando esté desarrollado).
+
+**Datos relevados:**
+- Tienen **sistemas separados** para obras sociales, autorizaciones y facturación electrónica (AFIP)
+- El sistema que se les colgó es **solo stock + ventas**, y era **online**
+- No pudieron registrar ventas porque el sistema online cayó
+- **Necesitan stock + ventas OFFLINE** — exactamente lo que TUSTOCK ofrece
+- No requieren features de farmacia específicos
+
+**Conclusión:** No necesitan nada especial de nuestra parte. Es un cliente ideal para TUSTOCK estándar. El dolor es que su sistema online los dejó tirados.
+
+**Próximo paso:** El humano va a buscar una reunión con el dueño para entender:
+1. ¿Cada sucursal maneja stock independiente o comparten?
+2. ¿Necesitan vista consolidada desde un solo lugar?
+3. ¿Cuántas PCs serían (1 por sucursal)?
+
+**Nota 31/7:** El humano valora la **alternativa B** — destrabar la reunión con llamada/WhatsApp + social proof de la librería (las 3 preguntas de arriba sirven de guión). Decisión A (3 licencias separadas) vs C (MVP multi-sucursal ~50h) se toma con esa entrevista. Ver sección 16.
+
+**Precio tentativo:** Ventas recomienda:
+- 3 licencias separadas = $300K ($100K c/u con nuevos precios) o $36K/mes ($12K/mes c/u)
+- O plan multi-sucursal si requiere consolidated view (a desarrollar)
+
+---
+
+## LEAD POTENCIAL: Polirrubro 1 sucursal (Agosto 2026)
+
+> **Cliente potencial:** Polirrubro de barrio con 1 sucursal. Reunión agendada para el sábado 2/8.
+
+**Estado:** 🟢 Reunión confirmada para el fin de semana.
+
+**Datos relevados:**
+- **Origen:** Nuevo contacto, no registrado antes
+- **Negocio:** Polirrubro de barrio (probablemente bebidas, comestibles, limpieza)
+- **Sucursales:** 1
+- **Reunión:** Sábado (presencial/virtual a confirmar)
+
+**Necesidades probables (a confirmar en reunión):**
+- Stock y ventas POS
+- Fechas de vencimiento (✅ implementado)
+- Offline (diferenciador TUSTOCK)
+- Backup local
+
+**Estrategia sugerida:** Ir a escuchar primero. Demo enfocada en POS rápido + inventario con vencimientos + Monitor Cloud. Contar caso Librería como testimonio real.
 
 ---
 
@@ -710,6 +780,13 @@ La clienta manifestó dos necesidades concretas:
 | 2026-07-29 | **Feature página Códigos**: Nueva ruta `/barcodes` con grilla de etiquetas imprimibles, filtros, botón Imprimir con `@media print`. Link "Códigos" en sidebar. | 🖥 DEV |
 | 2026-07-29 | **Feature PDF de códigos de barras**: Endpoint `GET /api/products/barcodes/pdf` genera PDF A4 con grilla 3 columnas usando reportlab. Botón "Descargar PDF" en página Códigos. Filtros por search y category_id. | 🖥 DEV |
 | 2026-07-29 | **Fix PDF en EXE**: hiddenimport `reportlab.graphics.barcode.ecc200datamatrix` faltante en PyInstaller causaba `ModuleNotFoundError` al generar PDF desde el EXE. Agregado al spec. Frontend cambió `window.open()` (sin token) por `fetch()` con Authorization header para evitar 401. DB de productos copiada a `_internal/tustock.db`. (Dispatcher + DEV) | Dispatcher 🧑‍💻 |
+| 2026-07-30 | **Nuevo prospecto polirrubro 1 sucursal**: Reunión confirmada para el sábado. Registrado en MEMORY con estrategia de demo. | 🧑 HUMANO + Dispatcher |
+| 2026-07-30 | **Seed demo polirrubro creado**: `server/seed_demo_polirrubro.py` — 48 productos realistas con vencimientos, 8 ventas hoy, fiado. Verificado. | 🖥 DEV |
+| 2026-07-30 | **Bundle demo USB listo**: `USB_TUSTOCK\TUSTOCK_DEMO\` con DB demo (trial + EULA ok, sin cloud.json). Exe verificado sirviendo 48 productos. Guión en `LEEME-DEMO.txt`. | Dispatcher 🧑‍💻 |
+| 2026-07-30 | **Análisis multi-sucursal**: Documento `docs/analisis-multisucursal-2026-07-30.md` — instancias SQLite + coordinador cloud, MVP ~40-45h, stock remoto con badge de frescura, venta cruzada fuera de MVP. | 🖥 DEV |
+| 2026-07-30 | **Multi-sucursal a STANDBY**: No desarrollar hasta conseguir reunión con encargado/dueño de farmacia. Se retoma con confirmación del cliente. | 🧑 HUMANO + Dispatcher |
+| 2026-07-30 | **Estrategia farmacia — exprimir con suscripciones**: Priorizar Suscripción Pro ($15K/mes) o suscripciones por sucursal sobre pagos únicos. NO ofrecer Básico/Pro único como primera opción. | 🧑 HUMANO |
+| 2026-07-30 | **Demo probada mañana**: El humano prueba el bundle demo (`USB_TUSTOCK\TUSTOCK_DEMO\`) en su notebook antes de la reunión del sábado. | 🧑 HUMANO |
 
 ---
 ## 13. EQUIPO LEGAL
@@ -832,7 +909,7 @@ La clienta manifestó dos necesidades concretas:
 
 ---
 
-*Última actualización: 30 de Julio de 2026 (APK Stock modificado: initial_stock + modo auditoría. Pendiente compilar)*
+*Última actualización: 31 de Julio de 2026 (Procedimiento de actualización de clientes documentado — sección 15)*
 
 ---
 
@@ -897,12 +974,47 @@ La clienta manifestó dos necesidades concretas:
 7. Instalar APK en el celular → configurar IP: 192.168.X.X:8090
 ```
 
+### Actualización de un cliente EXISTENTE (actualización de versión)
+
+> ⚠️ **NO alcanza con reemplazar el `TUSTOCK.exe`.** El .exe es solo el bootloader (~11 MB). Todo el código real (backend), el frontend React compilado, el cloud agent y los docs legales viven en `_internal/`. Además, **la base de datos del cliente vive dentro de `_internal/tustock.db`** — con sus productos, ventas, clientes, licencia activa y EULA aceptado. Reemplazar la carpeta completa sin preservar la DB = perder TODO el negocio del cliente.
+
+**Dónde vive cada cosa en la PC del cliente:**
+
+| Qué | Dónde | Se preserva en update |
+|-----|-------|:---------------------:|
+| Código + frontend + docs | `TUSTOCK/_internal/` | Se reemplaza completo |
+| Datos del negocio + licencia + EULA | `TUSTOCK/_internal/tustock.db` (+ -wal/-shm) | ✅ SE COPIA a la carpeta nueva |
+| Config Monitor Cloud | `TUSTOCK/config/cloud.json` (junto al exe, fuera de _internal) | ✅ SE COPIA a la carpeta nueva |
+| `.env` del server | `TUSTOCK/_internal/server/.env` (empaquetado en build, sanitizado) | Viene en el bundle nuevo |
+
+**Por qué NO alcanza solo el .exe:** el bootloader carga todo desde `_internal/`. Si solo cambiás el .exe, seguís ejecutando el código viejo de `_internal/` — el frontend, el backend y las features nuevas ni se instalan.
+
+**Procedimiento correcto (a prueba de errores — copiar carpeta nueva):**
+
+```
+1. Detener TUSTOCK (bandeja → "Detener servidor"). Verificar puerto 8090 libre.
+2. BACKUP: copiar `_internal/tustock.db` (+ tustock.db-wal, tustock.db-shm) y `config/` a un backup/.
+3. Copiar el bundle nuevo completo a la PC como `TUSTOCK_NUEVO/`.
+4. Copiar la DB del cliente: `TUSTOCK_NUEVO\_internal\tustock.db` (desde la instalación vieja).
+   - Si la instalación vieja tiene `-wal`/`-shm`, copiarlos también (o cerrar bien el server antes).
+5. Copiar `TUSTOCK\config\cloud.json` → `TUSTOCK_NUEVO\config\cloud.json`.
+6. Renombrar carpeta vieja a `TUSTOCK_VIEJO` (backup) y `TUSTOCK_NUEVO` → `TUSTOCK`.
+7. Ejecutar `TUSTOCK.exe`. Verificar en Productos la columna "Vence" (features nuevas).
+8. Migraciones de DB son AUTOMÁTICAS: `init_db()` corre `create_all` + `_run_migrations()`
+   (agrega columnas faltantes, ej: `expiry_date`). No tocar la DB a mano.
+```
+
+**Verificar post-update:** health OK (`http://localhost:8090/api/health`), login sin EULA repetido (la DB trae el EULA aceptado), productos con datos intactos, Monitor Cloud sigue pusheando (el `config/cloud.json` preservado lo mantiene).
+
+**Regla para DEV:** si una feature nueva agrega columnas a modelos existentes, la migración DEBE ir en `server/database.py::_run_migrations()` (ALTER TABLE con check de inspector). Sin esto, DBs de clientes existentes crashean al actualizar.
+
 ---
 
-*Última actualización: 30 de Julio de 2026 (APK Stock modificado: initial_stock + modo auditoría. Pendiente compilar)*
+*Última actualización: 31 de Julio de 2026 (Procedimiento de actualización de clientes documentado — sección 15)*
 
 ---
-## 16. ACCIONES DEL DISPATCHER (30/7)
+
+## 16. ACCIONES DEL DISPATCHER (31/7)
 
 - [fix] CONTRASEÑA MONITOR CLOUD LIBRERÍA: Reseteada en Railway PostgreSQL vía TCP proxy. Nueva contraseña: `25976027PG` (asignada por el humano para la clienta). Login verificado exitosamente. (2026-07-29)
 - [check] DASHBOARD LIBRERÍA VERIFICADO: 605 pushes de métricas recibidas, última push hace minutos. 1 venta hoy ($3.500 fiado). 78 productos en inventario. Agente local funcionando correctamente. (2026-07-29)
@@ -911,3 +1023,30 @@ La clienta manifestó dos necesidades concretas:
 - [ops] TUSTOCK_ADMIN_TOKEN configurado: Token `nwkf0GsJ1VQDEzT2tjypmXuKrqW349ZRFS5oO6Ia` seteado en Railway + server/.env. Pendiente desde 22/7. (2026-07-29)
 - [feature] STOCK INICIAL AL CREAR PRODUCTO: Nuevo campo `initial_stock` en formulario de creación. Schema ProductCreate con `initial_stock: float = 0.0`. Backend: si >0 llama `adjust_stock()` con movement_type="adjustment". Frontend: input numérico con subtext, toast con nombre + unidades, foco vuelve a Nombre. Build verificado. (2026-07-29)
 - [android] APK STOCK MODIFICADO: 3 archivos con initial_stock + toggle auditoría. Workflow `.github/workflows/build-apk.yml` actualizado para compilar ambos APKs (Stock + POS) via GitHub Actions. Disparo automático al pushear cambios en `android/**`. (2026-07-30)
+- [fix] GRADLEW QUOTING BUG: `DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'` en `android/gradlew` tenía nested quotes que causaban `Error: Could not find or load main class "-Xmx64m"` en GitHub Actions Ubuntu. Fix: `DEFAULT_JVM_OPTS="-Xmx64m -Xms64m"`. Build APK #39 exitoso. (2026-07-30)
+- [ops] APKs COMPILADOS #39: Release `apk-39` creada con app-pos-debug.apk (29.1 MB) + app-stock-debug.apk (29.1 MB). Descargados a `USB_TUSTOCK\TUSTOCK\` para entrega a clientes. (2026-07-30)
+- [ops] KEYSTORE TUSTOCK CREADO: `android/app/tustock-release.jks` con alias `tustock-release`. Firmado con datos de TUSTOCK (Chamical, La Rioja). Almacenado en GitHub Secrets como `KEYSTORE_BASE64`. (2026-07-30)
+- [feature] RELEASE SIGNING CONFIG: `signingConfigs.release` en `build.gradle` lee `keystore.properties` desde rootProject, con `rootProject.file()` para resolver rutas correctamente. (2026-07-30)
+- [feature] CI RELEASE BUILD: Workflow `build-apk.yml` compila ambos sabores (debug + release) cuando hay keystore en secrets. Release con `fail_on_unmatched_files: false` para no fallar si faltan archivos. (2026-07-30)
+- [fix] GRADLEW QUOTING BUG: `DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'` en `android/gradlew` tenía nested quotes que causaban `Error: Could not find or load main class "-Xmx64m"` en GitHub Actions Ubuntu. Fix: `DEFAULT_JVM_OPTS="-Xmx64m -Xms64m"`. Build APK #39 exitoso. (2026-07-30)
+- [ops] APKs COMPILADOS #42 (RELEASE): Release `apk-42` con app-pos-release.apk (27.7 MB) + app-stock-release.apk (27.7 MB) firmados con keystore TUSTOCK. Descargados a `USB_TUSTOCK\TUSTOCK\`. (2026-07-30)
+- [feature] SEED DEMO POLIRRUBRO: `server/seed_demo_polirrubro.py` — DB demo para reuniones de venta. 29 categorías, 48 productos EAN13 con precios julio 2026, 14 próximos a vencer (leche 5d, yogur 3d, pan 2d, facturas 2d), 10 stock bajo, 2 stock cero. 8 ventas hoy ($114.300 en 5 métodos de pago), 4 clientes (2 con fiado), 3 vendedores, presupuesto + pedido pendientes. Idempotente (mismo patrón que seed.py). (2026-07-30)
+- [ops] BUNDLE DEMO USB: `USB_TUSTOCK\TUSTOCK_DEMO\` — copia del bundle de entrega con DB demo cargada (48 productos, trial activo hasta 23/8, EULA aceptado). SIN config/cloud.json (no pushea al cloud real). Exe verificado: health OK + API sirve 48 productos. Guión en `USB_TUSTOCK\LEEME-DEMO.txt`. (2026-07-30)
+- [analisis] MULTI-SUCURSAL: Documento `docs/analisis-multisucursal-2026-07-30.md` — instancias SQLite independientes + coordinador cloud (PostgreSQL/Railway). MVP ~40-45h (1 semana): sync catálogo + stock remoto con badge de frescura, push real-time existente (≤31s). Fase 2 (~20-30h): transferencias/venta remota vía CommandQueue (requiere operation_id). Riesgos: stock offline desactualizado, conflictos de IDs (product_uuid), 1 solo prospecto real. (2026-07-30)
+- [decision] MULTI-SUCURSAL STANDBY: Humano definió NO desarrollar multi-sucursal hasta reunión con encargado/dueño de farmacia. Estrategia de venta farmacia: SUSCRIPCIONES primero (Suscripción Pro $15K/mes o por sucursal), no pagos únicos. Demo probada mañana en notebook. (2026-07-30)
+- [ops] PROCEDIMIENTO ACTUALIZACIÓN CLIENTES: Documentado en sección 15 — NO alcanza con reemplazar TUSTOCK.exe (es solo el bootloader; todo vive en `_internal/`). Reemplazar carpeta completa preservando `_internal/tustock.db` (datos + licencia + EULA) y `config/cloud.json`. Migraciones DB automáticas vía `database.py::_run_migrations()` (ej: `expiry_date`). Verificado: bundle USB actualizado (29/7 20:08) incluye vencimientos + stock inicial; APKs release #42 (30/7). (2026-07-31)
+- [ops] INSTRUCTIVO ACTUALIZACIÓN MANUAL: `USB_TUSTOCK\ACTUALIZAR-LIBRERIA.txt` — paso a paso para actualizar la PC de la librería a mano (12 pasos + problemas comunes + regla de oro). Se hace reemplazando la carpeta completa preservando tustock.db y cloud.json. El humano lo ejecuta en la librería. (2026-07-31)
+- [exito] ACTUALIZACIÓN LIBRERÍA COMPLETADA: El humano actualizó la PC de la librería con el procedimiento del instructivo (carpeta nueva + preservación de tustock.db + cloud.json) e instaló los APKs release #42. **FUNCIONA TODO** — primera actualización de cliente existente validada en campo. El procedimiento de la sección 15 queda CONFIRMADO como correcto. (2026-07-31)
+- [analisis] MULTI-SUCURSAL ESTIMACIÓN VALIDADA (31/7): DEV validó el análisis del 30/7 contra el código. **MVP ~50h ≈ 2 semanas** (ajuste 46→50h). Desglose: cloud API+modelos 12h (tablas Branch/CatalogState, branch_id en MetricsPush, migración idempotente — hoy cloud NO tiene _run_migrations), server 11h (product_uuid + backfill en DBs de clientes vivos + RemoteStock + flag multisucursal_enabled en 4 puntos), agente+push 7h (catálogo sin LIMIT 500), frontend 9h (panel stock otras sucursales + badges frescura), config/EXE 4h, QA 4h, buffer 3h. FUERA del MVP: Fase 2 venta cruzada/transferencias ~25h (requiere operation_id, hoy stuck-executing vigente en cloud/api.py:1407-1409) + Fase 3 vista consolidada ~12h → total completo ~85-90h. Riesgos: stock viejo mostrado fresco (badge honesto), backfill product_uuid (1 ciclo actualización clientes, §15 probado), catálogo divergente (dedupe por barcode). Dependencias NO técnicas: deploy Railway + rebuild EXE + visita 3 sucursales. **Recomendación DEV: esperar la reunión — riesgo es de mercado (1 prospecto), no técnico.** (2026-07-31)
+- [decision] ALTERNATIVAS MULTI-SUCURSAL EVALUADAS (31/7): El humano preguntó si hay alternativa al desarrollo. Se formalizaron 3 opciones: **A)** Vender 3 licencias independientes (0h de dev; $300K único o $36K/mes con nuevos precios, o Suscripción Pro $15K/mes por sucursal según estrategia 30/7) — aplica si cada sucursal maneja stock independiente. **B)** Destrabar el STANDBY sin reunión presencial: llamada/WhatsApp con el encargado respondiendo 3 preguntas clave (¿stock independiente o compartido? ¿necesitan vista consolidada? ¿cuántas PCs?) + social proof de la librería. **C)** MVP multi-sucursal 50h solo si la respuesta es "sí, vista consolidada". **El humano valora B como muy buena opción y va a pensar la situación antes de decidir.** La decisión A vs C se toma con la entrevista. (2026-07-31)
+
+## 17. TELENOTA 1/8 — MEJORAS UX PRODUCTOS (en curso)
+
+> Fuente: `E:\TELENOTAS\inbox\2026-08-01.md`. Prioridad de trabajo acordada: (1) botón TST-, (2) paginación/búsqueda, (3) toma de stock masiva DESPUÉS.
+
+- [telenota] Ítem 1 — Paginación + búsqueda: Cliente Librería tiene 309 productos (≈5% del stock real, va a crecer a miles). Pide **50 productos por página** y **búsqueda reactiva** (a medida que escribe, sin botón Buscar).
+- [telenota] Ítem 2 — Botón "Generar code" perdido: El cliente duplica el barcode en el campo code porque al EDITAR un producto no hay botón "Generar" (solo aparecía al crear). La causa raíz: ambos botones (code + barcode) tenían condición `{!editing && ...}`.
+- [telenota] Ítem 3 — Toma de stock masiva: Cliente con miles de productos no puede contar todo a mano. Ideas: import Excel/CSV, o descarga offline en app Stock + envío batch (Android congelado — requeriría levantar congelamiento). Alternativa priorizada: **Import Excel/CSV en web (~4-6h)**.
+- [fix] BOTÓN GENERAR CODE EN EDICIÓN (1/8): `web/src/pages/Products.tsx:247-256` — botón "Generar" (TST- + 10 dígitos vía `/products/generate-code`) ahora visible en creación Y edición. En edición: solo si `form.code` está vacío (si tiene code muestra "Código existente"); confirmación si regenera con code existente. Botón barcode sigue solo en creación. Causa raíz: ambos botones tenían `{!editing && ...}`. Backend `server/routes/products.py:76-86` ya existía (genera code TST- con chequeo de colisión). (2026-08-01)
+- [feature] PAGINACIÓN SERVER-SIDE + BÚSQUEDA (1/8): `server/routes/products.py:27-74` — endpoint `GET /api/products` ahora acepta `search` (ILIKE en name/code/barcode), `category_id`, `include_inactive`, `near_expiry`, `page` (1-based), `page_size` (1-200, default 50). Responde `{products, total, page, page_size, total_pages}` con offset/limit y orden por nombre. (DEV, 2026-08-01)
+- [feature] UI PAGINACIÓN CONFIGURABLE + DEBOUNCE (1/8): `web/src/pages/Products.tsx` — selector de page size 50/100/200 (default 50, persistido en `localStorage['products_page_size']`), búsqueda reactiva con debounce 300ms + indicador "Buscando...", refetch del backend paginado, botones Anterior/Siguiente, "Página X de Y", "Mostrando N de TOTAL", card TOTAL usa `total` del backend. Nota: "SIN STOCK" sigue calculado sobre página actual (limita conocida, requiere endpoint de stats). Build ✅ (317.91 kB JS, 949ms). (UI, 2026-08-01)

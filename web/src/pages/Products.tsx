@@ -5,12 +5,28 @@ import MaterialIcon from '../components/ui/MaterialIcon'
 
 interface Category { id: number; name: string; parent_id: number | null }
 
+interface ProductListResponse {
+  products: Product[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
 export default function Products() {
   const { toast } = useToast()
   const [products, setProducts] = useState<Product[]>([])
   const [stock, setStock] = useState<StockItem[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [search, setSearch] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [pageSize, setPageSize] = useState<number>(() => {
+    const saved = parseInt(localStorage.getItem('products_page_size') || '50', 10)
+    return saved === 50 || saved === 100 || saved === 200 ? saved : 50
+  })
   const [filterCat, setFilterCat] = useState<number | ''>('')
   const [filterNearExpiry, setFilterNearExpiry] = useState(false)
   const [showInactive, setShowInactive] = useState(false)
@@ -27,20 +43,31 @@ export default function Products() {
 
   const load = () => {
     setLoading(true)
-    let qs = `?search=${encodeURIComponent(search)}&include_inactive=${showInactive}`
+    let qs = `?search=${encodeURIComponent(debouncedSearch)}&include_inactive=${showInactive}&page=${page}&page_size=${pageSize}`
     if (filterCat !== '') qs += `&category_id=${filterCat}`
     if (filterNearExpiry) qs += `&near_expiry=30`
     Promise.all([
-      api.get<Product[]>(`/products${qs}`),
+      api.get<ProductListResponse>(`/products${qs}`),
       api.get<StockItem[]>('/stock'),
       api.get<Category[]>('/products/categories'),
     ])
-      .then(([prods, stk, cats]) => { setProducts(prods); setStock(stk); setCategories(cats) })
+      .then(([data, stk, cats]) => { setProducts(data.products); setTotal(data.total); setTotalPages(data.total_pages); setStock(stk); setCategories(cats) })
       .catch(() => toast('Error al cargar productos', 'error'))
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [search, showInactive, filterCat, filterNearExpiry])
+  const handlePageSizeChange = (n: number) => {
+    setPageSize(n)
+    localStorage.setItem('products_page_size', String(n))
+    setPage(1)
+  }
+
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedSearch(searchQuery.trim()); setPage(1) }, 300)
+    return () => clearTimeout(t)
+  }, [searchQuery])
+
+  useEffect(() => { load() }, [debouncedSearch, showInactive, filterCat, filterNearExpiry, page, pageSize])
 
   const getStock = (id: number) => stock.find(s => s.id === id)?.quantity || 0
 
@@ -98,7 +125,6 @@ export default function Products() {
     load()
   }
 
-  const activeCount = products.filter(p => p.is_active).length
   const outOfStockCount = products.filter(p => { const q = getStock(p.id); return q === 0 && p.is_active }).length
 
   const inputStyle: React.CSSProperties = {
@@ -143,7 +169,7 @@ export default function Products() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface-container-low)', padding: 4, borderRadius: 'var(--radius)', border: '1px solid rgba(66,71,84,0.3)' }}>
             <span style={{ fontSize: 13, color: 'var(--on-surface-variant)', paddingLeft: 8 }}>Ver inactivos</span>
             <button
-              onClick={() => { setShowInactive(!showInactive); setSearch('') }}
+              onClick={() => { setShowInactive(!showInactive); setSearchQuery(''); setPage(1) }}
               style={{
                 position: 'relative', display: 'inline-flex', height: 24, width: 44,
                 alignItems: 'center', borderRadius: 'var(--radius-full)',
@@ -187,17 +213,26 @@ export default function Products() {
             <MaterialIcon name="search" size={18} color="var(--outline)" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
             <input
               placeholder="Filtrá por descripción, marca o EAN..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
               style={{ ...inputStyle, paddingLeft: 40 }}
             />
+            {searchQuery.trim() !== debouncedSearch && (
+              <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--outline)', fontStyle: 'italic', pointerEvents: 'none' }}>Buscando...</span>
+            )}
           </div>
-          <select value={filterCat} onChange={e => setFilterCat(e.target.value ? +e.target.value : '')} style={{ ...inputStyle, width: 240, flexShrink: 0, appearance: 'none' as const, cursor: 'pointer' }}>
+          <select value={filterCat} onChange={e => { setFilterCat(e.target.value ? +e.target.value : ''); setPage(1) }} style={{ ...inputStyle, width: 240, flexShrink: 0, appearance: 'none' as const, cursor: 'pointer' }}>
             <option value="">Todas las categorías</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
+          <select value={pageSize} onChange={e => handlePageSizeChange(+e.target.value)}
+            style={{ background: 'var(--surface-container-highest)', border: '1px solid var(--outline-variant)', borderRadius: 6, fontSize: 12, fontWeight: 600, color: 'var(--on-surface)', padding: '8px 10px', cursor: 'pointer', flexShrink: 0 }}>
+            <option value={50}>50 / pág</option>
+            <option value={100}>100 / pág</option>
+            <option value={200}>200 / pág</option>
+          </select>
           <button
-            onClick={() => setFilterNearExpiry(!filterNearExpiry)}
+            onClick={() => { setFilterNearExpiry(!filterNearExpiry); setPage(1) }}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               padding: '8px 12px', border: `1px solid ${filterNearExpiry ? 'var(--tertiary)' : 'var(--outline-variant)'}`, borderRadius: 'var(--radius)',
@@ -216,7 +251,7 @@ export default function Products() {
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
           }}>
             <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--outline)', marginBottom: 4 }}>TOTAL ITEMS</span>
-            <span style={{ fontFamily: 'var(--font-data)', fontSize: 18, fontWeight: 600, color: 'var(--on-surface)' }}>{activeCount}</span>
+            <span style={{ fontFamily: 'var(--font-data)', fontSize: 18, fontWeight: 600, color: 'var(--on-surface)' }}>{total}</span>
           </div>
           <div style={{
             background: 'var(--surface-container)', border: '1px solid rgba(66,71,84,0.5)',
@@ -244,11 +279,19 @@ export default function Products() {
               <label style={labelStyle}>Código</label>
               <div style={{ display: 'flex', gap: 6 }}>
                 <input value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} style={{ ...inputStyle, flex: 1 }} disabled={!!editing} />
-                {!editing && (
-                  <button type="button" onClick={async () => { try { const data = await api.get<{ code: string }>('/products/generate-code'); setForm({ ...form, code: data.code }) } catch (e) {} }}
+                {!editing || (editing && !form.code) ? (
+                  <button type="button" onClick={async () => {
+                    if (editing && form.code && !confirm('¿Regenerar código? Se perderá el actual.')) return
+                    try {
+                      const data = await api.get<{ code: string }>('/products/generate-code')
+                      setForm({ ...form, code: data.code })
+                    } catch (e) {}
+                  }}
                     style={{ padding: '8px 14px', background: 'var(--surface-container-highest)', color: 'var(--on-surface)', border: '1px solid var(--outline-variant)', borderRadius: 6, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', cursor: 'pointer' }}>
                     Generar
                   </button>
+                ) : (
+                  <span style={{ display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12, color: 'var(--outline)' }}>Código existente</span>
                 )}
               </div>
             </div>
@@ -479,7 +522,7 @@ export default function Products() {
             {products.length === 0 && (
               <tr>
                 <td colSpan={7} style={{ padding: 48, textAlign: 'center', color: 'var(--on-surface-variant)', fontSize: 14 }}>
-                  {showInactive ? 'No hay productos inactivos' : 'No se encontraron productos'}
+                  {loading ? 'Cargando...' : showInactive ? 'No hay productos inactivos' : 'No se encontraron productos'}
                 </td>
               </tr>
             )}
@@ -494,12 +537,12 @@ export default function Products() {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <span style={{ fontSize: 13, color: 'var(--on-surface-variant)' }}>
-            Mostrando {products.length} de {products.length} productos
+            {loading ? 'Cargando...' : `Mostrando ${products.length} de ${total} productos`}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button style={paginationBtnStyle}>Anterior</button>
-            <button style={{ ...paginationBtnStyle, width: 32, height: 32, padding: 0, justifyContent: 'center', background: 'var(--primary-container)', color: 'var(--on-primary-container)', fontWeight: 700, border: 'none', fontFamily: 'var(--font-data)', fontSize: 12 }}>1</button>
-            <button style={paginationBtnStyle}>Siguiente</button>
+            <button style={pageBtnDisabled(page <= 1)} disabled={page <= 1} onClick={() => setPage(page - 1)}>Anterior</button>
+            <span style={{ fontSize: 13, color: 'var(--on-surface-variant)', fontFamily: 'var(--font-data)' }}>Página {page} de {Math.max(totalPages, 1)}</span>
+            <button style={pageBtnDisabled(page >= totalPages)} disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Siguiente</button>
           </div>
         </div>
       </div>
@@ -563,3 +606,9 @@ const paginationBtnStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
 }
+
+const pageBtnDisabled = (disabled: boolean): React.CSSProperties => ({
+  ...paginationBtnStyle,
+  opacity: disabled ? 0.4 : 1,
+  cursor: disabled ? 'not-allowed' : 'pointer',
+})

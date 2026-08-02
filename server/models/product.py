@@ -1,6 +1,6 @@
 """Modelos de categorías y productos."""
 
-from sqlalchemy import Column, Integer, String, Text, Float, Boolean, Date, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, Float, Boolean, Date, DateTime, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from database import Base
@@ -37,3 +37,6 @@ class Product(Base):
     expiry_date = Column(Date, nullable=True)
 
     category = relationship("Category", back_populates="products")
+
+
+Index("idx_products_search", Product.name, Product.code, Product.barcode, sqlite_on_conflict_ignore=True)

@@ -7,7 +7,7 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from database import get_db
 from models.product import Product, Category
-from schemas import ProductCreate, ProductUpdate, ProductOut, CategoryCreate
+from schemas import ProductCreate, ProductUpdate, ProductOut, CategoryCreate, ProductListResponse
 from services.stock_service import get_current_stock, get_low_stock
 
 router = APIRouter(prefix="/api/products", tags=["products"])
@@ -24,26 +24,54 @@ def to_product_out(p: Product) -> dict:
     data["category_name"] = p.category.name if p.category else None
     return data
 
-@router.get("")
+@router.get("", response_model=ProductListResponse)
 def list_products(
     db: Session = Depends(get_db),
     search: str = Query(default="", max_length=200),
     category_id: int = None,
     include_inactive: bool = False,
     near_expiry: int = None,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
 ):
-    """Lista todos los productos activos con filtros opcionales de búsqueda, categoría y próximos a vencer."""
+    """Lista productos con paginación, búsqueda (name/code/barcode) y filtros opcionales.
+    
+    Query params:
+    - search: filtra por name, code o barcode (ILIKE)
+    - category_id: filtra por categoría
+    - include_inactive: incluye productos desactivados (default false)
+    - near_expiry: productos que vencen en N días
+    - page: página (1-based, default 1)
+    - page_size: items por página (1-200, default 50)
+    """
     q = db.query(Product)
     if not include_inactive:
         q = q.filter(Product.is_active == True)
     if search:
-        q = q.filter(Product.name.ilike(f"%{search}%") | Product.code.ilike(f"%{search}%"))
+        s = f"%{search}%"
+        q = q.filter(
+            Product.name.ilike(s) 
+            | Product.code.ilike(s) 
+            | Product.barcode.ilike(s)
+        )
     if category_id:
         q = q.filter(Product.category_id == category_id)
     if near_expiry:
         cutoff = date.today() + timedelta(days=near_expiry)
         q = q.filter(Product.expiry_date <= cutoff)
-    return [to_product_out(p) for p in q.order_by(Product.name).all()]
+    
+    total = q.count()
+    total_pages = (total + page_size - 1) // page_size
+    offset = (page - 1) * page_size
+    products = q.order_by(Product.name).offset(offset).limit(page_size).all()
+    
+    return {
+        "products": [to_product_out(p) for p in products],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    }
 
 @router.get("/generate-code")
 def generate_barcode(db: Session = Depends(get_db)):
