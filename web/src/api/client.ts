@@ -2,9 +2,10 @@ const BASE = '/api'
 const TOKEN = 'tustock-local-token'
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const isForm = options?.body instanceof FormData
   const res = await fetch(`${BASE}${path}`, {
     headers: {
-      'Content-Type': 'application/json',
+      ...(isForm ? {} : { 'Content-Type': 'application/json' }),
       'Authorization': `Bearer ${TOKEN}`,
       ...options?.headers,
     },
@@ -25,6 +26,8 @@ export const api = {
   put: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  upload: <T>(path: string, formData: FormData) =>
+    request<T>(path, { method: 'POST', body: formData }),
 }
 
 export interface Product {

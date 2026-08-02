@@ -13,6 +13,7 @@ import Vendors from './pages/Vendors'
 import Upgrade from './pages/Upgrade'
 import Settings from './pages/Settings'
 import Barcodes from './pages/Barcodes'
+import ImportStock from './pages/ImportStock'
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="/customers" element={<Customers />} />
             <Route path="/vendors" element={<Vendors />} />
             <Route path="/audits" element={<Audits />} />
+            <Route path="/stock-import" element={<ImportStock />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/scanner" element={<ScannerConnect />} />
             <Route path="/upgrade" element={<Upgrade />} />

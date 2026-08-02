@@ -11,7 +11,7 @@
 - **Próximas prioridades (orden):**
   1. 🟡 **Multi-sucursal en STANDBY** hasta reunión con encargado/dueño de farmacia (análisis DEV validado 31/7: **~50h MVP ≈ 2 semanas**, ver `docs/analisis-multisucursal-2026-07-30.md`)
   2. 🟢 Reunión polirrubro 1 sucursal — **reprogramada a la semana del 5/8** (horario a confirmar con el cliente). Demo probada exitosa en notebook (2/8). Bundle en `USB_TUSTOCK\TUSTOCK_DEMO\`, guión en `LEEME-DEMO.txt`
-  3. 🟡 **Opción E (app Stock CSV)** — aprobada (2/8) pero **EN ESPERA hasta reunión polirrubro** (~16h, catálogo offline confirmado)
+  3. 🟢 **Opción E (app Stock CSV)** — **EN DESARROLLO (2/8)**: app Stock genera CSV local + import + catálogo offline (~16h)
   4. Activar Programa Despegue ML ($45K recuperable, $45K publicidad gratis)
   5. Registrar bases de datos en AAIP (obligación legal Ley 25.326)
   6. Railway a Hobby cuando se acaben créditos gratis ($5/mes)
@@ -669,6 +669,7 @@ La clienta manifestó dos necesidades concretas:
 - [feature] ANALYTICS SEMANALES: Endpoint `GET /api/admin/analytics/weekly` en cloud API con data de todos los negocios (7 días). Métricas por negocio: pushes, ventas, métodos de pago, top productos, inventario, stock bajo/cero, clientes, deudores, pedidos pendientes. Health status (healthy/warning/inactive). Script `scripts/weekly_report.py` genera markdown con resumen, salud, ranking, top global y alertas + ntfy. (2026-07-29)
 - [feature] STOCK INICIAL AL CREAR PRODUCTO: Nuevo campo `initial_stock` en formulario de creación. Schema ProductCreate con `initial_stock: float = 0.0`. Backend: si >0 llama `adjust_stock()` con movement_type="adjustment". Frontend: input numérico con subtext, toast con nombre + unidades, foco vuelve a Nombre. Build verificado. (2026-07-29)
 - [feature] ANALYTICS SEMANALES: Endpoint `GET /api/admin/analytics/weekly` en cloud API con data de todos los negocios (7 días). Métricas por negocio: pushes, ventas, métodos de pago, top productos, inventario, stock bajo/cero, clientes, deudores, pedidos pendientes. Health status (healthy/warning/inactive). Script `scripts/weekly_report.py` genera markdown con resumen, salud, ranking, top global y alertas + ntfy. (2026-07-29)
+- [feature] IMPORT CSV TOMA DE STOCK: `server/services/csv_import.py` (nuevo) — parseador CSV RFC 4180 (UTF-8 BOM/UTF-16, header opcional, duplicados aditivos, resolve por barcode/code). Endpoints `POST /api/audits/import-csv` (sube CSV → crea audit draft con subset, NO corrige) y `POST /api/audits/import-register` (registra producto no existente con código TST+10, valida licencia). `create_audit` acepta `product_ids` opcional. Fix `complete_audit`: crea `CurrentStock` si falta (productos importados). UI `web/src/pages/ImportStock.tsx` (ruta `/stock-import`, link sidebar "Importar stock"): upload → preview editable (cantidades + diferencias) → registrar productos nuevos desde errores → "Aplicar correcciones". `api.upload()` con FormData (el client siempre mandaba Content-Type json). QA integración completo (audit 2: register+edit+complete, stock final 9/2/7). Build ✅ 331.54 kB. (2026-08-02)
 
 ---
 ## 12. HISTORIAL DE DECISIONES
@@ -793,6 +794,7 @@ La clienta manifestó dos necesidades concretas:
 | 2026-08-02 | **Reunión polirrubro reprogramada**: Pasa de sábado 2/8 a la **semana del 5/8** (horario a confirmar con el cliente). Demo probada exitosa en notebook (2/8). | 🧑 HUMANO |
 | 2026-08-02 | **B1+B2 web DESCARTADOS**: El humano decidió NO aplicar las mejoras web de refocus + beep. La toma de stock actual funciona y la mejora real llega con la Opción E (upgrade completo). Se evita tocar código web que quedará obsoleto con el CSV. | 🧑 HUMANO |
 | 2026-08-02 | **Opción E en ESPERA hasta reunión polirrubro**: El humano decidió NO arrancar el desarrollo de la app Stock (Opción E, ~16h) hasta tener la reunión con el polirrubro (semana del 5/8). Si el cliente pide algo que cambie prioridades, se ajusta. El upgrade de toma de stock queda agendado para después de la reunión. | 🧑 HUMANO |
+| 2026-08-02 | **Opción E — INICIO DE DESARROLLO**: El humano dio luz verde para arrancar la implementación de la Opción E (app Stock genera CSV local + import + catálogo offline, ~16h) sin esperar la reunión. Prioridad de fases: (1) app Kotlin ~7.5h, (2) import server+web ~5.5h, (3) QA+CI ~3h. | 🧑 HUMANO + Dispatcher |
 
 ---
 ## 13. EQUIPO LEGAL

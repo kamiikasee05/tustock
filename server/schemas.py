@@ -89,6 +89,13 @@ class ScanRequest(BaseModel):
     """Código de producto escaneado durante una auditoría."""
     product_code: str = Field(..., max_length=50)
 
+class ImportRegister(BaseModel):
+    """Registro de un producto nuevo desde un barcode no registrado del import CSV."""
+    audit_id: int
+    barcode: str = Field(..., max_length=50)
+    name: str = Field(..., max_length=200)
+    quantity: float = Field(..., ge=0)
+
 class VendorCreate(BaseModel):
     """Datos para registrar un nuevo vendedor."""
     dni: str = Field(..., max_length=20)

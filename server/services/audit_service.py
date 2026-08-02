@@ -7,8 +7,11 @@ from models.product import Product
 from models.stock import CurrentStock, StockMovement
 from services.stock_service import get_current_stock
 
-def create_audit(db: Session, notes: str = None, created_by: str = None):
-    """Crea una auditoría en borrador con todos los productos activos y su stock teórico."""
+def create_audit(db: Session, notes: str = None, created_by: str = None, product_ids: list[int] = None):
+    """Crea una auditoría en borrador con todos los productos activos y su stock teórico.
+
+    Si se pasa product_ids, solo se incluyen esos productos (para import de CSV).
+    """
     audit = StockAudit(
         audit_date=date.today(),
         status="draft",
@@ -18,7 +21,10 @@ def create_audit(db: Session, notes: str = None, created_by: str = None):
     db.add(audit)
     db.flush()
 
-    products = db.query(Product).filter(Product.is_active == True).all()
+    q = db.query(Product).filter(Product.is_active == True)
+    if product_ids:
+        q = q.filter(Product.id.in_(product_ids))
+    products = q.all()
     for p in products:
         qty = get_current_stock(db, p.id)
         item = AuditItem(
@@ -85,6 +91,8 @@ def complete_audit(db: Session, audit_id: int, apply_corrections: bool = True):
                 cs = db.query(CurrentStock).filter(CurrentStock.product_id == item.product_id).first()
                 if cs:
                     cs.quantity = item.counted_qty
+                else:
+                    db.add(CurrentStock(product_id=item.product_id, quantity=item.counted_qty))
 
                 movement = StockMovement(
                     product_id=item.product_id,

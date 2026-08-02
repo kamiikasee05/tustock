@@ -22,6 +22,7 @@ const navItems: NavItem[] = [
   { to: '/products', label: 'Productos', icon: 'inventory_2' },
   { to: '/barcodes', label: 'Códigos', icon: 'label' },
   { to: '/audits', label: 'Auditorias', icon: 'history_edu' },
+  { to: '/stock-import', label: 'Importar stock', icon: 'file_upload' },
   { to: '/customers', label: 'Clientes', icon: 'group' },
   { to: '/vendors', label: 'Vendedores', icon: 'badge' },
   { to: '/reports', label: 'Informes', icon: 'analytics' },
