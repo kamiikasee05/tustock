@@ -17,7 +17,16 @@ data class ProductResponse(
     val description: String?,
     val selling_price: Double,
     val stock: Double,
-    val unit: String
+    val unit: String,
+    val barcode: String? = null
+)
+
+data class ProductListResponse(
+    val products: List<ProductResponse>,
+    val total: Int,
+    val page: Int,
+    val page_size: Int,
+    val total_pages: Int
 )
 
 data class VendorResponse(
@@ -81,6 +90,48 @@ object ApiClient {
             } else {
                 Result.failure(Exception("Producto no encontrado"))
             }
+        } catch (e: Exception) {
+            Result.failure(Exception("Error de conexion: ${e.message}"))
+        }
+    }
+
+    suspend fun fetchProducts(page: Int, pageSize: Int): Result<ProductListResponse> = withContext(Dispatchers.IO) {
+        try {
+            val request = authorizedBuilder()
+                .url("$baseUrl/api/products?page=$page&page_size=$pageSize")
+                .get()
+                .build()
+            val response = client.newCall(request).execute()
+            if (response.isSuccessful) {
+                val body = response.body?.string() ?: throw Exception("Respuesta vacia")
+                Result.success(gson.fromJson(body, ProductListResponse::class.java))
+            } else {
+                Result.failure(Exception("Error al descargar catalogo (${response.code})"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Error de conexion: ${e.message}"))
+        }
+    }
+
+    suspend fun downloadCatalog(): Result<List<ProductResponse>> = withContext(Dispatchers.IO) {
+        try {
+            val all = mutableListOf<ProductResponse>()
+            var page = 1
+            var totalPages = 1
+            do {
+                val request = authorizedBuilder()
+                    .url("$baseUrl/api/products?page=$page&page_size=200")
+                    .get()
+                    .build()
+                val response = client.newCall(request).execute()
+                if (!response.isSuccessful) throw Exception("Error al descargar catalogo (${response.code})")
+                val body = response.body?.string() ?: throw Exception("Respuesta vacia")
+                val listResp = gson.fromJson(body, ProductListResponse::class.java)
+                all.addAll(listResp.products)
+                totalPages = listResp.total_pages
+                page++
+            } while (page <= totalPages)
+            Result.success(all)
         } catch (e: Exception) {
             Result.failure(Exception("Error de conexion: ${e.message}"))
         }

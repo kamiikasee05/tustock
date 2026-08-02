@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Top bar: toggle + config -->
+    <!-- Top bar: take start + config -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,21 +18,15 @@
         android:layout_margin="12dp"
         android:gravity="center_vertical">
 
-        <Switch
-            android:id="@+id/auditToggle"
+        <Button
+            android:id="@+id/startTakeButton"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:thumbTint="#4d8eff"
-            android:trackTint="#334155" />
-
-        <TextView
-            android:id="@+id/auditLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Auditoría"
-            android:textColor="#94a3b8"
-            android:textSize="13sp"
-            android:layout_marginStart="6dp" />
+            android:layout_height="40dp"
+            android:text="Iniciar toma"
+            android:textStyle="bold"
+            android:backgroundTint="#22c55e"
+            android:textColor="#ffffff"
+            android:paddingHorizontal="16dp" />
 
         <View
             android:layout_width="0dp"
@@ -48,6 +42,65 @@
             android:backgroundTint="#334155"
             android:textColor="#94a3b8"
             android:padding="0dp" />
+    </LinearLayout>
+
+    <!-- Session bar: active take info + actions -->
+    <LinearLayout
+        android:id="@+id/sessionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="top"
+        android:layout_marginTop="60dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:background="#CC0f172a"
+        android:padding="10dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/sessionInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Líneas: 0 · Productos: 0"
+            android:textColor="#ffffff"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/sessionCsvName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#94a3b8"
+            android:textSize="12sp"
+            android:layout_marginTop="2dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/shareButton"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="Finalizar y enviar"
+                android:textStyle="bold"
+                android:backgroundTint="#4d8eff"
+                android:textColor="#ffffff"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/newTakeButton"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="Nueva toma"
+                android:backgroundTint="#334155"
+                android:textColor="#e2e8f0" />
+        </LinearLayout>
     </LinearLayout>
 
     <TextView
@@ -155,6 +208,17 @@
                 android:textColor="#e2e8f0"
                 android:layout_marginStart="8dp" />
         </LinearLayout>
+
+        <Button
+            android:id="@+id/registerProductButton"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:text="Registrar en el sistema"
+            android:textStyle="bold"
+            android:backgroundTint="#f59e0b"
+            android:textColor="#ffffff"
+            android:layout_marginTop="10dp"
+            android:visibility="gone" />
     </LinearLayout>
 
     <!-- Product not found card -->
