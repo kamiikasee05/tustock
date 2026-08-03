@@ -148,8 +148,8 @@ export default function ImportStock() {
     }
     const sinPrecio = pendientes.filter(e => getPrice(e.barcode!, e.price) <= 0)
     const msg = sinPrecio.length > 0
-      ? `¿Registrar ${pendientes.length} producto(s) nuevo(s)?\n${sinPrecio.length} sin precio (quedan a $0 — cargalo en el input de precio o después en Productos).`
-      : `¿Registrar ${pendientes.length} producto(s) nuevo(s)?\nSe crean con el nombre, el precio y el stock contado.`
+      ? `¿Registrar ${pendientes.length} producto(s) nuevo(s)?\nSe aplica el stock contado. ${sinPrecio.length} sin precio (quedan a $0 — cargalo en el input de precio o después en Productos).`
+      : `¿Registrar ${pendientes.length} producto(s) nuevo(s)?\nSe crean con nombre, precio y stock contado.`
     if (!confirm(msg)) return
     setBusy(true)
     try {

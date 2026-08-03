@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from models.audit import StockAudit, AuditItem
 from models.product import Product
+from models.stock import CurrentStock
 from services.audit_service import create_audit, update_audit_item
 from services.stock_service import get_current_stock
 
@@ -275,9 +276,9 @@ def import_stock_csv(db: Session, content: bytes, notes: str = None) -> dict:
 
 
 def register_product_from_import(db: Session, audit_id: int, barcode: str, name: str, quantity: float, price=None) -> dict:
-    """Registra un producto nuevo y lo agrega a la auditoría de import con su conteo.
-
-    El stock se aplica recién cuando la auditoría se completa (like el resto del import).
+    """Registra un producto nuevo, le aplica el stock contado de inmediato y lo
+    agrega a la auditoría de import. Con el stock ya aplicado, el AuditItem queda
+    con diferencia 0 y completar la auditoría no genera correcciones duplicadas.
     """
     import random
     import string
@@ -332,13 +333,19 @@ def register_product_from_import(db: Session, audit_id: int, barcode: str, name:
         raise ValueError("El código de barras ya está registrado")
     db.refresh(product)
 
+    qty = float(quantity)
+    if qty > 0:
+        db.add(CurrentStock(product_id=product.id, quantity=qty))
+        db.flush()
+
     theoretical = get_current_stock(db, product.id)
+    difference = qty - theoretical
     item = AuditItem(
         audit_id=audit.id,
         product_id=product.id,
         theoretical_qty=theoretical,
-        counted_qty=float(quantity),
-        difference=float(quantity),
+        counted_qty=qty,
+        difference=difference,
     )
     db.add(item)
     db.commit()
@@ -351,8 +358,8 @@ def register_product_from_import(db: Session, audit_id: int, barcode: str, name:
         "name": product.name,
         "price": product.selling_price,
         "theoretical_qty": theoretical,
-        "counted_qty": float(quantity),
-        "difference": float(quantity),
+        "counted_qty": qty,
+        "difference": difference,
     }
 
 
@@ -360,7 +367,10 @@ def register_products_batch(db: Session, audit_id: int, products: list[dict]) ->
     """Registra en lote los productos nuevos (barcodes no registrados) del import CSV.
 
     products: lista de {"barcode", "name", "quantity", "price"}. Todo se hace en una sola
-    transacción. Respeta el límite de productos del plan y responde errores por fila.
+    transacción. El stock contado (quantity > 0) se aplica de inmediato a cada producto
+    creado; los AuditItems quedan con diferencia 0 para que completar la auditoría no
+    genere correcciones duplicadas. Respeta el límite de productos del plan y responde
+    errores por fila.
     """
     import random
     import string
@@ -436,13 +446,18 @@ def register_products_batch(db: Session, audit_id: int, products: list[dict]) ->
         db.add(product)
         db.flush()
 
+        if info["quantity"] > 0:
+            db.add(CurrentStock(product_id=product.id, quantity=info["quantity"]))
+            db.flush()
+
         theoretical = get_current_stock(db, product.id)
+        difference = info["quantity"] - theoretical
         db.add(AuditItem(
             audit_id=audit.id,
             product_id=product.id,
             theoretical_qty=theoretical,
             counted_qty=info["quantity"],
-            difference=info["quantity"],
+            difference=difference,
         ))
         allowed -= 1
         created.append({
@@ -454,7 +469,7 @@ def register_products_batch(db: Session, audit_id: int, products: list[dict]) ->
             "price": product.selling_price,
             "theoretical_qty": theoretical,
             "counted_qty": info["quantity"],
-            "difference": info["quantity"],
+            "difference": difference,
         })
 
     db.commit()
