@@ -1,9 +1,11 @@
 """Import de toma de stock desde CSV generado por la app Stock.
 
 Formato definido (Opción E):
-    barcode;cantidad;nombre;timestamp
+    barcode;cantidad;nombre;precio;fecha
     Separador: ';'  |  Encoding: UTF-8 con BOM (opcional)  |  Quoting RFC 4180
-    Header opcional (barcode;cantidad;nombre;fecha).
+    Header opcional (barcode;cantidad;nombre;precio;fecha).
+    La columna precio es opcional: CSVs viejos (barcode;cantidad;nombre;fecha)
+    se siguen aceptando y el precio queda en $0. Decimal con coma o punto.
     Duplicados: append aditivo — dos líneas con el mismo barcode se SUMAN.
     El nombre del CSV es solo referencia legible; la verdad la pone el barcode.
 """
@@ -93,6 +95,22 @@ def parse_quantity(raw: str):
         return None
 
 
+def parse_price(raw: str):
+    """Convierte el precio a float, tolerando coma/punto decimal y símbolo $."""
+    if raw is None:
+        return None
+    s = raw.replace(" ", "").replace("\u00a0", "").replace("$", "")
+    if "," in s and "." not in s:
+        s = s.replace(",", ".")
+    try:
+        v = float(s)
+        if v < 0:
+            return None
+        return v
+    except ValueError:
+        return None
+
+
 def parse_stock_csv(content: bytes) -> dict:
     """Parsea el CSV de toma de stock y devuelve filas válidas y errores de formato."""
     text = decode_csv_bytes(content)
@@ -102,6 +120,7 @@ def parse_stock_csv(content: bytes) -> dict:
     malformed = []
     skipped = 0
     first_data = True
+    price_idx = None
     for idx, fields in enumerate(raw_rows):
         line_no = idx + 1
         cleaned = [f.strip() for f in fields]
@@ -122,6 +141,10 @@ def parse_stock_csv(content: bytes) -> dict:
             lower0 = barcode.lower()
             if lower0 in ("barcode", "codigo", "código", "code", "sku", "ean", "gtin") or \
                qty_raw.lower().startswith("cantidad") or parse_quantity(qty_raw) is None:
+                for h, header in enumerate(cleaned):
+                    if header.lower() in ("precio", "price", "precio($)", "precio $", "precio$"):
+                        price_idx = h
+                        break
                 continue
 
         if not barcode:
@@ -136,7 +159,13 @@ def parse_stock_csv(content: bytes) -> dict:
             })
             continue
 
-        rows.append({"line": line_no, "barcode": barcode, "quantity": qty, "name": name})
+        price = None
+        if price_idx is not None and len(cleaned) > price_idx:
+            price = parse_price(cleaned[price_idx])
+        elif len(cleaned) >= 5:
+            price = parse_price(cleaned[3])
+
+        rows.append({"line": line_no, "barcode": barcode, "quantity": qty, "name": name, "price": price})
 
     return {"rows": rows, "malformed": malformed, "skipped": skipped}
 
@@ -182,11 +211,13 @@ def import_stock_csv(db: Session, content: bytes, notes: str = None) -> dict:
     for r in parsed["rows"]:
         key = r["barcode"]
         if key not in aggregated:
-            aggregated[key] = {"quantity": 0.0, "name": r["name"], "lines": []}
+            aggregated[key] = {"quantity": 0.0, "name": r["name"], "price": r["price"], "lines": []}
         aggregated[key]["quantity"] += r["quantity"]
         aggregated[key]["lines"].append(r["line"])
         if not aggregated[key]["name"] and r["name"]:
             aggregated[key]["name"] = r["name"]
+        if aggregated[key]["price"] is None and r["price"]:
+            aggregated[key]["price"] = r["price"]
 
     barcodes = list(aggregated.keys())
     lookup = resolve_products(db, barcodes)
@@ -202,6 +233,7 @@ def import_stock_csv(db: Session, content: bytes, notes: str = None) -> dict:
                 "barcode": barcode,
                 "name": info["name"],
                 "quantity": info["quantity"],
+                "price": info["price"],
                 "message": "Producto no registrado",
             })
             continue
@@ -224,6 +256,7 @@ def import_stock_csv(db: Session, content: bytes, notes: str = None) -> dict:
                 "barcode": m["product"].barcode or m["scanned"],
                 "scanned": m["scanned"],
                 "name": m["product"].name,
+                "price": m["product"].selling_price,
                 "theoretical_qty": upd["theoretical"],
                 "counted_qty": upd["counted"],
                 "difference": upd["difference"],
@@ -241,7 +274,7 @@ def import_stock_csv(db: Session, content: bytes, notes: str = None) -> dict:
     }
 
 
-def register_product_from_import(db: Session, audit_id: int, barcode: str, name: str, quantity: float) -> dict:
+def register_product_from_import(db: Session, audit_id: int, barcode: str, name: str, quantity: float, price=None) -> dict:
     """Registra un producto nuevo y lo agrega a la auditoría de import con su conteo.
 
     El stock se aplica recién cuando la auditoría se completa (like el resto del import).
@@ -259,6 +292,8 @@ def register_product_from_import(db: Session, audit_id: int, barcode: str, name:
         raise ValueError("Código de barras vacío")
     if not name:
         raise ValueError("Nombre requerido")
+
+    price = float(price) if isinstance(price, (int, float)) and price > 0 else 0.0
 
     audit = db.query(StockAudit).filter(StockAudit.id == audit_id).first()
     if not audit:
@@ -284,7 +319,7 @@ def register_product_from_import(db: Session, audit_id: int, barcode: str, name:
         barcode=barcode,
         description="",
         cost_price=0.0,
-        selling_price=0.0,
+        selling_price=price,
         min_stock=0,
         unit="unidad",
         is_active=True,
@@ -314,6 +349,7 @@ def register_product_from_import(db: Session, audit_id: int, barcode: str, name:
         "barcode": product.barcode,
         "scanned": barcode,
         "name": product.name,
+        "price": product.selling_price,
         "theoretical_qty": theoretical,
         "counted_qty": float(quantity),
         "difference": float(quantity),
@@ -323,7 +359,7 @@ def register_product_from_import(db: Session, audit_id: int, barcode: str, name:
 def register_products_batch(db: Session, audit_id: int, products: list[dict]) -> dict:
     """Registra en lote los productos nuevos (barcodes no registrados) del import CSV.
 
-    products: lista de {"barcode", "name", "quantity"}. Todo se hace en una sola
+    products: lista de {"barcode", "name", "quantity", "price"}. Todo se hace en una sola
     transacción. Respeta el límite de productos del plan y responde errores por fila.
     """
     import random
@@ -351,11 +387,15 @@ def register_products_batch(db: Session, audit_id: int, products: list[dict]) ->
         name = (item.get("name") or "").strip()
         if name.lower() in ("(no registrado)", "no registrado"):
             name = ""
+        raw_price = item.get("price")
+        price = float(raw_price) if isinstance(raw_price, (int, float)) and raw_price > 0 else 0.0
         if barcode not in seen:
-            seen[barcode] = {"name": "", "quantity": 0.0}
+            seen[barcode] = {"name": "", "quantity": 0.0, "price": 0.0}
         seen[barcode]["quantity"] += float(item.get("quantity") or 0)
         if not seen[barcode]["name"] and name:
             seen[barcode]["name"] = name
+        if seen[barcode]["price"] <= 0 and price > 0:
+            seen[barcode]["price"] = price
 
     existing = resolve_products(db, list(seen.keys()))
 
@@ -388,7 +428,7 @@ def register_products_batch(db: Session, audit_id: int, products: list[dict]) ->
             barcode=barcode,
             description="",
             cost_price=0.0,
-            selling_price=0.0,
+            selling_price=info["price"],
             min_stock=0,
             unit="unidad",
             is_active=True,
@@ -411,6 +451,7 @@ def register_products_batch(db: Session, audit_id: int, products: list[dict]) ->
             "barcode": product.barcode,
             "scanned": barcode,
             "name": product.name,
+            "price": product.selling_price,
             "theoretical_qty": theoretical,
             "counted_qty": info["quantity"],
             "difference": info["quantity"],

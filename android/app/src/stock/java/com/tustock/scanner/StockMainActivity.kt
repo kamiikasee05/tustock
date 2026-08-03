@@ -32,6 +32,7 @@ class StockMainActivity : AppCompatActivity() {
     private var imageAnalysis: ImageAnalysis? = null
     private val prefs by lazy { getSharedPreferences("tustock_prefs", MODE_PRIVATE) }
     private var lastNewName: String = ""
+    private var lastNewPrice: String = ""
 
     // CSV take session
     private var csvActive = false
@@ -53,6 +54,7 @@ class StockMainActivity : AppCompatActivity() {
 
         val savedUrl = prefs.getString("server_url", "http://192.168.1.100:8090")
         ApiClient.baseUrl = savedUrl ?: "http://192.168.1.100:8090"
+        lastNewPrice = prefs.getString("last_new_price", "") ?: ""
 
         startTakeButton = findViewById(R.id.startTakeButton)
         sessionBar = findViewById(R.id.sessionBar)
@@ -183,10 +185,10 @@ class StockMainActivity : AppCompatActivity() {
         sessionCsvName.text = activeCsvFile?.name ?: ""
     }
 
-    private fun appendCsvLine(barcode: String, qty: Int, name: String) {
+    private fun appendCsvLine(barcode: String, qty: Int, name: String, price: Double) {
         val file = activeCsvFile ?: return
         scope.launch {
-            withContext(Dispatchers.IO) { CsvToma.appendLine(file, barcode, qty, name) }
+            withContext(Dispatchers.IO) { CsvToma.appendLine(file, barcode, qty, name, price) }
             csvLines++
             csvItems.add(barcode)
             updateSessionUi()
@@ -266,6 +268,7 @@ class StockMainActivity : AppCompatActivity() {
         val scanAgainBtn = findViewById<Button>(R.id.scanAgainButton)
         val registerBtn = findViewById<Button>(R.id.registerProductButton)
         val newNameInput = findViewById<EditText>(R.id.newProductNameInput)
+        val newPriceInput = findViewById<EditText>(R.id.newPriceInput)
 
         val notFoundCard = findViewById<View>(R.id.notFoundCard)
         val notFoundCode = findViewById<TextView>(R.id.notFoundCode)
@@ -281,6 +284,7 @@ class StockMainActivity : AppCompatActivity() {
         scanAgainBtn.setOnClickListener {
             resultCard.visibility = View.GONE
             newNameInput.visibility = View.GONE
+            newPriceInput.visibility = View.GONE
             lastScannedCode = null
             isProcessing = false
             scanHint.visibility = View.VISIBLE
@@ -317,19 +321,33 @@ class StockMainActivity : AppCompatActivity() {
                     Toast.makeText(this, "Ingresá una cantidad válida (mínimo 1)", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
+                var price = 0.0
                 val name = if (product == null) {
                     val typed = newNameInput.text.toString().trim()
                     if (typed.length < 2) {
                         Toast.makeText(this, "Ingresá el nombre del producto (mínimo 2 letras)", Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
+                    val priceStr = newPriceInput.text.toString().trim()
+                    val p = priceStr.toDoubleOrNull()
+                    if (p == null || p <= 0) {
+                        Toast.makeText(this, "Ingresá el precio", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+                    price = p
                     lastNewName = typed
+                    lastNewPrice = priceStr
+                    prefs.edit().putString("last_new_price", priceStr).apply()
                     typed
-                } else lastScannedName
-                appendCsvLine(code, qty, name)
+                } else {
+                    price = product.selling_price
+                    lastScannedName
+                }
+                appendCsvLine(code, qty, name, price)
                 Toast.makeText(this, "✓ $name x$qty", Toast.LENGTH_SHORT).show()
                 resultCard.visibility = View.GONE
                 newNameInput.visibility = View.GONE
+                newPriceInput.visibility = View.GONE
                 lastScannedCode = null
                 isProcessing = false
                 quantityInput.setText("")
@@ -445,11 +463,15 @@ class StockMainActivity : AppCompatActivity() {
                                             if (product != null) {
                                                 productPrice.text = "Stock en sistema: ${product.stock.toInt()}"
                                                 newNameInput.visibility = View.GONE
+                                                newPriceInput.visibility = View.GONE
                                             } else {
                                                 productPrice.text = "No esta en el catalogo - cargá el nombre"
                                                 newNameInput.setText(lastNewName)
                                                 newNameInput.setSelection(0, newNameInput.text.length)
                                                 newNameInput.visibility = View.VISIBLE
+                                                newPriceInput.setText(lastNewPrice)
+                                                newPriceInput.setSelection(0, newPriceInput.text.length)
+                                                newPriceInput.visibility = View.VISIBLE
                                                 newNameInput.requestFocus()
                                             }
                                             productStock.visibility = View.GONE

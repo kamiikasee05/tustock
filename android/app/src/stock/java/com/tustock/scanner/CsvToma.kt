@@ -23,18 +23,22 @@ object CsvToma {
         val file = File(dir, name)
         FileOutputStream(file, true).use { out ->
             out.write("\uFEFF".toByteArray(Charsets.UTF_8))
-            out.write("barcode;cantidad;nombre;fecha\n".toByteArray(Charsets.UTF_8))
+            out.write("barcode;cantidad;nombre;precio;fecha\n".toByteArray(Charsets.UTF_8))
         }
         return file
     }
 
-    fun appendLine(file: File, barcode: String, qty: Int, name: String) {
+    fun appendLine(file: File, barcode: String, qty: Int, name: String, price: Double) {
         val timestamp = tsFormat.format(Date())
-        val fields = listOf(barcode, qty.toString(), name, timestamp)
+        val fields = listOf(barcode, qty.toString(), name, formatPrice(price), timestamp)
         val line = fields.joinToString(";") { quote(it) }
         FileOutputStream(file, true).use { out ->
             out.write((line + "\n").toByteArray(Charsets.UTF_8))
         }
+    }
+
+    private fun formatPrice(price: Double): String {
+        return if (price == price.toLong().toDouble()) price.toLong().toString() else price.toString()
     }
 
     private fun quote(field: String): String {

@@ -48,7 +48,7 @@ def import_register(data: ImportRegister, db: Session = Depends(get_db)):
     from services.csv_import import register_product_from_import
 
     try:
-        return register_product_from_import(db, data.audit_id, data.barcode, data.name, data.quantity)
+        return register_product_from_import(db, data.audit_id, data.barcode, data.name, data.quantity, data.price)
     except PermissionError as e:
         raise HTTPException(403, str(e))
     except ValueError as e:

@@ -9,6 +9,7 @@ interface ImportItem {
   barcode: string
   scanned: string
   name: string
+  price?: number
   theoretical_qty: number
   counted_qty: number
   difference: number
@@ -20,11 +21,16 @@ interface ImportError {
   barcode?: string
   name?: string
   quantity?: number
+  price?: number
   message: string
   malformed?: boolean
 }
 
 interface NameInputState {
+  [barcode: string]: string
+}
+
+interface PriceInputState {
   [barcode: string]: string
 }
 
@@ -44,6 +50,11 @@ const fmt = (n: number | null | undefined) => {
   return String(n).replace(/\.0$/, '')
 }
 
+const fmtPrice = (n: number | null | undefined) => {
+  if (n === null || n === undefined || n <= 0) return '$0'
+  return '$' + String(n).replace(/\.0$/, '')
+}
+
 export default function ImportStock() {
   const { toast } = useToast()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -55,6 +66,16 @@ export default function ImportStock() {
   const [result, setResult] = useState<any>(null)
   const [busy, setBusy] = useState(false)
   const [nameInputs, setNameInputs] = useState<NameInputState>({})
+  const [priceInputs, setPriceInputs] = useState<PriceInputState>({})
+
+  const getPrice = (barcode: string, fallback?: number): number => {
+    const raw = (priceInputs[barcode] || '').trim()
+    if (raw !== '') {
+      const p = parseFloat(raw.replace(',', '.'))
+      if (!isNaN(p) && p > 0) return p
+    }
+    return fallback && fallback > 0 ? fallback : 0
+  }
 
   const doImport = async () => {
     if (!file) return
@@ -103,6 +124,7 @@ export default function ImportStock() {
         barcode: err.barcode,
         name,
         quantity: err.quantity ?? 0,
+        price: getPrice(err.barcode, err.price),
       })
       setItems(prev => [...prev, { ...res, original_qty: res.counted_qty }])
       setErrors(prev => prev.filter(e => e.barcode !== err.barcode))
@@ -124,7 +146,11 @@ export default function ImportStock() {
       toast(`Falta nombre para ${sinNombre.length} producto(s) — escribí el nombre en la fila correspondiente`, 'error')
       return
     }
-    if (!confirm(`¿Registrar ${pendientes.length} producto(s) nuevo(s)?\nSe crean con el nombre y el stock contado (precio $0 — lo cargás después en Productos).`)) return
+    const sinPrecio = pendientes.filter(e => getPrice(e.barcode!, e.price) <= 0)
+    const msg = sinPrecio.length > 0
+      ? `¿Registrar ${pendientes.length} producto(s) nuevo(s)?\n${sinPrecio.length} sin precio (quedan a $0 — cargalo en el input de precio o después en Productos).`
+      : `¿Registrar ${pendientes.length} producto(s) nuevo(s)?\nSe crean con el nombre, el precio y el stock contado.`
+    if (!confirm(msg)) return
     setBusy(true)
     try {
       const res = await api.post<any>('/audits/import-register-batch', {
@@ -133,6 +159,7 @@ export default function ImportStock() {
           barcode: e.barcode,
           name: nameInputs[e.barcode!] || e.name || '',
           quantity: e.quantity ?? 0,
+          price: getPrice(e.barcode!, e.price),
         })),
       })
       const createdBarcodes = new Set((res.created || []).map((c: any) => c.scanned))
@@ -260,7 +287,7 @@ export default function ImportStock() {
                 <p style={{ fontSize: 13, color: 'var(--on-surface-variant)', marginTop: 4 }}>
                   {file
                     ? `${(file.size / 1024).toFixed(1)} KB — tocan para cambiarlo`
-                    : 'Formato: barcode;cantidad;nombre — el mismo que exporta la app Stock'}
+                    : 'Formato: barcode;cantidad;nombre;precio — el mismo que exporta la app Stock'}
                 </p>
               </div>
               <input
@@ -349,6 +376,7 @@ export default function ImportStock() {
                   <tr style={{ borderBottom: '1px solid rgba(66,71,84,0.3)' }}>
                     <th style={th}>Producto</th>
                     <th style={th}>Código escaneado</th>
+                    <th style={{ ...th, textAlign: 'right' }}>Precio</th>
                     <th style={{ ...th, textAlign: 'right' }}>Stock en sistema</th>
                     <th style={{ ...th, textAlign: 'right' }}>Conteo CSV</th>
                     <th style={{ ...th, textAlign: 'right' }}>Diferencia</th>
@@ -365,6 +393,7 @@ export default function ImportStock() {
                           <span style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>{it.code}</span>
                         </td>
                         <td style={{ ...td, fontFamily: 'var(--font-data)', color: 'var(--on-surface-variant)' }}>{it.scanned}</td>
+                        <td style={{ ...td, textAlign: 'right', fontFamily: 'var(--font-data)', color: 'var(--on-surface-variant)' }}>{fmtPrice(it.price)}</td>
                         <td style={{ ...td, textAlign: 'right', fontFamily: 'var(--font-data)' }}>{fmt(it.theoretical_qty)}</td>
                         <td style={{ ...td, textAlign: 'right' }}>
                           <input
@@ -386,7 +415,7 @@ export default function ImportStock() {
                     )
                   })}
                   {items.length === 0 && (
-                    <tr><td colSpan={5} style={{ padding: 32, textAlign: 'center', color: 'var(--on-surface-variant)' }}>
+                    <tr><td colSpan={6} style={{ padding: 32, textAlign: 'center', color: 'var(--on-surface-variant)' }}>
                       No hay productos que coincidan en el CSV
                     </td></tr>
                   )}
@@ -427,6 +456,7 @@ export default function ImportStock() {
                     <tr style={{ borderBottom: '1px solid rgba(255,180,171,0.15)' }}>
                       <th style={{ ...th, color: 'var(--danger)' }}>Código / línea</th>
                       <th style={{ ...th, color: 'var(--danger)' }}>Motivo</th>
+                      <th style={{ ...th, textAlign: 'center', color: 'var(--danger)' }}>Precio</th>
                       <th style={{ ...th, textAlign: 'center', color: 'var(--danger)' }}>Acción</th>
                     </tr>
                   </thead>
@@ -442,6 +472,24 @@ export default function ImportStock() {
                           )}
                         </td>
                         <td style={{ ...td, color: 'var(--on-surface-variant)' }}>{err.message}</td>
+                        <td style={{ ...td, textAlign: 'center' }}>
+                          {err.malformed || !err.barcode ? (
+                            <span style={{ color: 'var(--on-surface-variant)' }}>—</span>
+                          ) : (
+                            <input
+                              type="number"
+                              min={0}
+                              step="any"
+                              placeholder="Precio $"
+                              value={priceInputs[err.barcode] ?? (err.price && err.price > 0 ? String(err.price).replace(/\.0$/, '') : '')}
+                              onChange={e => setPriceInputs(prev => ({ ...prev, [err.barcode!]: e.target.value }))}
+                              style={{
+                                ...inputStyle, width: 100,
+                                borderColor: priceInputs[err.barcode] ? 'var(--primary)' : 'var(--outline-variant)',
+                              }}
+                            />
+                          )}
+                        </td>
                         <td style={{ ...td, textAlign: 'center' }}>
                           {err.malformed ? (
                             <button onClick={() => setErrors(prev => prev.filter((_, x) => x !== i))} style={ghostBtn}>
