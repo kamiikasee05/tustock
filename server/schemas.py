@@ -46,6 +46,7 @@ class ProductOut(BaseModel):
     is_active: bool
     barcode: Optional[str] = None
     expiry_date: Optional[date] = None
+    stock: float = 0.0
 
 class CategoryCreate(BaseModel):
     """Datos para crear una nueva categoría."""

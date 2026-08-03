@@ -7,12 +7,13 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from database import get_db
 from models.product import Product, Category
+from models.stock import CurrentStock
 from schemas import ProductCreate, ProductUpdate, ProductOut, CategoryCreate, ProductListResponse
 from services.stock_service import get_current_stock, get_low_stock
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
-def to_product_out(p: Product) -> dict:
+def to_product_out(p: Product, stock: float = None) -> dict:
     """Convierte un modelo Product en diccionario con nombre de categoría incluido."""
     data = ProductOut(
         id=p.id, code=p.code, name=p.name, description=p.description or "",
@@ -20,6 +21,7 @@ def to_product_out(p: Product) -> dict:
         selling_price=p.selling_price, min_stock=p.min_stock,
         unit=p.unit, is_active=p.is_active, barcode=p.barcode,
         expiry_date=p.expiry_date,
+        stock=stock if stock is not None else 0.0,
     ).model_dump()
     data["category_name"] = p.category.name if p.category else None
     return data
@@ -64,9 +66,18 @@ def list_products(
     total_pages = (total + page_size - 1) // page_size
     offset = (page - 1) * page_size
     products = q.order_by(Product.name).offset(offset).limit(page_size).all()
-    
+
+    stock_map = {}
+    if products:
+        cs_rows = (
+            db.query(CurrentStock)
+            .filter(CurrentStock.product_id.in_([p.id for p in products]))
+            .all()
+        )
+        stock_map = {cs.product_id: cs.quantity for cs in cs_rows}
+
     return {
-        "products": [to_product_out(p) for p in products],
+        "products": [to_product_out(p, stock=stock_map.get(p.id, 0.0)) for p in products],
         "total": total,
         "page": page,
         "page_size": page_size,
@@ -146,7 +157,7 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     p = db.query(Product).filter(Product.id == product_id).first()
     if not p:
         raise HTTPException(404, "Producto no encontrado")
-    return to_product_out(p)
+    return to_product_out(p, stock=get_current_stock(db, p.id))
 
 @router.post("")
 def create_product(data: ProductCreate, db: Session = Depends(get_db)):
@@ -173,7 +184,7 @@ def create_product(data: ProductCreate, db: Session = Depends(get_db)):
     db.refresh(p)
     if initial_stock_val > 0:
         adjust_stock(db, p.id, float(initial_stock_val), "adjustment", notes="Stock inicial")
-    return to_product_out(p)
+    return to_product_out(p, stock=get_current_stock(db, p.id))
 
 @router.put("/{product_id}")
 def update_product(product_id: int, data: ProductUpdate, db: Session = Depends(get_db)):
@@ -197,7 +208,7 @@ def update_product(product_id: int, data: ProductUpdate, db: Session = Depends(g
         current = get_current_stock(db, product_id)
         if current != initial_stock_val:
             adjust_stock(db, product_id, float(initial_stock_val), "adjustment", notes="Stock inicial (edición)")
-    return to_product_out(p)
+    return to_product_out(p, stock=get_current_stock(db, p.id))
 
 @router.delete("/{product_id}")
 def deactivate_product(product_id: int, db: Session = Depends(get_db)):

@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -49,6 +50,8 @@ class StockMainActivity : AppCompatActivity() {
     private lateinit var sessionInfo: TextView
     private lateinit var sessionCsvName: TextView
     private lateinit var auditToggle: Switch
+    private lateinit var auditLabel: TextView
+    private lateinit var auditStatus: TextView
     private lateinit var auditCompareText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,6 +68,8 @@ class StockMainActivity : AppCompatActivity() {
         sessionCsvName = findViewById(R.id.sessionCsvName)
 
         auditToggle = findViewById(R.id.auditToggle)
+        auditLabel = findViewById(R.id.auditLabel)
+        auditStatus = findViewById(R.id.auditStatus)
         auditCompareText = findViewById(R.id.auditCompareText)
         auditMode = prefs.getBoolean("audit_mode", false)
         auditToggle.isChecked = auditMode
@@ -79,6 +84,7 @@ class StockMainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.newTakeButton).setOnClickListener { newTake() }
 
         restoreSession()
+        updateAuditUi()
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             != PackageManager.PERMISSION_GRANTED) {
@@ -100,6 +106,7 @@ class StockMainActivity : AppCompatActivity() {
             csvActive = true
             persistSession()
             updateSessionUi()
+            updateAuditStatus()
             startTakeButton.text = "Iniciar toma"
             startTakeButton.isEnabled = true
             startTakeButton.visibility = View.GONE
@@ -211,13 +218,30 @@ class StockMainActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateAuditUi() {
+        val thumb = if (auditMode) 0xFF4d8eff.toInt() else 0xFF94a3b8.toInt()
+        val track = if (auditMode) 0xFF334155.toInt() else 0xFF1e293b.toInt()
+        val label = if (auditMode) 0xFF4d8eff.toInt() else 0xFF94a3b8.toInt()
+        auditToggle.thumbTintList = ColorStateList.valueOf(thumb)
+        auditToggle.trackTintList = ColorStateList.valueOf(track)
+        auditLabel.setTextColor(label)
+        updateAuditStatus()
+    }
+
+    private fun updateAuditStatus() {
+        auditStatus.visibility = if (auditMode && !csvActive) View.VISIBLE else View.GONE
+    }
+
     private fun onAuditToggle(checked: Boolean) {
         auditMode = checked
         prefs.edit().putBoolean("audit_mode", checked).apply()
+        updateAuditUi()
         if (!checked) {
             auditCompareText.visibility = View.GONE
+            Toast.makeText(this, "Modo normal — toma de stock", Toast.LENGTH_SHORT).show()
             return
         }
+        Toast.makeText(this, "Modo auditoría — comparativa activa", Toast.LENGTH_SHORT).show()
         if (catalogList.isEmpty()) {
             scope.launch {
                 val (catalog, status) = downloadCatalogForTake()
