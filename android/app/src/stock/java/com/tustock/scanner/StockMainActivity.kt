@@ -38,15 +38,18 @@ class StockMainActivity : AppCompatActivity() {
     private var csvActive = false
     private var activeCsvFile: File? = null
     private var csvLines = 0
-    private val csvItems = HashSet<String>()
+    private val csvAccum = HashMap<String, Double>()
     private val catalogList = mutableListOf<ProductResponse>()
     private val catalogByKey = HashMap<String, ProductResponse>()
+    private var auditMode = false
 
     // UI refs
     private lateinit var startTakeButton: Button
     private lateinit var sessionBar: View
     private lateinit var sessionInfo: TextView
     private lateinit var sessionCsvName: TextView
+    private lateinit var auditToggle: Switch
+    private lateinit var auditCompareText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +63,12 @@ class StockMainActivity : AppCompatActivity() {
         sessionBar = findViewById(R.id.sessionBar)
         sessionInfo = findViewById(R.id.sessionInfo)
         sessionCsvName = findViewById(R.id.sessionCsvName)
+
+        auditToggle = findViewById(R.id.auditToggle)
+        auditCompareText = findViewById(R.id.auditCompareText)
+        auditMode = prefs.getBoolean("audit_mode", false)
+        auditToggle.isChecked = auditMode
+        auditToggle.setOnCheckedChangeListener { _, checked -> onAuditToggle(checked) }
 
         findViewById<Button>(R.id.configButton).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
@@ -87,7 +96,7 @@ class StockMainActivity : AppCompatActivity() {
             val file = CsvToma.createCsvFile(this@StockMainActivity)
             activeCsvFile = file
             csvLines = 0
-            csvItems.clear()
+            csvAccum.clear()
             csvActive = true
             persistSession()
             updateSessionUi()
@@ -171,17 +180,23 @@ class StockMainActivity : AppCompatActivity() {
         val info = CsvToma.readCsv(file)
         activeCsvFile = file
         csvLines = info.lines
-        csvItems.clear()
-        csvItems.addAll(info.distinctBarcodes)
+        csvAccum.clear()
+        csvAccum.putAll(info.quantities)
         csvActive = true
         startTakeButton.visibility = View.GONE
         sessionBar.visibility = View.VISIBLE
         updateSessionUi()
         Toast.makeText(this, "Toma en curso retomada — ${file.name}", Toast.LENGTH_LONG).show()
+        if (auditMode && catalogList.isEmpty()) {
+            scope.launch {
+                val (catalog, _) = downloadCatalogForTake()
+                Toast.makeText(this@StockMainActivity, "Catálogo listo para auditoría (${catalog.size} productos)", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun updateSessionUi() {
-        sessionInfo.text = "Líneas: $csvLines · Productos: ${csvItems.size}"
+        sessionInfo.text = "Líneas: $csvLines · Productos: ${csvAccum.size}"
         sessionCsvName.text = activeCsvFile?.name ?: ""
     }
 
@@ -190,10 +205,93 @@ class StockMainActivity : AppCompatActivity() {
         scope.launch {
             withContext(Dispatchers.IO) { CsvToma.appendLine(file, barcode, qty, name, price) }
             csvLines++
-            csvItems.add(barcode)
+            csvAccum[barcode] = (csvAccum[barcode] ?: 0.0) + qty
             updateSessionUi()
             persistSession()
         }
+    }
+
+    private fun onAuditToggle(checked: Boolean) {
+        auditMode = checked
+        prefs.edit().putBoolean("audit_mode", checked).apply()
+        if (!checked) {
+            auditCompareText.visibility = View.GONE
+            return
+        }
+        if (catalogList.isEmpty()) {
+            scope.launch {
+                val (catalog, status) = downloadCatalogForTake()
+                val msg = when (status) {
+                    "cache" -> "Auditoría activa — catálogo desde cache (${catalog.size} productos)"
+                    "none" -> "Auditoría activa — sin catálogo, solo productos nuevos"
+                    else -> "Auditoría activa — catálogo descargado (${catalog.size} productos)"
+                }
+                Toast.makeText(this@StockMainActivity, msg, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun updateAuditCompare(product: ProductResponse?, code: String) {
+        if (!auditMode || product == null) {
+            auditCompareText.visibility = View.GONE
+            return
+        }
+        val system = product.stock
+        val counted = csvAccum[code] ?: 0.0
+        val diff = counted - system
+        val sign = if (diff > 0) "+" else ""
+        auditCompareText.text = "Sistema: ${fmtQty(system)} | Contado: ${fmtQty(counted)} → ${sign}${fmtQty(diff)}"
+        val color = when {
+            diff < 0 -> 0xFFEF4444.toInt()
+            diff > 0 -> 0xFF22C55E.toInt()
+            else -> 0xFF94A3B8.toInt()
+        }
+        auditCompareText.setTextColor(color)
+        auditCompareText.visibility = View.VISIBLE
+    }
+
+    private fun fmtQty(v: Double): String =
+        if (v == v.toLong().toDouble()) v.toLong().toString() else v.toString()
+
+    private fun auditSummaryText(): String {
+        if (csvAccum.isEmpty()) return "No hay productos contados todavía."
+        var withDiff = 0
+        var faltantes = 0
+        var sobrantes = 0
+        val examples = mutableListOf<String>()
+        for ((code, qty) in csvAccum) {
+            val p = catalogByKey[code] ?: catalogByKey[code.lowercase()] ?: continue
+            val diff = qty - p.stock
+            if (diff == 0.0) continue
+            withDiff++
+            if (diff < 0) faltantes++ else sobrantes++
+            if (examples.size < 5) {
+                val sign = if (diff > 0) "+" else ""
+                examples.add("${p.name}: ${sign}${fmtQty(diff)}")
+            }
+        }
+        val sb = StringBuilder()
+        sb.append("Productos contados: ${csvAccum.size}\n")
+        sb.append("Con diferencia: $withDiff\n")
+        sb.append("Faltantes: $faltantes\n")
+        sb.append("Sobrantes: $sobrantes")
+        if (examples.isNotEmpty()) {
+            sb.append("\n\nEjemplos:\n").append(examples.joinToString("\n"))
+        }
+        return sb.toString()
+    }
+
+    private fun maybeShowAuditSummary(confirmLabel: String, onConfirm: () -> Unit) {
+        if (!auditMode || csvAccum.isEmpty()) {
+            onConfirm()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Resumen de auditoría")
+            .setMessage(auditSummaryText())
+            .setPositiveButton(confirmLabel) { _, _ -> onConfirm() }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
     private fun shareCsv() {
@@ -202,6 +300,10 @@ class StockMainActivity : AppCompatActivity() {
             Toast.makeText(this, "El archivo CSV no existe", Toast.LENGTH_SHORT).show()
             return
         }
+        maybeShowAuditSummary("Enviar CSV") { doShareCsv(file) }
+    }
+
+    private fun doShareCsv(file: File) {
         val uri: Uri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", file)
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/csv"
@@ -216,14 +318,17 @@ class StockMainActivity : AppCompatActivity() {
         val msg = if (csvLines > 0)
             "La toma actual tiene $csvLines líneas. ¿Empezar una nueva?"
             else "¿Empezar una nueva toma?"
+        val summary = if (auditMode && csvAccum.isNotEmpty())
+            "Resumen de auditoría:\n${auditSummaryText()}\n\n"
+            else ""
         AlertDialog.Builder(this)
             .setTitle("Nueva toma")
-            .setMessage("$msg\nSi querés guardar la actual, enviá el CSV antes de empezar.")
+            .setMessage("$summary$msg\nSi querés guardar la actual, enviá el CSV antes de empezar.")
             .setPositiveButton("Nueva toma") { _, _ ->
                 val file = CsvToma.createCsvFile(this)
                 activeCsvFile = file
                 csvLines = 0
-                csvItems.clear()
+                csvAccum.clear()
                 persistSession()
                 updateSessionUi()
                 Toast.makeText(this, "Nueva toma iniciada", Toast.LENGTH_SHORT).show()
@@ -243,6 +348,7 @@ class StockMainActivity : AppCompatActivity() {
     private fun hideAllCards() {
         findViewById<View>(R.id.resultCard).visibility = View.GONE
         findViewById<View>(R.id.notFoundCard).visibility = View.GONE
+        auditCompareText.visibility = View.GONE
     }
 
     override fun onRequestPermissionsResult(
@@ -474,6 +580,7 @@ class StockMainActivity : AppCompatActivity() {
                                                 newPriceInput.visibility = View.VISIBLE
                                                 newNameInput.requestFocus()
                                             }
+                                            updateAuditCompare(product, code)
                                             productStock.visibility = View.GONE
                                             quantityInput.hint = "Cuantos hay?"
                                             quantityInput.setText("")

@@ -48,11 +48,11 @@ object CsvToma {
         return field
     }
 
-    data class CsvInfo(val lines: Int, val distinctBarcodes: List<String>)
+    data class CsvInfo(val lines: Int, val quantities: Map<String, Double>)
 
     fun readCsv(file: File): CsvInfo {
         var lines = 0
-        val seen = HashSet<String>()
+        val quantities = LinkedHashMap<String, Double>()
         var first = true
         file.readLines(Charsets.UTF_8).forEach { raw ->
             val line = raw.removePrefix("\uFEFF").trimEnd('\r')
@@ -62,9 +62,21 @@ object CsvToma {
                 if (line.startsWith("barcode;")) return@forEach
             }
             lines++
-            val bc = line.substringBefore(';').trim()
-            if (bc.isNotEmpty()) seen.add(bc)
+            val parts = line.split(';')
+            if (parts.size < 2) return@forEach
+            val bc = unquote(parts[0]).trim()
+            if (bc.isEmpty()) return@forEach
+            val qty = unquote(parts[1]).toDoubleOrNull() ?: 0.0
+            quantities[bc] = (quantities[bc] ?: 0.0) + qty
         }
-        return CsvInfo(lines, seen.toList())
+        return CsvInfo(lines, quantities)
+    }
+
+    private fun unquote(field: String): String {
+        var f = field.trim()
+        if (f.length >= 2 && f.startsWith("\"") && f.endsWith("\"")) {
+            f = f.substring(1, f.length - 1).replace("\"\"", "\"")
+        }
+        return f
     }
 }

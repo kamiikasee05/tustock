@@ -28,6 +28,23 @@
             android:textColor="#ffffff"
             android:paddingHorizontal="16dp" />
 
+        <Switch
+            android:id="@+id/auditToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:thumbTint="#4d8eff"
+            android:trackTint="#334155" />
+
+        <TextView
+            android:id="@+id/auditLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Auditoría"
+            android:textColor="#94a3b8"
+            android:textSize="13sp"
+            android:layout_marginStart="6dp" />
+
         <View
             android:layout_width="0dp"
             android:layout_height="1dp"
@@ -167,6 +184,16 @@
                 android:textSize="16sp"
                 android:gravity="end" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/auditCompareText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#94a3b8"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:layout_marginTop="10dp"
+            android:visibility="gone" />
 
         <EditText
             android:id="@+id/newProductNameInput"
