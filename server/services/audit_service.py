@@ -1,6 +1,7 @@
 """Servicios para crear, ejecutar y completar auditorías de stock."""
 
 from datetime import datetime, timezone, date
+from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 from models.audit import StockAudit, AuditItem
 from models.product import Product
@@ -150,11 +151,37 @@ def get_audit_detail(db: Session, audit_id: int):
     }
 
 def list_audits(db: Session):
-    """Lista todas las auditorías ordenadas por fecha de creación descendente."""
-    audits = db.query(StockAudit).order_by(StockAudit.created_at.desc()).all()
+    """Lista todas las auditorías ordenadas por fecha de creación descendente, con resumen de sobrantes/faltantes.
+
+    items_checked = items con conteo cargado (counted_qty no nulo).
+    sobrantes/faltantes = items con difference > 0 / < 0 en un solo query agregado (sin N+1).
+    """
+    rows = (
+        db.query(
+            StockAudit,
+            func.count(AuditItem.id).label("total_items"),
+            func.count(AuditItem.counted_qty).label("items_checked"),
+            func.sum(case((AuditItem.difference > 0, 1), else_=0)).label("sobrantes"),
+            func.sum(case((AuditItem.difference < 0, 1), else_=0)).label("faltantes"),
+        )
+        .outerjoin(AuditItem, AuditItem.audit_id == StockAudit.id)
+        .group_by(StockAudit.id)
+        .order_by(StockAudit.created_at.desc())
+        .all()
+    )
     return [
-        {"id": a.id, "audit_date": str(a.audit_date), "status": a.status, "created_by": a.created_by, "notes": a.notes}
-        for a in audits
+        {
+            "id": audit.id,
+            "audit_date": str(audit.audit_date),
+            "status": audit.status,
+            "created_by": audit.created_by,
+            "notes": audit.notes,
+            "total_items": int(total_items or 0),
+            "items_checked": int(items_checked or 0),
+            "sobrantes": int(sobrantes or 0),
+            "faltantes": int(faltantes or 0),
+        }
+        for audit, total_items, items_checked, sobrantes, faltantes in rows
     ]
 
 def scan_to_audit(db: Session, audit_id: int, product_code: str):

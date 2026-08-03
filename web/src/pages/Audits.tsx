@@ -34,6 +34,13 @@ export default function Audits() {
     } catch (e: any) { toast('Error: ' + e.message, 'error') }
   }
 
+  const viewAudit = async (id: number) => {
+    try {
+      const detail = await api.get<any>(`/audits/${id}`)
+      setCurrentAudit(detail)
+    } catch (e: any) { toast('Error: ' + e.message, 'error') }
+  }
+
   const scanToAudit = async (code: string) => {
     if (!currentAudit) return
     try {
@@ -98,34 +105,57 @@ export default function Audits() {
           border: '1px solid rgba(66,71,84,0.4)',
           marginBottom: 'var(--space-lg)',
         }}>
-          <label style={{
-            display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em',
-            textTransform: 'uppercase', color: 'var(--on-surface-variant)',
-            marginBottom: 'var(--space-sm)',
-          }}>
-            Escaneá el código para contar
-          </label>
-          <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-            <input
-              placeholder="Código de barras o SKU..."
-              value={scanCode}
-              onChange={e => setScanCode(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') scanToAudit(scanCode) }}
-              style={{ flex: 1, padding: '12px 16px', fontSize: 16 }}
-              autoFocus
-            />
-            <button onClick={() => scanToAudit(scanCode)} style={{
-              display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
-              background: 'var(--primary-container)', color: 'var(--on-primary-container)',
-              paddingLeft: 'var(--space-lg)', paddingRight: 'var(--space-lg)',
-              paddingTop: 'var(--space-sm)', paddingBottom: 'var(--space-sm)',
-              borderRadius: 'var(--radius)', fontWeight: 700,
-              boxShadow: '0 4px 12px rgba(77,142,255,0.2)',
-            }}>
-              <MaterialIcon name="qr_code_scanner" size={20} />
-              Contar +1
-            </button>
-          </div>
+          {currentAudit.status === 'completed' ? (
+            <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+              <span style={{
+                display: 'flex', alignItems: 'center', gap: 'var(--space-xs)',
+                padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: 12, fontWeight: 700,
+                background: 'rgba(80,216,144,0.12)', color: 'var(--success)',
+              }}>
+                <MaterialIcon name="trending_up" size={16} />
+                {currentAudit.sobrantes ?? (currentAudit.items || []).filter((i: any) => i.difference > 0).length} sobrantes
+              </span>
+              <span style={{
+                display: 'flex', alignItems: 'center', gap: 'var(--space-xs)',
+                padding: '6px 12px', borderRadius: 'var(--radius-full)', fontSize: 12, fontWeight: 700,
+                background: 'rgba(244,81,108,0.12)', color: 'var(--error)',
+              }}>
+                <MaterialIcon name="trending_down" size={16} />
+                {currentAudit.faltantes ?? (currentAudit.items || []).filter((i: any) => i.difference < 0).length} faltantes
+              </span>
+            </div>
+          ) : (
+            <>
+              <label style={{
+                display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em',
+                textTransform: 'uppercase', color: 'var(--on-surface-variant)',
+                marginBottom: 'var(--space-sm)',
+              }}>
+                Escaneá el código para contar
+              </label>
+              <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                <input
+                  placeholder="Código de barras o SKU..."
+                  value={scanCode}
+                  onChange={e => setScanCode(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') scanToAudit(scanCode) }}
+                  style={{ flex: 1, padding: '12px 16px', fontSize: 16 }}
+                  autoFocus
+                />
+                <button onClick={() => scanToAudit(scanCode)} style={{
+                  display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
+                  background: 'var(--primary-container)', color: 'var(--on-primary-container)',
+                  paddingLeft: 'var(--space-lg)', paddingRight: 'var(--space-lg)',
+                  paddingTop: 'var(--space-sm)', paddingBottom: 'var(--space-sm)',
+                  borderRadius: 'var(--radius)', fontWeight: 700,
+                  boxShadow: '0 4px 12px rgba(77,142,255,0.2)',
+                }}>
+                  <MaterialIcon name="qr_code_scanner" size={20} />
+                  Contar +1
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         <div style={{
@@ -143,16 +173,18 @@ export default function Audits() {
               <MaterialIcon name="difference" size={20} />
               Diferencias: {currentAudit.items?.length || 0}
             </span>
-            <button onClick={completeAudit} style={{
-              display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
-              background: 'var(--success)', color: 'var(--bg)',
-              paddingLeft: 'var(--space-lg)', paddingRight: 'var(--space-lg)',
-              paddingTop: 'var(--space-sm)', paddingBottom: 'var(--space-sm)',
-              borderRadius: 'var(--radius)', fontWeight: 700, fontSize: 13,
-            }}>
-              <MaterialIcon name="check_circle" size={18} />
-              Completar y aplicar
-            </button>
+            {currentAudit.status !== 'completed' && (
+              <button onClick={completeAudit} style={{
+                display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
+                background: 'var(--success)', color: 'var(--bg)',
+                paddingLeft: 'var(--space-lg)', paddingRight: 'var(--space-lg)',
+                paddingTop: 'var(--space-sm)', paddingBottom: 'var(--space-sm)',
+                borderRadius: 'var(--radius)', fontWeight: 700, fontSize: 13,
+              }}>
+                <MaterialIcon name="check_circle" size={18} />
+                Completar y aplicar
+              </button>
+            )}
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -245,6 +277,8 @@ export default function Audits() {
               <th style={th}>#</th>
               <th style={th}>Fecha</th>
               <th style={th}>Estado</th>
+              <th style={{ ...th, textAlign: 'center' }}>Sobrantes</th>
+              <th style={{ ...th, textAlign: 'center' }}>Faltantes</th>
               <th style={th}>Creado por</th>
               <th style={th}>Notas</th>
               <th style={{ ...th, textAlign: 'center' }}>Acción</th>
@@ -266,6 +300,30 @@ export default function Audits() {
                     {getStatusLabel(a.status)}
                   </span>
                 </td>
+                <td style={{ ...td, textAlign: 'center' }}>
+                  {a.status === 'completed' && a.sobrantes > 0 ? (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      minWidth: 28, padding: '2px 10px', borderRadius: 'var(--radius-full)',
+                      fontSize: 12, fontWeight: 700,
+                      background: 'rgba(80,216,144,0.12)', color: 'var(--success)',
+                    }}>+{a.sobrantes}</span>
+                  ) : (
+                    <span style={{ color: 'var(--on-surface-variant)' }}>—</span>
+                  )}
+                </td>
+                <td style={{ ...td, textAlign: 'center' }}>
+                  {a.status === 'completed' && a.faltantes > 0 ? (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      minWidth: 28, padding: '2px 10px', borderRadius: 'var(--radius-full)',
+                      fontSize: 12, fontWeight: 700,
+                      background: 'rgba(244,81,108,0.12)', color: 'var(--error)',
+                    }}>{a.faltantes}</span>
+                  ) : (
+                    <span style={{ color: 'var(--on-surface-variant)' }}>—</span>
+                  )}
+                </td>
                 <td style={td}>{a.created_by || '-'}</td>
                 <td style={{ ...td, color: 'var(--on-surface-variant)' }}>{a.notes || '-'}</td>
                 <td style={{ ...td, textAlign: 'center' }}>
@@ -283,13 +341,23 @@ export default function Audits() {
                     </button>
                   )}
                   {a.status === 'completed' && (
-                    <span style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>Completada</span>
+                    <button onClick={() => viewAudit(a.id)} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 'var(--space-xs)',
+                      padding: 'var(--space-xs) var(--space-md)',
+                      borderRadius: 'var(--radius)',
+                      background: 'var(--surface-container-high)',
+                      color: 'var(--primary)',
+                      fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                    }}>
+                      <MaterialIcon name="visibility" size={16} />
+                      Ver detalle
+                    </button>
                   )}
                 </td>
               </tr>
             ))}
             {audits.length === 0 && (
-              <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: 'var(--on-surface-variant)' }}>
+              <tr><td colSpan={8} style={{ padding: 40, textAlign: 'center', color: 'var(--on-surface-variant)' }}>
                 <MaterialIcon name="fact_check" size={48} style={{ opacity: 0.3, marginBottom: 8, display: 'block', margin: '0 auto 12px' }} />
                 No hay auditorías registradas
               </td></tr>

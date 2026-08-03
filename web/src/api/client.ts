@@ -93,6 +93,10 @@ export interface Audit {
   status: string
   created_by: string
   notes: string
+  total_items: number
+  items_checked: number
+  sobrantes: number
+  faltantes: number
 }
 
 export interface CustomerBrief {
