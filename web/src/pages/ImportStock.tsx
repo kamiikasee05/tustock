@@ -24,6 +24,10 @@ interface ImportError {
   malformed?: boolean
 }
 
+interface NameInputState {
+  [barcode: string]: string
+}
+
 interface ImportPreview {
   audit_id: number | null
   status: string
@@ -50,6 +54,7 @@ export default function ImportStock() {
   const [errors, setErrors] = useState<ImportError[]>([])
   const [result, setResult] = useState<any>(null)
   const [busy, setBusy] = useState(false)
+  const [nameInputs, setNameInputs] = useState<NameInputState>({})
 
   const doImport = async () => {
     if (!file) return
@@ -86,8 +91,11 @@ export default function ImportStock() {
 
   const registerProduct = async (err: ImportError) => {
     if (!preview?.audit_id || !err.barcode) return
-    const name = (prompt('Nombre del producto nuevo:', err.name || err.barcode || '') || '').trim()
-    if (!name) return
+    const name = (nameInputs[err.barcode] || err.name || '').trim()
+    if (!name) {
+      toast('Escribí un nombre para el producto', 'error')
+      return
+    }
     setBusy(true)
     try {
       const res = await api.post<any>('/audits/import-register', {
@@ -108,14 +116,24 @@ export default function ImportStock() {
 
   const registerAll = async () => {
     if (!preview?.audit_id) return
-    const pendientes = errors.filter(e => !e.malformed && e.barcode && e.name)
+    const pendientes = errors.filter(e => !e.malformed && e.barcode)
+    const conNombre = pendientes.filter(e => e.name || nameInputs[e.barcode!])
+    const sinNombre = pendientes.filter(e => !e.name && !nameInputs[e.barcode!])
     if (pendientes.length === 0) return
+    if (sinNombre.length > 0) {
+      toast(`Falta nombre para ${sinNombre.length} producto(s) — escribí el nombre en la fila correspondiente`, 'error')
+      return
+    }
     if (!confirm(`¿Registrar ${pendientes.length} producto(s) nuevo(s)?\nSe crean con el nombre y el stock contado (precio $0 — lo cargás después en Productos).`)) return
     setBusy(true)
     try {
       const res = await api.post<any>('/audits/import-register-batch', {
         audit_id: preview.audit_id,
-        products: pendientes.map(e => ({ barcode: e.barcode, name: e.name, quantity: e.quantity ?? 0 })),
+        products: pendientes.map(e => ({
+          barcode: e.barcode,
+          name: nameInputs[e.barcode!] || e.name || '',
+          quantity: e.quantity ?? 0,
+        })),
       })
       const createdBarcodes = new Set((res.created || []).map((c: any) => c.scanned))
       setItems(prev => [...prev, ...(res.created || []).map((c: any) => ({ ...c, original_qty: c.counted_qty }))])
@@ -392,7 +410,7 @@ export default function ImportStock() {
                   <MaterialIcon name="error" size={20} />
                   {errors.length} línea{errors.length !== 1 ? 's' : ''} sin resolver
                 </span>
-                {errors.some(e => !e.malformed && e.barcode && e.name) && (
+                {errors.some(e => !e.malformed && e.barcode && (e.name || nameInputs[e.barcode])) && (
                   <button onClick={registerAll} disabled={busy} style={{
                     ...inputBtn,
                     background: 'var(--danger)', color: 'var(--bg)',
@@ -431,15 +449,29 @@ export default function ImportStock() {
                               Ignorar
                             </button>
                           ) : (
-                            <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
-                              <button onClick={() => registerProduct(err)} disabled={busy} style={inputBtn}>
-                                <MaterialIcon name="add_box" size={16} />
-                                Registrar producto
-                              </button>
-                              <button onClick={() => skipError(err.barcode)} disabled={busy} style={ghostBtn}>
-                                <MaterialIcon name="skip_next" size={16} />
-                                Saltar
-                              </button>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', alignItems: 'center' }}>
+                              {(!err.name && err.barcode) && (
+                                <input
+                                  type="text"
+                                  placeholder="Nombre del producto"
+                                  value={nameInputs[err.barcode] || ''}
+                                  onChange={e => setNameInputs(prev => ({ ...prev, [err.barcode!]: e.target.value }))}
+                                  style={{
+                                    ...inputStyle, width: 160,
+                                    borderColor: nameInputs[err.barcode] ? 'var(--primary)' : 'var(--outline-variant)',
+                                  }}
+                                />
+                              )}
+                              <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
+                                <button onClick={() => registerProduct(err)} disabled={busy} style={inputBtn}>
+                                  <MaterialIcon name="add_box" size={16} />
+                                  Registrar producto
+                                </button>
+                                <button onClick={() => skipError(err.barcode)} disabled={busy} style={ghostBtn}>
+                                  <MaterialIcon name="skip_next" size={16} />
+                                  Saltar
+                                </button>
+                              </div>
                             </div>
                           )}
                         </td>
