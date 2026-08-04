@@ -17,9 +17,10 @@ object CsvToma {
     fun catalogFile(context: Context): File =
         File(tomasDir(context), "catalogo.json")
 
-    fun createCsvFile(context: Context): File {
+    fun createCsvFile(context: Context, auditMode: Boolean = false): File {
         val dir = tomasDir(context)
-        val name = "toma-stock-${fileFormat.format(Date())}.csv"
+        val prefix = if (auditMode) "auditoria" else "toma-stock"
+        val name = "$prefix-${fileFormat.format(Date())}.csv"
         val file = File(dir, name)
         FileOutputStream(file, true).use { out ->
             out.write("\uFEFF".toByteArray(Charsets.UTF_8))

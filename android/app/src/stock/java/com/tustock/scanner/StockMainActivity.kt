@@ -53,6 +53,7 @@ class StockMainActivity : AppCompatActivity() {
     private lateinit var auditLabel: TextView
     private lateinit var auditStatus: TextView
     private lateinit var auditCompareText: TextView
+    private lateinit var modeBanner: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,6 +72,7 @@ class StockMainActivity : AppCompatActivity() {
         auditLabel = findViewById(R.id.auditLabel)
         auditStatus = findViewById(R.id.auditStatus)
         auditCompareText = findViewById(R.id.auditCompareText)
+        modeBanner = findViewById(R.id.modeBanner)
         auditMode = prefs.getBoolean("audit_mode", false)
         auditToggle.isChecked = auditMode
         auditToggle.setOnCheckedChangeListener { _, checked -> onAuditToggle(checked) }
@@ -99,14 +101,14 @@ class StockMainActivity : AppCompatActivity() {
             startTakeButton.isEnabled = false
             startTakeButton.text = "Descargando..."
             val (catalog, status) = downloadCatalogForTake()
-            val file = CsvToma.createCsvFile(this@StockMainActivity)
+            val file = CsvToma.createCsvFile(this@StockMainActivity, auditMode)
             activeCsvFile = file
             csvLines = 0
             csvAccum.clear()
             csvActive = true
             persistSession()
             updateSessionUi()
-            updateAuditStatus()
+            updateAuditUi()
             startTakeButton.text = "Iniciar toma"
             startTakeButton.isEnabled = true
             startTakeButton.visibility = View.GONE
@@ -127,6 +129,7 @@ class StockMainActivity : AppCompatActivity() {
             catalogList.addAll(online.getOrThrow())
             buildCatalogIndex()
             saveCatalogCache()
+            updateModeBanner()
             return Pair(catalogList.toList(), "online")
         }
         val cached = loadCatalogCache()
@@ -134,8 +137,10 @@ class StockMainActivity : AppCompatActivity() {
             catalogList.clear()
             catalogList.addAll(cached)
             buildCatalogIndex()
+            updateModeBanner()
             return Pair(catalogList.toList(), "cache")
         }
+        updateModeBanner()
         return Pair(emptyList(), "none")
     }
 
@@ -193,17 +198,22 @@ class StockMainActivity : AppCompatActivity() {
         startTakeButton.visibility = View.GONE
         sessionBar.visibility = View.VISIBLE
         updateSessionUi()
+        updateAuditUi()
         Toast.makeText(this, "Toma en curso retomada — ${file.name}", Toast.LENGTH_LONG).show()
         if (auditMode && catalogList.isEmpty()) {
             scope.launch {
                 val (catalog, _) = downloadCatalogForTake()
+                updateSessionUi()
                 Toast.makeText(this@StockMainActivity, "Catálogo listo para auditoría (${catalog.size} productos)", Toast.LENGTH_LONG).show()
             }
         }
     }
 
     private fun updateSessionUi() {
-        sessionInfo.text = "Líneas: $csvLines · Productos: ${csvAccum.size}"
+        val tag = if (auditMode) "AUDITORÍA" else "TOMA DE STOCK"
+        val t = theoreticalCount()
+        val theo = if (auditMode && t > 0) " · Teórico: $t" else ""
+        sessionInfo.text = "$tag · Líneas: $csvLines · Productos: ${csvAccum.size}$theo"
         sessionCsvName.text = activeCsvFile?.name ?: ""
     }
 
@@ -225,14 +235,37 @@ class StockMainActivity : AppCompatActivity() {
         auditToggle.thumbTintList = ColorStateList.valueOf(thumb)
         auditToggle.trackTintList = ColorStateList.valueOf(track)
         auditLabel.setTextColor(label)
+        startTakeButton.text = if (auditMode) "Iniciar auditoría" else "Iniciar toma"
         updateAuditStatus()
+        updateModeBanner()
     }
 
     private fun updateAuditStatus() {
         auditStatus.visibility = if (auditMode && !csvActive) View.VISIBLE else View.GONE
     }
 
+    private fun theoreticalCount(): Int = catalogList.count { it.stock > 0 }
+
+    private fun updateModeBanner() {
+        val t = theoreticalCount()
+        modeBanner.text = if (auditMode) {
+            if (t > 0) "AUDITORÍA — Teórico: $t artículos por contar"
+            else "AUDITORÍA — sin catálogo con stock (descargá el catálogo)"
+        } else {
+            "TOMA DE STOCK — para carga inicial o agregar stock"
+        }
+        modeBanner.setTextColor(if (auditMode) 0xFF4d8eff.toInt() else 0xFF22c55e.toInt())
+        modeBanner.setBackgroundColor(if (auditMode) 0xCC0f172a.toInt() else 0xCC052e16.toInt())
+    }
+
     private fun onAuditToggle(checked: Boolean) {
+        if (csvActive) {
+            auditToggle.setOnCheckedChangeListener(null)
+            auditToggle.isChecked = !checked
+            auditToggle.setOnCheckedChangeListener { _, c -> onAuditToggle(c) }
+            Toast.makeText(this, "Finalizá o enviá la toma actual antes de cambiar de modo", Toast.LENGTH_LONG).show()
+            return
+        }
         auditMode = checked
         prefs.edit().putBoolean("audit_mode", checked).apply()
         updateAuditUi()
@@ -279,28 +312,42 @@ class StockMainActivity : AppCompatActivity() {
 
     private fun auditSummaryText(): String {
         if (csvAccum.isEmpty()) return "No hay productos contados todavía."
+        val theoretical = theoreticalCount()
+        val scanned = csvAccum.size
         var withDiff = 0
         var faltantes = 0
         var sobrantes = 0
+        var faltantesUnits = 0.0
+        var sobrantesUnits = 0.0
         val examples = mutableListOf<String>()
         for ((code, qty) in csvAccum) {
             val p = catalogByKey[code] ?: catalogByKey[code.lowercase()] ?: continue
             val diff = qty - p.stock
             if (diff == 0.0) continue
             withDiff++
-            if (diff < 0) faltantes++ else sobrantes++
+            if (diff < 0) {
+                faltantes++
+                faltantesUnits += -diff
+            } else {
+                sobrantes++
+                sobrantesUnits += diff
+            }
             if (examples.size < 5) {
                 val sign = if (diff > 0) "+" else ""
                 examples.add("${p.name}: ${sign}${fmtQty(diff)}")
             }
         }
         val sb = StringBuilder()
-        sb.append("Productos contados: ${csvAccum.size}\n")
+        sb.append("Artículos contados: $scanned\n")
+        if (theoretical > 0) sb.append("Teórico (con stock): $theoretical\n")
         sb.append("Con diferencia: $withDiff\n")
-        sb.append("Faltantes: $faltantes\n")
-        sb.append("Sobrantes: $sobrantes")
+        sb.append("Faltantes: $faltantes (${fmtQty(faltantesUnits)} unid.)\n")
+        sb.append("Sobrantes: $sobrantes (${fmtQty(sobrantesUnits)} unid.)")
         if (examples.isNotEmpty()) {
             sb.append("\n\nEjemplos:\n").append(examples.joinToString("\n"))
+        }
+        if (theoretical > 0 && scanned < theoretical) {
+            sb.append("\n\n⚠️ IMPORTANTE: escaneaste $scanned de $theoretical artículos con stock. Hay productos que NO contaste — revisá antes de enviar.")
         }
         return sb.toString()
     }
@@ -311,7 +358,7 @@ class StockMainActivity : AppCompatActivity() {
             return
         }
         AlertDialog.Builder(this)
-            .setTitle("Resumen de auditoría")
+            .setTitle("Vista previa de auditoría")
             .setMessage(auditSummaryText())
             .setPositiveButton(confirmLabel) { _, _ -> onConfirm() }
             .setNegativeButton("Cancelar", null)
@@ -329,13 +376,14 @@ class StockMainActivity : AppCompatActivity() {
 
     private fun doShareCsv(file: File) {
         val uri: Uri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", file)
+        val subject = if (auditMode) "Auditoría de stock ${file.name}" else "Toma de stock ${file.name}"
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/csv"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "Toma de stock ${file.name}")
+            putExtra(Intent.EXTRA_SUBJECT, subject)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        startActivity(Intent.createChooser(intent, "Enviar CSV de toma de stock"))
+        startActivity(Intent.createChooser(intent, if (auditMode) "Enviar CSV de auditoría" else "Enviar CSV de toma de stock"))
     }
 
     private fun newTake() {
@@ -349,7 +397,7 @@ class StockMainActivity : AppCompatActivity() {
             .setTitle("Nueva toma")
             .setMessage("$summary$msg\nSi querés guardar la actual, enviá el CSV antes de empezar.")
             .setPositiveButton("Nueva toma") { _, _ ->
-                val file = CsvToma.createCsvFile(this)
+                val file = CsvToma.createCsvFile(this, auditMode)
                 activeCsvFile = file
                 csvLines = 0
                 csvAccum.clear()
