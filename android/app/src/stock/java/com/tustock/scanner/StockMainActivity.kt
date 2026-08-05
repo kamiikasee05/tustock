@@ -2,12 +2,16 @@ package com.tustock.scanner
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
@@ -377,13 +381,22 @@ class StockMainActivity : AppCompatActivity() {
     private fun doShareCsv(file: File) {
         val uri: Uri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", file)
         val subject = if (auditMode) "Auditoría de stock ${file.name}" else "Toma de stock ${file.name}"
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/csv"
+        val chooserLabel = if (auditMode) "Enviar CSV de auditoría" else "Enviar CSV de toma de stock"
+        fun shareIntent(type: String): Intent = Intent(Intent.ACTION_SEND).apply {
+            this.type = type
             putExtra(Intent.EXTRA_STREAM, uri)
             putExtra(Intent.EXTRA_SUBJECT, subject)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        startActivity(Intent.createChooser(intent, if (auditMode) "Enviar CSV de auditoría" else "Enviar CSV de toma de stock"))
+        try {
+            startActivity(Intent.createChooser(shareIntent("text/csv"), chooserLabel))
+        } catch (e: ActivityNotFoundException) {
+            try {
+                startActivity(Intent.createChooser(shareIntent("*/*"), chooserLabel))
+            } catch (e2: ActivityNotFoundException) {
+                Toast.makeText(this, "No hay apps para compartir archivos instaladas", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun newTake() {
@@ -549,6 +562,17 @@ class StockMainActivity : AppCompatActivity() {
                     addStockBtn.isEnabled = true
                     addStockBtn.text = "Agregar al stock"
                 }
+            }
+        }
+
+        quantityInput.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                addStockBtn.performClick()
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(quantityInput.windowToken, 0)
+                true
+            } else {
+                false
             }
         }
 
