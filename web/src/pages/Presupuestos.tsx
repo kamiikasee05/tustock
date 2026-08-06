@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
-import { api } from '../api/client'
+import { api, Product, ScanResult } from '../api/client'
 import { useToast } from '../components/Toast'
 import MaterialIcon from '../components/ui/MaterialIcon'
 
 interface BudgetItem { product_id: number; code: string; name: string; quantity: number; unit_price: number }
 interface Budget { id: number; customer_name: string | null; total: number; status: string; items: BudgetItem[]; created_at: string }
-interface Product { id: number; code: string; name: string; selling_price: number }
 
 export default function Presupuestos() {
   const { toast } = useToast()
@@ -16,40 +15,49 @@ export default function Presupuestos() {
   const [customerName, setCustomerName] = useState('')
   const [inputCode, setInputCode] = useState('')
   const [cart, setCart] = useState<BudgetItem[]>([])
-  const [products, setProducts] = useState<Product[]>([])
+  const [suggestions, setSuggestions] = useState<Product[]>([])
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
 
   const loadBudgets = useCallback(async () => {
     try { const data = await api.get<Budget[]>('/budgets?status=pending'); setBudgets(data) } finally { setLoading(false) }
   }, [])
 
   useEffect(() => { loadBudgets() }, [loadBudgets])
-  useEffect(() => {
-    const loadProducts = async () => {
-      const all: Product[] = []
-      let page = 1
-      let totalPages = 1
-      try {
-        do {
-          const data = await api.get<{ products: Product[]; total: number; total_pages: number }>(
-            `/products?page=${page}&page_size=200`
-          )
-          all.push(...data.products)
-          totalPages = data.total_pages
-          page++
-        } while (page <= totalPages)
-        setProducts(all)
-      } catch {}
-    }
-    loadProducts()
-  }, [])
 
-  const addToCart = (code: string) => {
-    const prod = products.find(p => p.code === code || p.barcode === code)
-    if (!prod) { toast('Producto no encontrado', 'error'); return }
+  useEffect(() => {
+    const q = inputCode.trim()
+    if (!q) { setSuggestions([]); setSuggestionsLoading(false); return }
+    setSuggestionsLoading(true)
+    const t = setTimeout(async () => {
+      try {
+        const data = await api.get<{ products: Product[] }>(`/products?search=${encodeURIComponent(q)}&page=1&page_size=15`)
+        setSuggestions(data.products)
+      } catch {
+        setSuggestions([])
+      } finally {
+        setSuggestionsLoading(false)
+      }
+    }, 300)
+    return () => clearTimeout(t)
+  }, [inputCode])
+
+  const addProductToCart = (prod: { id: number; code: string; name: string; selling_price: number }) => {
     const existing = cart.find(i => i.product_id === prod.id)
     if (existing) { setCart(cart.map(i => i.product_id === prod.id ? { ...i, quantity: i.quantity + 1 } : i)) }
     else { setCart([...cart, { product_id: prod.id, code: prod.code, name: prod.name, quantity: 1, unit_price: prod.selling_price }]) }
     setInputCode('')
+    setSuggestions([])
+  }
+
+  const handleCodeSubmit = async () => {
+    const code = inputCode.trim()
+    if (!code) return
+    try {
+      const prod = await api.get<ScanResult>(`/products/scan/${encodeURIComponent(code)}`)
+      addProductToCart({ id: prod.id, code: prod.code, name: prod.name, selling_price: prod.selling_price })
+    } catch (e: any) {
+      toast(e.message || 'Producto no encontrado', 'error')
+    }
   }
 
   const subtotal = cart.reduce((s, i) => s + i.quantity * i.unit_price, 0)
@@ -172,8 +180,44 @@ export default function Presupuestos() {
               <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Nombre del cliente..." style={{ width: '100%', padding: '10px 14px', boxSizing: 'border-box' }} />
             </div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-              <input placeholder="Escaneá o escribí codigo..." value={inputCode} onChange={e => setInputCode(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addToCart(inputCode) }} style={{ flex: 1, padding: '10px 14px' }} autoFocus />
-              <button onClick={() => addToCart(inputCode)} style={{
+              <div style={{ position: 'relative', flex: 1 }}>
+                <input placeholder="Escaneá o escribí codigo..." value={inputCode} onChange={e => setInputCode(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleCodeSubmit() }} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px' }} autoFocus />
+                {suggestionsLoading && (
+                  <span style={{
+                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                    fontSize: 11, color: 'var(--outline)', fontStyle: 'italic', pointerEvents: 'none',
+                  }}>Buscando...</span>
+                )}
+                {suggestions.length > 0 && (
+                  <div style={{
+                    position: 'absolute', left: 0, right: 0, top: '100%', marginTop: 4,
+                    background: 'var(--surface-container-high)',
+                    border: '1px solid rgba(66,71,84,0.4)',
+                    borderRadius: 'var(--radius)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.45)',
+                    zIndex: 30, overflow: 'hidden',
+                  }}>
+                    {suggestions.map(p => (
+                      <button key={p.id} onClick={() => addProductToCart(p)} style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+                        width: '100%', padding: '10px 12px', background: 'transparent',
+                        border: 'none', borderBottom: '1px solid rgba(66,71,84,0.2)',
+                        cursor: 'pointer', textAlign: 'left', transition: 'background var(--transition)',
+                      }}>
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
+                          <span style={{ display: 'block', fontSize: 11, color: 'var(--outline)', fontFamily: 'var(--font-data)' }}>{p.code}</span>
+                        </span>
+                        <span style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--success)', fontFamily: 'var(--font-data)' }}>${p.selling_price.toLocaleString()}</span>
+                          <span style={{ display: 'block', fontSize: 11, color: 'var(--on-surface-variant)' }}>Stock: {p.stock}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button onClick={() => handleCodeSubmit()} style={{
                 display: 'flex', alignItems: 'center', gap: 'var(--space-sm)',
                 background: 'var(--primary-container)', color: 'var(--on-primary-container)',
                 paddingLeft: 'var(--space-lg)', paddingRight: 'var(--space-lg)',

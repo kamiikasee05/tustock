@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { api, Product, StockItem } from '../api/client'
+import { api, Product } from '../api/client'
 import { useToast } from '../components/Toast'
 import MaterialIcon from '../components/ui/MaterialIcon'
 
@@ -16,7 +16,6 @@ interface ProductListResponse {
 export default function Products() {
   const { toast } = useToast()
   const [products, setProducts] = useState<Product[]>([])
-  const [stock, setStock] = useState<StockItem[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -48,10 +47,9 @@ export default function Products() {
     if (filterNearExpiry) qs += `&near_expiry=30`
     Promise.all([
       api.get<ProductListResponse>(`/products${qs}`),
-      api.get<StockItem[]>('/stock'),
       api.get<Category[]>('/products/categories'),
     ])
-      .then(([data, stk, cats]) => { setProducts(data.products); setTotal(data.total); setTotalPages(data.total_pages); setStock(stk); setCategories(cats) })
+      .then(([data, cats]) => { setProducts(data.products); setTotal(data.total); setTotalPages(data.total_pages); setCategories(cats) })
       .catch(() => toast('Error al cargar productos', 'error'))
       .finally(() => setLoading(false))
   }
@@ -68,8 +66,6 @@ export default function Products() {
   }, [searchQuery])
 
   useEffect(() => { load() }, [debouncedSearch, showInactive, filterCat, filterNearExpiry, page, pageSize])
-
-  const getStock = (id: number) => stock.find(s => s.id === id)?.quantity || 0
 
   const handleSubmit = async () => {
     setSubmitting(true)
@@ -99,7 +95,7 @@ export default function Products() {
 
   const handleEdit = (p: Product) => {
     setEditing(p)
-    setForm({ code: p.code, name: p.name, description: p.description || '', cost_price: p.cost_price, selling_price: p.selling_price, min_stock: p.min_stock, unit: p.unit, category_id: p.category_id ?? '', barcode: p.barcode || '', expiry_date: p.expiry_date ? p.expiry_date.split('T')[0] : '', initial_stock: getStock(p.id) })
+    setForm({ code: p.code, name: p.name, description: p.description || '', cost_price: p.cost_price, selling_price: p.selling_price, min_stock: p.min_stock, unit: p.unit, category_id: p.category_id ?? '', barcode: p.barcode || '', expiry_date: p.expiry_date ? p.expiry_date.split('T')[0] : '', initial_stock: p.stock })
     setShowForm(true)
   }
 
@@ -122,7 +118,7 @@ export default function Products() {
     load()
   }
 
-  const outOfStockCount = products.filter(p => { const q = getStock(p.id); return q === 0 && p.is_active }).length
+  const outOfStockCount = products.filter(p => p.stock === 0 && p.is_active).length
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -384,7 +380,7 @@ export default function Products() {
           </thead>
           <tbody>
             {products.map(p => {
-              const qty = getStock(p.id)
+              const qty = p.stock
               const isLow = qty <= p.min_stock && qty > 0
               const isOut = qty === 0
               const inactive = !p.is_active

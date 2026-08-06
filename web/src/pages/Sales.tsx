@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { api, Sale, Product, StockItem, CustomerBrief } from '../api/client'
+import { api, Sale, Product, ScanResult, CustomerBrief } from '../api/client'
 import { useToast } from '../components/Toast'
 import MaterialIcon from '../components/ui/MaterialIcon'
 
@@ -14,15 +14,15 @@ interface CartItem {
 export default function Sales() {
   const { toast } = useToast()
   const [sales, setSales] = useState<Sale[]>([])
-  const [products, setProducts] = useState<Product[]>([])
-  const [stock, setStock] = useState<StockItem[]>([])
   const [customers, setCustomers] = useState<CustomerBrief[]>([])
+  const [suggestions, setSuggestions] = useState<Product[]>([])
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
   const [cart, setCart] = useState<CartItem[]>([])
   const [inputCode, setInputCode] = useState('')
+  const [scanning, setScanning] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('efectivo')
   const [selectedCustomer, setSelectedCustomer] = useState<number | ''>('')
   const [discount, setDiscount] = useState(0)
-  const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [tab, setTab] = useState<'new' | 'history'>('new')
 
@@ -30,39 +30,33 @@ export default function Sales() {
     api.get<Sale[]>('/sales?limit=50').then(setSales).catch(() => {})
   }
 
-  const loadAllProducts = async (): Promise<Product[]> => {
-    const all: Product[] = []
-    let page = 1
-    let totalPages = 1
-    do {
-      const data = await api.get<{ products: Product[]; total: number; total_pages: number }>(
-        `/products?page=${page}&page_size=200`
-      )
-      all.push(...data.products)
-      totalPages = data.total_pages
-      page++
-    } while (page <= totalPages)
-    return all
-  }
-
   useEffect(() => {
     Promise.all([
-      loadAllProducts(),
-      api.get<StockItem[]>('/stock'),
       api.get<Sale[]>('/sales?limit=50'),
       api.get<CustomerBrief[]>('/customers'),
     ])
-      .then(([prods, stk, s, c]) => { setProducts(prods); setStock(stk); setSales(s); setCustomers(c) })
+      .then(([s, c]) => { setSales(s); setCustomers(c) })
       .catch(() => toast('Error al cargar datos', 'error'))
-      .finally(() => setLoading(false))
   }, [])
 
-  const addToCart = (code: string) => {
-    const prod = products.find(p => p.code === code || p.barcode === code)
-    if (!prod) {
-      toast(`Código no encontrado: ${code}`, 'error')
-      return
-    }
+  useEffect(() => {
+    const q = inputCode.trim()
+    if (!q) { setSuggestions([]); setSuggestionsLoading(false); return }
+    setSuggestionsLoading(true)
+    const t = setTimeout(async () => {
+      try {
+        const data = await api.get<{ products: Product[] }>(`/products?search=${encodeURIComponent(q)}&page=1&page_size=15`)
+        setSuggestions(data.products)
+      } catch {
+        setSuggestions([])
+      } finally {
+        setSuggestionsLoading(false)
+      }
+    }, 300)
+    return () => clearTimeout(t)
+  }, [inputCode])
+
+  const addProductToCart = (prod: { id: number; code: string; name: string; selling_price: number }) => {
     setCart(prev => {
       const existing = prev.find(i => i.product_id === prod.id)
       if (existing) {
@@ -71,6 +65,21 @@ export default function Sales() {
       return [...prev, { product_id: prod.id, code: prod.code, name: prod.name, quantity: 1, unit_price: prod.selling_price }]
     })
     setInputCode('')
+    setSuggestions([])
+  }
+
+  const handleCodeSubmit = async () => {
+    const code = inputCode.trim()
+    if (!code || scanning) return
+    setScanning(true)
+    try {
+      const prod = await api.get<ScanResult>(`/products/scan/${encodeURIComponent(code)}`)
+      addProductToCart({ id: prod.id, code: prod.code, name: prod.name, selling_price: prod.selling_price })
+    } catch {
+      toast(`Código no encontrado: ${code}`, 'error')
+    } finally {
+      setScanning(false)
+    }
   }
 
   const subtotal = cart.reduce((sum, i) => sum + i.quantity * i.unit_price, 0)
@@ -93,7 +102,6 @@ export default function Sales() {
       setDiscount(0)
       setSelectedCustomer('')
       loadSales()
-      api.get<StockItem[]>('/stock').then(setStock)
     } catch (e: any) {
       toast('Error: ' + e.message, 'error')
     } finally {
@@ -174,7 +182,7 @@ export default function Sales() {
                     placeholder="Código de barras, SKU o nombre..."
                     value={inputCode}
                     onChange={e => setInputCode(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') addToCart(inputCode) }}
+                    onKeyDown={e => { if (e.key === 'Enter') handleCodeSubmit() }}
                     style={{
                       width: '100%', background: 'var(--surface)',
                       border: '2px solid var(--outline-variant)',
@@ -188,6 +196,40 @@ export default function Sales() {
                     }}
                     autoFocus
                   />
+                  {(suggestionsLoading || scanning) && (
+                    <span style={{
+                      position: 'absolute', right: 44, top: '50%', transform: 'translateY(-50%)',
+                      fontSize: 11, color: 'var(--outline)', fontStyle: 'italic', pointerEvents: 'none',
+                    }}>Buscando...</span>
+                  )}
+                  {suggestions.length > 0 && (
+                    <div style={{
+                      position: 'absolute', left: 0, right: 0, top: '100%', marginTop: 6,
+                      background: 'var(--surface-container-high)',
+                      border: '1px solid rgba(66,71,84,0.4)',
+                      borderRadius: 'var(--radius)',
+                      boxShadow: '0 12px 32px rgba(0,0,0,0.45)',
+                      zIndex: 30, overflow: 'hidden',
+                    }}>
+                      {suggestions.map(p => (
+                        <button key={p.id} onClick={() => addProductToCart(p)} style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+                          width: '100%', padding: '10px 12px', background: 'transparent',
+                          border: 'none', borderBottom: '1px solid rgba(66,71,84,0.2)',
+                          cursor: 'pointer', textAlign: 'left', transition: 'background var(--transition)',
+                        }}>
+                          <span style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
+                            <span style={{ display: 'block', fontSize: 11, color: 'var(--outline)', fontFamily: 'var(--font-data)' }}>{p.code}</span>
+                          </span>
+                          <span style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--success)', fontFamily: 'var(--font-data)' }}>${p.selling_price.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
+                            <span style={{ display: 'block', fontSize: 11, color: 'var(--on-surface-variant)' }}>Stock: {p.stock}</span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <kbd style={{
                     position: 'absolute', right: 'var(--space-md)', top: '50%', transform: 'translateY(-50%)',
                     background: 'var(--surface-container-highest)',

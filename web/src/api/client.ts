@@ -44,6 +44,17 @@ export interface Product {
   is_active: boolean
   barcode?: string | null
   expiry_date?: string | null
+  stock: number
+}
+
+export interface ScanResult {
+  id: number
+  code: string
+  name: string
+  description: string
+  selling_price: number
+  stock: number
+  unit: string
 }
 
 export interface StockItem {
