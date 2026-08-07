@@ -44,7 +44,9 @@ Thumbs.db
 .env
 .env.local
 *.env
+*.env.bak
 server/.env
+server/.env.bak
 
 # Respaldos de sesiones
 respaldos/

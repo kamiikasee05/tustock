@@ -12,6 +12,13 @@ PROJECT_ROOT = Path(SPEC_DIR).parent
 import barcode as _barcode
 _BARCODE_DIR = os.path.dirname(os.path.abspath(_barcode.__file__))
 
+# Scripts: incluir todo EXCEPTO cloudflared.exe (51 MB, se descarga on-demand)
+scripts_datas = [
+    (str(p), "scripts")
+    for p in (PROJECT_ROOT / "scripts").iterdir()
+    if p.is_file() and p.name != "cloudflared.exe"
+]
+
 a = Analysis(
     [str(PROJECT_ROOT / "installer" / "tustock_entry.py")],
     pathex=[str(PROJECT_ROOT / "server")],
@@ -22,7 +29,7 @@ a = Analysis(
         # Monitor local
         (str(PROJECT_ROOT / "monitor"), "monitor"),
         # Scripts
-        (str(PROJECT_ROOT / "scripts"), "scripts"),
+        *scripts_datas,
         # Cloud agent
         (str(PROJECT_ROOT / "cloud"), "cloud"),
         # Documentos legales

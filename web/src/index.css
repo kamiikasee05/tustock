@@ -183,3 +183,31 @@ a {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+
+/* Modo liviano: desactiva animaciones y glass en PCs de bajos recursos */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .glass-panel {
+    background: rgba(29, 32, 39, 0.92);
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+.lite,
+.lite *,
+.lite *::before,
+.lite *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+.lite .glass-panel {
+  background: rgba(29, 32, 39, 0.92);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
