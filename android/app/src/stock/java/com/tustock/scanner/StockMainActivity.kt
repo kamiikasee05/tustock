@@ -67,6 +67,9 @@ class StockMainActivity : AppCompatActivity() {
         ApiClient.baseUrl = savedUrl ?: "http://192.168.1.100:8090"
         lastNewPrice = prefs.getString("last_new_price", "") ?: ""
 
+        // Load bundled ARCOR catalog (641 products)
+        CatalogProvider.load(this)
+
         startTakeButton = findViewById(R.id.startTakeButton)
         sessionBar = findViewById(R.id.sessionBar)
         sessionInfo = findViewById(R.id.sessionInfo)
@@ -252,11 +255,13 @@ class StockMainActivity : AppCompatActivity() {
 
     private fun updateModeBanner() {
         val t = theoreticalCount()
+        val arcorCount = CatalogProvider.size()
+        val arcorInfo = if (arcorCount > 0) " · Catálogo ARCOR: $arcorCount" else ""
         modeBanner.text = if (auditMode) {
-            if (t > 0) "AUDITORÍA — Teórico: $t artículos por contar"
-            else "AUDITORÍA — sin catálogo con stock (descargá el catálogo)"
+            if (t > 0) "AUDITORÍA — Teórico: $t artículos por contar$arcorInfo"
+            else "AUDITORÍA — sin catálogo con stock (descargá el catálogo)$arcorInfo"
         } else {
-            "TOMA DE STOCK — para carga inicial o agregar stock"
+            "TOMA DE STOCK — para carga inicial o agregar stock$arcorInfo"
         }
         modeBanner.setTextColor(if (auditMode) 0xFF4d8eff.toInt() else 0xFF22c55e.toInt())
         modeBanner.setBackgroundColor(if (auditMode) 0xCC0f172a.toInt() else 0xCC052e16.toInt())
@@ -515,21 +520,26 @@ class StockMainActivity : AppCompatActivity() {
                 var price = 0.0
                 val name = if (product == null) {
                     val typed = newNameInput.text.toString().trim()
-                    if (typed.length < 2) {
+                    val arcorProduct = CatalogProvider.lookup(code)
+                    if (typed.isEmpty() && arcorProduct != null) {
+                        // ARCOR product — use catalog name, no price required
+                        arcorProduct.name
+                    } else if (typed.length < 2) {
                         Toast.makeText(this, "Ingresá el nombre del producto (mínimo 2 letras)", Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
+                    } else {
+                        val priceStr = newPriceInput.text.toString().trim()
+                        val p = priceStr.toDoubleOrNull()
+                        if (p == null || p <= 0) {
+                            Toast.makeText(this, "Ingresá el precio", Toast.LENGTH_SHORT).show()
+                            return@setOnClickListener
+                        }
+                        price = p
+                        lastNewName = typed
+                        lastNewPrice = priceStr
+                        prefs.edit().putString("last_new_price", priceStr).apply()
+                        typed
                     }
-                    val priceStr = newPriceInput.text.toString().trim()
-                    val p = priceStr.toDoubleOrNull()
-                    if (p == null || p <= 0) {
-                        Toast.makeText(this, "Ingresá el precio", Toast.LENGTH_SHORT).show()
-                        return@setOnClickListener
-                    }
-                    price = p
-                    lastNewName = typed
-                    lastNewPrice = priceStr
-                    prefs.edit().putString("last_new_price", priceStr).apply()
-                    typed
                 } else {
                     price = product.selling_price
                     lastScannedName
@@ -654,34 +664,51 @@ class StockMainActivity : AppCompatActivity() {
                                     runOnUiThread {
                                         scanHint.text = "Procesando $code..."
                                         if (csvActive) {
-                                            // TAKE MODE: resolve locally from catalog, no round-trip
+                                            // TAKE MODE: check ARCOR catalog first, then TUSTOCK
                                             val product = catalogByKey[code] ?: catalogByKey[code.lowercase()]
+                                            val arcorProduct = CatalogProvider.lookup(code)
                                             lastScanned = product
-                                            lastScannedName = product?.name ?: ""
+                                            lastScannedName = product?.name ?: arcorProduct?.name ?: ""
                                             resultCard.visibility = View.GONE
                                             notFoundCard.visibility = View.GONE
-                                            productName.text = product?.name ?: "Producto nuevo"
-                                            productCode.text = "Codigo: $code"
-                                            if (product != null) {
-                                                productPrice.text = "Stock en sistema: ${product.stock.toInt()}"
-                                                newNameInput.visibility = View.GONE
-                                                newPriceInput.visibility = View.GONE
-                                            } else {
-                                                productPrice.text = "No esta en el catalogo - cargá el nombre"
-                                                newNameInput.setText(lastNewName)
-                                                newNameInput.setSelection(0, newNameInput.text.length)
-                                                newNameInput.visibility = View.VISIBLE
-                                                newPriceInput.setText(lastNewPrice)
-                                                newPriceInput.setSelection(0, newPriceInput.text.length)
-                                                newPriceInput.visibility = View.VISIBLE
-                                                newNameInput.requestFocus()
+
+                                            when {
+                                                // Case 1: In TUSTOCK (loaded product)
+                                                product != null -> {
+                                                    productName.text = product.name
+                                                    productCode.text = "Codigo: $code"
+                                                    productPrice.text = "Stock en sistema: ${product.stock.toInt()}"
+                                                    newNameInput.visibility = View.GONE
+                                                    newPriceInput.visibility = View.GONE
+                                                }
+                                                // Case 2: In ARCOR catalog but not in TUSTOCK
+                                                arcorProduct != null -> {
+                                                    productName.text = arcorProduct.name
+                                                    productCode.text = "Codigo: $code · ${arcorProduct.brand} · ${arcorProduct.category}"
+                                                    productPrice.text = "Conocido — no cargado en sistema"
+                                                    newNameInput.visibility = View.GONE
+                                                    newPriceInput.visibility = View.GONE
+                                                }
+                                                // Case 3: Unknown product
+                                                else -> {
+                                                    productName.text = "Producto nuevo"
+                                                    productCode.text = "Codigo: $code"
+                                                    productPrice.text = "No esta en el catalogo"
+                                                    newNameInput.setText(lastNewName)
+                                                    newNameInput.setSelection(0, newNameInput.text.length)
+                                                    newNameInput.visibility = View.VISIBLE
+                                                    newPriceInput.setText(lastNewPrice)
+                                                    newPriceInput.setSelection(0, newPriceInput.text.length)
+                                                    newPriceInput.visibility = View.VISIBLE
+                                                    newNameInput.requestFocus()
+                                                }
                                             }
                                             updateAuditCompare(product, code)
                                             productStock.visibility = View.GONE
                                             quantityInput.hint = "Cuantos hay?"
                                             quantityInput.setText("")
                                             addStockBtn.text = "Guardar"
-                                            registerBtn.visibility = if (product == null) View.VISIBLE else View.GONE
+                                            registerBtn.visibility = if (product == null && arcorProduct == null) View.VISIBLE else View.GONE
                                             resultCard.visibility = View.VISIBLE
                                             scanHint.visibility = View.GONE
                                             isProcessing = false
