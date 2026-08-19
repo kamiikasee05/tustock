@@ -145,7 +145,6 @@ def collect_inventory() -> dict:
             LEFT JOIN current_stock cs ON cs.product_id = p.id
             WHERE p.is_active = 1
             ORDER BY p.name
-            LIMIT 500
         """)
         products = [
             {
@@ -160,7 +159,7 @@ def collect_inventory() -> dict:
         return {
             "products": products,
             "total": total_count,
-            "truncated": len(products) < total_count,
+            "truncated": False,
         }
     except Exception:
         return None

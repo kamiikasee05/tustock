@@ -349,7 +349,7 @@ function renderInventorySection(){
       <div class="kpi">
         <div class="kpi-label">Total Productos</div>
         <div class="kpi-value">${total}</div>
-        <div class="kpi-sub">${inv.truncated?'Mostrando primeros 500':'Todos los productos'}</div>
+        <div class="kpi-sub">${inv.truncated?'Mostrando productos (parcial)':'Todos los productos'}</div>
       </div>
     </div>
 
@@ -413,7 +413,7 @@ function renderPedidosSection(d){
 
 function fetchPosData(){
   if(!state.token) return;
-  api('/api/inventory?per_page=500').then(d=>{
+  api('/api/inventory?per_page=2000').then(d=>{
     state.posProducts = (d.products||[]);
     render();
   }).catch(()=>{});

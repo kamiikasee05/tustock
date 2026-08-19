@@ -672,6 +672,41 @@ def login(data: dict, request: Request, db: Session = Depends(get_db)):
     return {"ok": True, "token": token, "business_name": biz.name}
 
 
+def _cleanup_old_pushes(db: Session, business_id: int, keep_id: int):
+    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=7)
+
+    db.query(MetricsPush).filter(
+        MetricsPush.business_id == business_id,
+        MetricsPush.id != keep_id,
+        MetricsPush.pushed_at < cutoff,
+    ).delete(synchronize_session=False)
+
+    recent = (
+        db.query(MetricsPush)
+        .filter(
+            MetricsPush.business_id == business_id,
+            MetricsPush.id != keep_id,
+            MetricsPush.pushed_at >= cutoff,
+        )
+        .order_by(desc(MetricsPush.pushed_at))
+        .all()
+    )
+
+    seen_days: set[str] = set()
+    ids_to_delete: list[int] = []
+    for p in recent:
+        day = p.pushed_at.strftime("%Y-%m-%d")
+        if day in seen_days:
+            ids_to_delete.append(p.id)
+        else:
+            seen_days.add(day)
+
+    if ids_to_delete:
+        db.query(MetricsPush).filter(MetricsPush.id.in_(ids_to_delete)).delete(synchronize_session=False)
+
+    db.commit()
+
+
 @app.post("/api/push")
 def push(data: dict, request: Request, db: Session = Depends(get_db)):
     api_key = request.headers.get("X-API-Key", "")
@@ -685,6 +720,8 @@ def push(data: dict, request: Request, db: Session = Depends(get_db)):
     push = MetricsPush(business_id=biz.id, payload=data)
     db.add(push)
     db.commit()
+
+    _cleanup_old_pushes(db, biz.id, push.id)
 
     log_event("push_metrics", {"api_key": api_key[:8], "business_id": biz.id})
     return {"ok": True, "pushed_at": datetime.now(timezone.utc).isoformat()}
