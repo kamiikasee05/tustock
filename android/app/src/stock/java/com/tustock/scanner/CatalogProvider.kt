@@ -17,25 +17,30 @@ object CatalogProvider {
     fun load(context: Context) {
         if (loaded) return
         try {
-            val inputStream = context.resources.openRawResource(R.raw.catalogo_arcor)
-            val reader = inputStream.bufferedReader(Charsets.UTF_8)
-            reader.useLines { lines ->
-                lines.drop(1).forEach { line ->  // skip header
-                    val parts = line.split(';', limit = 4)
-                    if (parts.size >= 2) {
-                        val barcode = parts[0].trim().removeSurrounding("\"")
-                        val name = parts[1].trim().removeSurrounding("\"")
-                        val brand = if (parts.size > 2) parts[2].trim().removeSurrounding("\"") else "ARCOR"
-                        val category = if (parts.size > 3) parts[3].trim().removeSurrounding("\"") else ""
-                        if (barcode.isNotEmpty()) {
-                            products[barcode] = CatalogProduct(barcode, name, brand, category)
-                        }
-                    }
-                }
-            }
+            loadCatalog(context, R.raw.catalogo_arcor, "ARCOR")
+            loadCatalog(context, R.raw.catalogo_cocacola, "Coca-Cola")
             loaded = true
         } catch (e: Exception) {
             // Silently fail — catalog unavailable
+        }
+    }
+
+    private fun loadCatalog(context: Context, rawResId: Int, defaultBrand: String) {
+        val inputStream = context.resources.openRawResource(rawResId)
+        val reader = inputStream.bufferedReader(Charsets.UTF_8)
+        reader.useLines { lines ->
+            lines.drop(1).forEach { line ->  // skip header
+                val parts = line.split(';', limit = 4)
+                if (parts.size >= 2) {
+                    val barcode = parts[0].trim().removeSurrounding("\"")
+                    val name = parts[1].trim().removeSurrounding("\"")
+                    val brand = if (parts.size > 2) parts[2].trim().removeSurrounding("\"") else defaultBrand
+                    val category = if (parts.size > 3) parts[3].trim().removeSurrounding("\"") else ""
+                    if (barcode.isNotEmpty()) {
+                        products[barcode] = CatalogProduct(barcode, name, brand, category)
+                    }
+                }
+            }
         }
     }
 
