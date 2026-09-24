@@ -1,0 +1,132 @@
+/* TUSTOCK landing - diferenciales, comparacion, pasos, features, precios,
+   hechos, FAQ, CTA final y footer. Compositions varied segun RHYTHM 2. */
+
+/* Diferenciales: item lider a lo ancho + lista. */
+.diff{background:var(--surface-lowest);border-block:1px solid var(--outline-variant)}
+.diff-lead{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:32px;align-items:center;padding:36px;background:var(--surface);border:1px solid var(--outline-variant);border-radius:var(--radius-xl);margin-bottom:18px}
+.diff-lead h3{font-size:clamp(20px,2.4vw,26px);font-weight:700;letter-spacing:-.01em;margin-bottom:10px}
+.diff-lead p{color:var(--on-surface-variant)}
+.diff-mark{font-family:var(--font-data);font-size:clamp(40px,7vw,72px);font-weight:800;color:var(--on-surface);line-height:1;letter-spacing:-.03em}
+.diff-mark small{display:block;margin-top:8px;font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--outline);letter-spacing:0}
+.diff-list{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.diff-item{display:flex;gap:14px;padding:20px;background:var(--surface);border:1px solid var(--outline-variant);border-radius:var(--radius-lg)}
+.diff-item .icon{color:var(--on-surface-variant);margin-top:2px}
+.diff-item h4{font-size:16px;font-weight:600;margin-bottom:4px}
+.diff-item p{font-size:14px;color:var(--on-surface-variant)}
+
+/* Comparacion: tabla con scroll contenido en mobile. */
+.table-wrap{overflow-x:auto;border:1px solid var(--outline-variant);border-radius:var(--radius-lg);background:var(--surface)}
+.table-wrap:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+table{border-collapse:collapse;width:100%;min-width:660px}
+th,td{text-align:left;padding:14px 18px;border-bottom:1px solid var(--outline-variant);font-size:15px;vertical-align:top}
+thead th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--on-surface-variant);font-weight:600;background:var(--surface-low)}
+tbody th{font-weight:600;color:var(--on-surface);width:26%}
+td{color:var(--on-surface-variant)}
+.col-us{background:rgba(77,142,255,.07)}
+thead .col-us{color:var(--primary)}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+.table-note{margin-top:12px;font-size:13px;color:var(--outline)}
+
+/* Como empezar: numeros mono grandes como motivo de identidad. */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.step{padding-top:20px;border-top:2px solid var(--outline-variant)}
+.step-num{display:block;font-family:var(--font-data);font-size:44px;font-weight:700;line-height:1;color:var(--primary);margin-bottom:14px}
+.step h3{font-size:18px;font-weight:700;margin-bottom:8px}
+.step p{font-size:15px;color:var(--on-surface-variant)}
+
+/* Features: banda lider + lista con divisores (no cards identicas). */
+.feat{background:var(--surface-low)}
+.feat-lead{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:center;padding:32px;background:var(--surface);border:1px solid var(--outline-variant);border-radius:var(--radius-xl);margin-bottom:18px}
+.feat-lead h3{font-size:22px;font-weight:700;margin-bottom:10px}
+.feat-lead p{color:var(--on-surface-variant)}
+.feat-lead .icon{width:30px;height:30px;color:var(--on-surface-variant);margin-bottom:14px}
+.feat-list{display:grid;grid-template-columns:1fr 1fr;gap:0 32px}
+.feat-item{display:flex;gap:14px;padding:18px 0;border-bottom:1px solid var(--outline-variant)}
+.feat-item .icon{color:var(--on-surface-variant);margin-top:2px}
+.feat-item h4{font-size:15px;font-weight:600;margin-bottom:4px}
+.feat-item p{font-size:14px;color:var(--on-surface-variant)}
+
+/* Precios: 4 planes exactos. Naranja solo en el recomendado. */
+.pricing{background:var(--surface-lowest);border-block:1px solid var(--outline-variant)}
+.pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:stretch;margin-top:12px}
+.plan{position:relative;display:flex;flex-direction:column;padding:26px 20px;background:var(--surface);border:1px solid var(--outline-variant);border-radius:var(--radius-lg)}
+.plan--rec{border-color:var(--tertiary);background:var(--surface-low)}
+.plan-tag{position:absolute;top:-11px;left:20px;padding:3px 9px;border:1px solid var(--tertiary);border-radius:var(--radius-sm);background:var(--surface-lowest);color:var(--tertiary);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.plan h3{font-size:16px;font-weight:600}
+.plan-price{font-family:var(--font-data);font-size:30px;font-weight:800;line-height:1;letter-spacing:-.02em;margin:16px 0 4px}
+.plan-price small{font-size:13px;font-weight:500;letter-spacing:0;color:var(--on-surface-variant)}
+.plan-mode{font-size:13px;color:var(--on-surface-variant);padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--outline-variant)}
+.plan-items{flex:1;display:flex;flex-direction:column;gap:9px;margin-bottom:22px}
+.plan-items li{display:flex;gap:9px;font-size:14px;color:var(--on-surface-variant)}
+.plan-items .icon{width:18px;height:18px;margin-top:1px}
+.li-yes .icon{color:var(--success)}
+.li-no .icon{color:var(--outline)}
+.plan .btn{width:100%}
+
+/* Hechos: checklist compacta, sin cards. */
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:14px 32px;margin-top:28px}
+.fact{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-top:1px solid var(--outline-variant)}
+.fact .icon{color:var(--success);margin-top:1px}
+.fact p{font-size:15px}
+
+/* FAQ: detalles nativos, funcionan sin JS. */
+.faq-list{max-width:760px;margin:0 auto;border-top:1px solid var(--outline-variant)}
+.faq-item{border-bottom:1px solid var(--outline-variant)}
+.faq-item summary{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:18px 2px;font-size:16px;font-weight:600;cursor:pointer;list-style:none;min-height:44px}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary:hover{color:var(--primary)}
+.faq-chevron{width:20px;height:20px;color:var(--outline);transition:transform var(--transition)}
+.faq-item[open] .faq-chevron{transform:rotate(180deg)}
+.faq-body{padding:0 2px 20px;color:var(--on-surface-variant);font-size:15px;max-width:66ch}
+
+/* CTA final: alto contraste, un solo CTA primario. */
+.cta{padding:80px 0}
+.cta-panel{padding:52px 32px;text-align:center;border:1px solid var(--outline-variant);border-radius:var(--radius-xl);background:var(--surface-low)}
+.cta-panel h2{font-size:clamp(24px,3.4vw,34px);font-weight:800;letter-spacing:-.02em}
+.cta-panel p{margin:12px auto 0;max-width:52ch;color:var(--on-surface-variant)}
+.cta-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:28px}
+.cta-note{margin-top:16px;font-size:13px;color:var(--outline)}
+
+/* Footer: sin la grilla de plantilla de 4 columnas. */
+.footer{background:var(--surface-lowest);border-top:1px solid var(--outline-variant);padding:44px 0 26px}
+.footer-top{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:32px}
+.footer .logo{font-size:20px;font-weight:800;margin-bottom:10px}
+.footer .logo span{color:var(--primary)}
+.footer-brand p{font-size:13px;color:var(--outline);max-width:34ch;margin-bottom:14px}
+.footer h4{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--on-surface-variant);margin-bottom:12px}
+.footer a{display:flex;align-items:center;min-height:44px;font-size:14px;color:var(--outline)}
+.footer a:hover{color:var(--primary)}
+.footer-bottom{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:32px;padding-top:20px;border-top:1px solid var(--outline-variant);font-size:12px;color:var(--outline)}
+
+/* Responsive: estados reales segun donde rompe el contenido. */
+@media (max-width:980px){
+  .hero-grid{grid-template-columns:1fr;gap:34px}
+  .hero h1{max-width:none}
+  .hero-panel{max-width:460px}
+  .diff-lead{grid-template-columns:1fr;gap:22px;padding:28px}
+  .diff-list{grid-template-columns:1fr}
+  .spec-list{grid-template-columns:1fr;gap:16px}
+  .feat-lead{grid-template-columns:1fr;padding:24px}
+  .feat-list{grid-template-columns:1fr}
+  .pricing-grid{grid-template-columns:1fr 1fr}
+  .steps{grid-template-columns:1fr;gap:22px}
+  .facts{grid-template-columns:1fr}
+  .footer-top{grid-template-columns:1fr 1fr}
+}
+@media (max-width:880px){
+  .nav-inner{height:auto;min-height:64px;flex-wrap:wrap;padding-top:8px;padding-bottom:8px}
+  .nav-links{order:3;width:100%;flex-wrap:wrap;gap:18px;padding-bottom:8px}
+  html.js .nav-inner{height:64px;min-height:64px;flex-wrap:nowrap;padding-top:0;padding-bottom:0}
+  html.js .nav-links{display:none}
+  html.js .nav-menu-btn{display:inline-flex}
+}
+@media (max-width:600px){
+  :root{--gutter:16px}
+  .section{padding:54px 0}
+  .hero{padding:118px 0 48px}
+  .pricing-grid{grid-template-columns:1fr}
+  .footer-top{grid-template-columns:1fr;gap:24px}
+  .cta-panel{padding:34px 20px}
+  .illo-body{grid-template-columns:1fr}
+  .illo-col{display:none}
+}
