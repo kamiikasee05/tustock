@@ -58,7 +58,7 @@
     var show = function (ok) {
       if (!ok) return;
       shot.classList.add("is-loaded");
-      if (caption) caption.textContent = "Panel de TUSTOCK en la PC del local.";
+      if (caption) caption.textContent = "Panel de TUSTOCK en la PC del local · datos de ejemplo";
     };
     if (shot.complete && shot.naturalWidth > 0) {
       show(true);
