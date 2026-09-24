@@ -1,0 +1,63 @@
+/* TU STOCK landing - tema CLARO (por defecto).
+   Override scopeado a html[data-theme="light"]: redefine los tokens de color y
+   los valores hardcodeados del tema oscuro. No altera el tema oscuro (que sigue
+   en :root dentro de landing.css). Direccion: DESIGN.md. Misma identidad: un
+   solo acento azul (naranja solo semantico), jerarquia por capa tonal y bordes,
+   sin gradientes ni glows nuevos. */
+
+html[data-theme="light"]{
+  color-scheme:light;
+
+  /* Neutros: fondo off-white, cards blancas, bandas grises para separar secciones. */
+  --bg:#f7f8fa;
+  --surface-lowest:#e9ecf1;
+  --surface-low:#f0f2f6;
+  --surface:#ffffff;
+  --surface-high:#eef1f5;
+  --surface-highest:#e2e6ec;
+
+  /* Texto: casi negro (no #000) y dos niveles de gris para secundario/terciario. */
+  --on-surface:#1a1c20;
+  --on-surface-variant:#42474f;
+  --outline:#5f6672;
+  --outline-variant:#d3d8e0;
+
+  /* Acento: el mismo azul de marca, oscurecido para leerse sobre claro.
+     El relleno del boton se mantiene igual que en oscuro (navy sobre azul). */
+  --primary:#1d4ed8;
+  --primary-container:#4d8eff;
+  --primary-hover:#6ba1ff;
+  --on-primary-container:#00285d;
+
+  /* Semanticos a tono claro: naranja (recomendado), verde y rojo. */
+  --tertiary:#95500e;
+  --success:#0f7a43;
+  --danger:#c0271d;
+}
+
+/* Glass del nav: el rgba oscuro pasa a blanco translucido. */
+html[data-theme="light"] .nav{background:rgba(247,248,250,.82)}
+
+/* Hardware debil (.lite): sin backdrop-filter, el nav cae al color de fondo. */
+html[data-theme="light"] .lite .nav{background:var(--bg)}
+
+/* Menu mobile: superficie blanca en vez de la banda profunda. */
+html[data-theme="light"] .nav-mobile{background:var(--surface)}
+
+/* Superficies que en oscuro se elevan por tono quedan en blanco para no
+   perderse contra el fondo off-white. */
+html[data-theme="light"] .hero-panel,
+html[data-theme="light"] .cta-panel{background:var(--surface)}
+
+/* Columna TUSTOCK de la tabla: tinte del azul de accion, apenas mas marcado. */
+html[data-theme="light"] .col-us{background:rgba(29,78,216,.06)}
+
+/* Badge del plan recomendado: fondo blanco para despegarse de la banda gris. */
+html[data-theme="light"] .plan-tag{background:var(--surface)}
+
+/* La captura del producto es oscura: marco sutil y sombra baja para que apoye
+   sobre el fondo claro en vez de flotar. */
+html[data-theme="light"] .shot-media{
+  border-color:#c6ccd7;
+  box-shadow:0 6px 20px rgba(16,19,26,.07);
+}

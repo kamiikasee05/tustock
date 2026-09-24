@@ -1,15 +1,19 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TUSTOCK | Stock y ventas en tu PC, aunque se corte el internet</title>
+<title>TU STOCK | Stock y ventas en tu PC, aunque se corte el internet</title>
 <meta name="description" content="Sistema de stock y ventas para polirrubros, kioscos, almacenes y librerías. El sistema base funciona sin internet, sin comisión por venta, con opción de pago único y app Android incluida.">
-<meta name="theme-color" content="#10131a">
+<meta name="theme-color" content="#f7f8fa">
 <link rel="stylesheet" href="assets/fonts/fonts-local.css">
 <link rel="stylesheet" href="assets/css/landing.css">
 <link rel="stylesheet" href="assets/css/landing-sections.css">
+<link rel="stylesheet" href="assets/css/landing-light.css">
 <script src="assets/js/landing.js" defer></script>
+<script>
+(function(){try{var t=localStorage.getItem("tustock-tema");if(t==="dark"){document.documentElement.setAttribute("data-theme","dark");var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content","#10131a");}}catch(e){}})();
+</script>
 </head>
 <body>
 <a class="skip" href="#inicio">Saltar al contenido</a>
@@ -32,11 +36,13 @@
   <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/></symbol>
   <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
   <symbol id="i-whatsapp" viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.2-.2.3-.8 1-.9 1.2-.2.2-.4.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 20z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
 </svg>
 
 <header class="nav">
   <div class="nav-inner">
-    <a class="nav-logo" href="#inicio">TUS<span>STOCK</span></a>
+    <a class="nav-logo" href="#inicio">TU <span>STOCK</span></a>
     <nav class="nav-links" aria-label="Secciones">
       <a href="#sistema">El sistema</a>
       <a href="#comparacion">Comparación</a>
@@ -45,6 +51,10 @@
     </nav>
     <div class="nav-actions">
       <a class="btn btn-primary btn-sm" href="#precios">Ver planes</a>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar a tema oscuro" aria-pressed="false">
+        <svg class="icon t-sun" aria-hidden="true"><use href="#i-sun"/></svg>
+        <svg class="icon t-moon" aria-hidden="true"><use href="#i-moon"/></svg>
+      </button>
       <button class="nav-menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="mobileNav" aria-label="Abrir menú de navegación">
         <svg class="icon" aria-hidden="true"><use href="#i-menu"/></svg>
       </button>
@@ -55,6 +65,11 @@
     <a href="#comparacion">Comparación</a>
     <a href="#precios">Precios</a>
     <a href="#faq">Preguntas</a>
+    <button class="theme-toggle theme-toggle-mobile" id="themeToggleMobile" type="button" aria-label="Cambiar a tema oscuro" aria-pressed="false">
+      <svg class="icon t-sun" aria-hidden="true"><use href="#i-sun"/></svg>
+      <svg class="icon t-moon" aria-hidden="true"><use href="#i-moon"/></svg>
+      <span class="theme-toggle-text">Tema oscuro</span>
+    </button>
   </div>
 </header>
 
@@ -63,10 +78,10 @@
   <div class="container hero-grid">
     <div class="hero-copy">
       <h1>Tu stock y tus ventas, en tu PC, aunque se corte el internet</h1>
-      <p class="hero-sub">TUSTOCK guarda los productos, las ventas y los fiados en la computadora de tu local. El sistema base funciona sin internet, no cobra comisión por venta y podés pagarlo una sola vez. La app Android para escanear y tomar pedidos va incluida.</p>
+      <p class="hero-sub">TU STOCK guarda los productos, las ventas y los fiados en la computadora de tu local. El sistema base funciona sin internet, no cobra comisión por venta y podés pagarlo una sola vez. La app Android para escanear y tomar pedidos va incluida.</p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="#precios">Ver planes y precios</a>
-        <a class="btn btn-outline" href="https://wa.me/5493826403110?text=Hola!%20Quiero%20info%20de%20TUSTOCK" target="_blank" rel="noopener">
+        <a class="btn btn-outline" href="https://wa.me/5493826403110?text=Hola!%20Quiero%20info%20de%20TU%20STOCK" target="_blank" rel="noopener">
           <svg class="icon icon-fill" aria-hidden="true"><use href="#i-whatsapp"/></svg>
           Escribinos por WhatsApp
         </a>
@@ -92,9 +107,9 @@
     </div>
     <figure class="shot reveal">
       <div class="shot-media">
-        <img class="shot-img" id="shotImg" src="assets/img/panel-dashboard.webp" alt="Panel de TUSTOCK con el resumen de ventas del día, alertas de stock bajo y las últimas ventas" width="1600" height="1000" loading="lazy" decoding="async" onerror="this.style.display='none'">
+        <img class="shot-img" id="shotImg" src="assets/img/panel-dashboard.webp" alt="Panel de TU STOCK con el resumen de ventas del día, alertas de stock bajo y las últimas ventas" width="1600" height="1000" loading="lazy" decoding="async" onerror="this.style.display='none'">
         <div class="illo" aria-hidden="true">
-          <div class="illo-bar"><i class="illo-dot"></i><i class="illo-dot"></i><i class="illo-dot"></i><span>panel de TUSTOCK</span></div>
+          <div class="illo-bar"><i class="illo-dot"></i><i class="illo-dot"></i><i class="illo-dot"></i><span>panel de TU STOCK</span></div>
           <div class="illo-body">
             <div class="illo-focus">
               <span class="label">Resumen del día</span>
@@ -121,7 +136,7 @@
 <section class="section diff" id="diferenciales">
   <div class="container">
     <div class="section-head reveal">
-      <h2 class="section-title">Por qué TUSTOCK</h2>
+      <h2 class="section-title">Por qué TU STOCK</h2>
       <p class="section-lead">Está pensado para un local chico que necesita funcionar hoy, sin depender de la conexión ni de una cuota que sube.</p>
     </div>
     <div class="diff-lead reveal">
@@ -143,14 +158,14 @@
 <section class="section" id="comparacion">
   <div class="container">
     <div class="section-head reveal">
-      <h2 class="section-title">TUSTOCK, un cuaderno y un sistema en la nube</h2>
+      <h2 class="section-title">TU STOCK, un cuaderno y un sistema en la nube</h2>
       <p class="section-lead">Cada opción tiene lo suyo. Esta es la diferencia frente a llevar todo en papel o pagar una suscripción en la nube.</p>
     </div>
-    <div class="table-wrap reveal" tabindex="0" role="region" aria-label="Comparación entre TUSTOCK, un cuaderno o Excel y un sistema en la nube">
+    <div class="table-wrap reveal" tabindex="0" role="region" aria-label="Comparación entre TU STOCK, un cuaderno o Excel y un sistema en la nube">
       <table>
         <caption class="sr-only">Comparación de opciones de gestión</caption>
         <thead>
-          <tr><th scope="col">Criterio</th><th scope="col" class="col-us">TUSTOCK</th><th scope="col">Cuaderno o Excel</th><th scope="col">Sistema en la nube</th></tr>
+          <tr><th scope="col">Criterio</th><th scope="col" class="col-us">TU STOCK</th><th scope="col">Cuaderno o Excel</th><th scope="col">Sistema en la nube</th></tr>
         </thead>
         <tbody>
           <tr><th scope="row">Funciona sin internet</th><td class="col-us">Sí, el sistema base</td><td>Funciona igual</td><td>Depende del proveedor: muchos requieren conexión permanente</td></tr>
@@ -224,7 +239,7 @@
           <li class="li-no"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>Informes</li>
           <li class="li-no"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>Exportación y Monitor Cloud</li>
         </ul>
-        <a class="btn btn-outline" href="https://wa.me/5493826403110?text=Hola!%20Quiero%20probar%20TUSTOCK" target="_blank" rel="noopener">Probar gratis</a>
+        <a class="btn btn-outline" href="https://wa.me/5493826403110?text=Hola!%20Quiero%20probar%20TU%20STOCK" target="_blank" rel="noopener">Probar gratis</a>
       </article>
       <article class="plan">
         <h3>Básico</h3>
@@ -237,7 +252,7 @@
           <li class="li-yes"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Exportación CSV y Excel</li>
           <li class="li-yes"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>1 año de updates</li>
         </ul>
-        <a class="btn btn-outline" href="https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20plan%20Basico%20de%20TUSTOCK" target="_blank" rel="noopener">Elegir Básico</a>
+        <a class="btn btn-outline" href="https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20plan%20Basico%20de%20TU%20STOCK" target="_blank" rel="noopener">Elegir Básico</a>
       </article>
       <article class="plan plan--rec">
         <span class="plan-tag">Recomendado</span>
@@ -251,7 +266,7 @@
           <li class="li-yes"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Soporte prioritario</li>
           <li class="li-yes"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Updates continuos</li>
         </ul>
-        <a class="btn btn-primary" href="https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20plan%20Premium%20de%20TUSTOCK" target="_blank" rel="noopener">Elegir Premium</a>
+        <a class="btn btn-primary" href="https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20plan%20Premium%20de%20TU%20STOCK" target="_blank" rel="noopener">Elegir Premium</a>
       </article>
       <article class="plan">
         <h3>Pro</h3>
@@ -264,7 +279,7 @@
           <li class="li-yes"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Soporte prioritario</li>
           <li class="li-yes"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>1 año de updates</li>
         </ul>
-        <a class="btn btn-outline" href="https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20plan%20Pro%20de%20TUSTOCK" target="_blank" rel="noopener">Elegir Pro</a>
+        <a class="btn btn-outline" href="https://wa.me/5493826403110?text=Hola!%20Quiero%20el%20plan%20Pro%20de%20TU%20STOCK" target="_blank" rel="noopener">Elegir Pro</a>
       </article>
     </div>
   </div>
@@ -315,7 +330,7 @@
       </details>
       <details class="faq-item">
         <summary>¿El sistema hace facturación electrónica?<svg class="faq-chevron" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
-        <div class="faq-body">No. TUSTOCK genera tickets no fiscales para el control interno y la caja. Podés seguir facturando por AFIP en paralelo.</div>
+        <div class="faq-body">No. TU STOCK genera tickets no fiscales para el control interno y la caja. Podés seguir facturando por AFIP en paralelo.</div>
       </details>
       <details class="faq-item">
         <summary>¿Puedo cobrar con tarjeta o Mercado Pago?<svg class="faq-chevron" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
@@ -335,7 +350,7 @@
       <h2>Probalo en tu local, sin compromiso</h2>
       <p>Te pasamos el instalador y una prueba de 30 días. Si te sirve, elegís cómo pagarlo.</p>
       <div class="cta-actions">
-        <a class="btn btn-primary" href="https://wa.me/5493826403110?text=Hola!%20Quiero%20info%20de%20TUSTOCK" target="_blank" rel="noopener">
+        <a class="btn btn-primary" href="https://wa.me/5493826403110?text=Hola!%20Quiero%20info%20de%20TU%20STOCK" target="_blank" rel="noopener">
           <svg class="icon icon-fill" aria-hidden="true"><use href="#i-whatsapp"/></svg>
           Escribinos por WhatsApp
         </a>
@@ -351,9 +366,9 @@
   <div class="container">
     <div class="footer-top">
       <div class="footer-brand">
-        <p class="logo">TUS<span>STOCK</span></p>
+        <p class="logo">TU <span>STOCK</span></p>
         <p>Sistema de stock y ventas para comercios argentinos. Funciona en tu PC; el sistema base no depende de internet.</p>
-        <a href="https://wa.me/5493826403110?text=Hola!%20Quiero%20info%20de%20TUSTOCK" target="_blank" rel="noopener">WhatsApp</a>
+        <a href="https://wa.me/5493826403110?text=Hola!%20Quiero%20info%20de%20TU%20STOCK" target="_blank" rel="noopener">WhatsApp</a>
         <a href="mailto:tustock.administracion@gmail.com">tustock.administracion@gmail.com</a>
       </div>
       <nav aria-label="Secciones">
@@ -372,7 +387,7 @@
       </nav>
     </div>
     <div class="footer-bottom">
-      <span>TUSTOCK &copy; 2026. Sistema de gestión para comercios argentinos.</span>
+      <span>TU STOCK &copy; 2026. Sistema de gestión para comercios argentinos.</span>
       <span>Hecho en Argentina.</span>
     </div>
   </div>

@@ -58,7 +58,7 @@
     var show = function (ok) {
       if (!ok) return;
       shot.classList.add("is-loaded");
-      if (caption) caption.textContent = "Panel de TUSTOCK en la PC del local · datos de ejemplo";
+      if (caption) caption.textContent = "Panel de TU STOCK en la PC del local · datos de ejemplo";
     };
     if (shot.complete && shot.naturalWidth > 0) {
       show(true);
@@ -69,4 +69,31 @@
       shot.style.display = "none";
     });
   }
+
+  // Tema claro/oscuro: claro por defecto, toggle persistido en localStorage.
+  function applyTheme(mode) {
+    var dark = mode === "dark";
+    root.setAttribute("data-theme", dark ? "dark" : "light");
+    try { localStorage.setItem("tustock-tema", mode); } catch (e) {}
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", dark ? "#10131a" : "#f7f8fa");
+    [document.getElementById("themeToggle"), document.getElementById("themeToggleMobile")].forEach(function (btn) {
+      if (!btn) return;
+      btn.setAttribute("aria-pressed", dark ? "true" : "false");
+      btn.setAttribute("aria-label", dark ? "Cambiar a tema claro" : "Cambiar a tema oscuro");
+      var txt = btn.querySelector(".theme-toggle-text");
+      if (txt) txt.textContent = dark ? "Tema claro" : "Tema oscuro";
+    });
+  }
+  function toggleTheme() {
+    applyTheme(root.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  }
+  [document.getElementById("themeToggle"), document.getElementById("themeToggleMobile")].forEach(function (btn) {
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      toggleTheme();
+      if (btn.id === "themeToggleMobile") closeMenu();
+    });
+  });
+  applyTheme(root.getAttribute("data-theme") === "dark" ? "dark" : "light");
 })();

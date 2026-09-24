@@ -3,6 +3,7 @@
    naranja solo como marcador del plan recomendado. Jerarquia por capa tonal. */
 
 :root{
+  color-scheme:dark;
   --bg:#10131a;
   --surface-lowest:#0b0e15;
   --surface-low:#191b23;
@@ -76,6 +77,15 @@ ul{list-style:none}
 .nav-actions{display:flex;align-items:center;gap:12px}
 .nav-menu-btn{display:none;width:44px;height:44px;align-items:center;justify-content:center;color:var(--on-surface)}
 .nav-menu-btn .icon{width:24px;height:24px}
+.theme-toggle{display:inline-flex;width:44px;height:44px;align-items:center;justify-content:center;border:1px solid var(--outline-variant);border-radius:var(--radius);color:var(--on-surface-variant);transition:color var(--transition),border-color var(--transition)}
+.theme-toggle:hover{color:var(--primary);border-color:var(--primary)}
+.theme-toggle .icon{width:20px;height:20px}
+.theme-toggle .t-sun{display:none}
+.theme-toggle .t-moon{display:inline-flex}
+html[data-theme="dark"] .theme-toggle .t-sun{display:inline-flex}
+html[data-theme="dark"] .theme-toggle .t-moon{display:none}
+.theme-toggle-mobile{width:100%;height:auto;min-height:44px;justify-content:flex-start;gap:10px;border:0;border-top:1px solid var(--outline-variant);border-radius:0;padding:13px 0}
+.theme-toggle-text{font-size:16px;font-weight:500}
 .nav-mobile{display:none}
 .nav-mobile.open{display:block;position:fixed;top:64px;left:0;right:0;z-index:49;background:var(--surface-lowest);border-bottom:1px solid var(--outline-variant);padding:4px var(--gutter) 14px}
 .nav-mobile a{display:block;padding:13px 0;font-size:16px;font-weight:500;color:var(--on-surface-variant);border-bottom:1px solid var(--outline-variant)}
